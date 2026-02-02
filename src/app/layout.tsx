@@ -1,0 +1,108 @@
+import type { Metadata } from "next";
+import { Nunito, Poppins, Inter } from "next/font/google";
+import "./globals.css";
+import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
+import ErrorReporter from "@/components/ErrorReporter";
+import Script from "next/script";
+
+const nunito = Nunito({
+  subsets: ["latin"],
+  variable: "--font-nunito",
+  weight: ["700", "800"],
+});
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  variable: "--font-poppins",
+  weight: ["600", "700"],
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+export const metadata: Metadata = {
+  title: "Qidzo | Kids' Social Learning & Fun Community",
+  description: "Join Qidzo, the safest and most fun social learning platform for kids! Share drawings, science experiments, and stories while earning magic badges.",
+  keywords: [
+    "kids social media",
+    "safe learning for kids",
+    "educational games",
+    "kids community",
+    "creative sharing",
+    "Qidzo learning",
+    "gamified education",
+    "safe internet for children",
+  ],
+  authors: [{ name: "Qidzo Team" }],
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  themeColor: "#8B5CF6",
+  robots: "index, follow",
+  
+  openGraph: {
+    title: "Qidzo | The Fun & Safe Social Learning Community for Kids",
+    description: "The playful place where kids share, learn, and grow together! Join challenges, earn badges, and explore a world of creativity.",
+    url: "https://qidzo.com",
+    siteName: "Qidzo",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1530210124550-912dc1381cb8?w=1200&h=630&fit=crop&q=80",
+        width: 1200,
+        height: 630,
+        alt: "Qidzo - Fun Learning & Creativity for Kids",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Qidzo | Kids' Social Learning & Fun Community",
+    description: "The playful place where kids share drawings, science, and stories!",
+    images: ["https://images.unsplash.com/photo-1530210124550-912dc1381cb8?w=1200&h=630&fit=crop&q=80"],
+  },
+
+  icons: {
+    icon: [
+      { url: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=32&h=32&fit=crop&q=80", sizes: "32x32", type: "image/png" },
+      { url: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=16&h=16&fit=crop&q=80", sizes: "16x16", type: "image/png" }
+    ],
+    apple: [
+      { url: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=180&h=180&fit=crop&q=80", sizes: "180x180", type: "image/png" }
+    ],
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <html
+      lang="en"
+      className={`${nunito.variable} ${poppins.variable} ${inter.variable}`}
+    >
+      <body className="antialiased font-inter bg-white text-gray-900">
+        <Script
+          id="orchids-browser-logs"
+          src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts/orchids-browser-logs.js"
+          strategy="afterInteractive"
+          data-orchids-project-id="39c8c727-aae0-4f3e-9a47-921df8273b31"
+        />
+        <ErrorReporter />
+        <Script
+          src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts//route-messenger.js"
+          strategy="afterInteractive"
+          data-target-origin="*"
+          data-message-type="ROUTE_CHANGE"
+          data-include-search-params="true"
+          data-only-in-iframe="true"
+          data-debug="true"
+          data-custom-data='{"appName": "YourApp", "version": "1.0.0", "greeting": "hi"}'
+        />
+        {children}
+        <VisualEditsMessenger />
+      </body>
+    </html>
+  );
+}
