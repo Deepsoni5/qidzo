@@ -1,9 +1,20 @@
 import type { Metadata } from "next";
+import {
+  ClerkProvider,
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from '@clerk/nextjs'
 import { Nunito, Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
+import Navbar from "@/components/Navbar";
+import { Viewport } from "next";
+import { Toaster } from "@/components/ui/sonner";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -21,6 +32,13 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#8B5CF6",
+};
 
 export const metadata: Metadata = {
   title: "Qidzo | Kids' Social Learning & Fun Community",
@@ -40,8 +58,6 @@ export const metadata: Metadata = {
     "best kids learning platoform",
   ],
   authors: [{ name: "Qidzo Team" }],
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
-  themeColor: "#8B5CF6",
   robots: "index, follow",
   
   openGraph: {
@@ -82,11 +98,13 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
+    <ClerkProvider>
     <html
       lang="en"
       className={`${nunito.variable} ${poppins.variable} ${inter.variable}`}
     >
       <body className="antialiased font-inter bg-white text-gray-900">
+        <Navbar />
         <Script
           id="orchids-browser-logs"
           src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts/orchids-browser-logs.js"
@@ -106,7 +124,9 @@ export default function RootLayout({
         />
         {children}
         <VisualEditsMessenger />
+        <Toaster richColors closeButton position="top-right" />
       </body>
-    </html>
+      </html>
+      </ClerkProvider>
   );
 }
