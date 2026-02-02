@@ -2,7 +2,7 @@
 Qidzo is a playful and bubbly social learning platform designed for kids aged 4-17. It combines the engagement of Instagram and Snapchat with the educational value of Duolingo and Khan Academy Kids, creating a safe, gamified environment for sharing and learning.
 
 ## Tech Stack
-- **Framework**: Next.js 15 (App Router)
+- **Framework**: Next.js 16 (App Router)
 - **Styling**: Tailwind CSS 4
 - **Icons**: Lucide React
 - **Fonts**: Nunito (Headings), Poppins (Accents), Inter (Body)
