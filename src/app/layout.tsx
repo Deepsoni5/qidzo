@@ -34,6 +34,10 @@ export const metadata: Metadata = {
     "Qidzo learning",
     "gamified education",
     "safe internet for children",
+    "kids social media platoform",
+    "best kids social media platoform",
+    "kids learning platoform",
+    "best kids learning platoform",
   ],
   authors: [{ name: "Qidzo Team" }],
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
@@ -60,7 +64,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Qidzo | Kids' Social Learning & Fun Community",
     description: "The playful place where kids share drawings, science, and stories!",
-    images: ["https://images.unsplash.com/photo-1530210124550-912dc1381cb8?w=1200&h=630&fit=crop&q=80"],
+    images: ["https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=180&h=180&fit=crop&q=80"],
   },
 
   icons: {
