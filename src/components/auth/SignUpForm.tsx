@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useSignUp } from "@clerk/nextjs";
+import { useState, useEffect, type ChangeEvent } from "react";
+import { useSignUp, useSignIn, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,6 +67,8 @@ type ProfileValues = z.infer<typeof profileSchema>;
 
 export default function SignUpForm() {
   const { isLoaded, signUp, setActive } = useSignUp();
+  const { signIn } = useSignIn();
+  const { user, isLoaded: isUserLoaded } = useUser();
   const router = useRouter();
   const [step, setStep] = useState<"auth" | "verification" | "profile">("auth");
   const [isLoading, setIsLoading] = useState(false);
@@ -108,6 +110,47 @@ export default function SignUpForm() {
       avatar: "", // Default avatar selection logic can go here
     },
   });
+
+  // Handle OAuth Redirect Return
+  useEffect(() => {
+    console.log("OAuth Effect Triggered", { isUserLoaded, user: user?.id, step });
+
+    if (isUserLoaded && user) {
+        const checkProfile = async () => {
+            console.log("Checking profile for user:", user.id);
+            // Check if profile exists in Supabase
+            const { data, error } = await supabase.from("parents").select("id").eq("clerk_id", user.id).single();
+            
+            console.log("Supabase profile check result:", { data, error });
+
+            if (data) {
+                console.log("Profile exists, redirecting to home");
+                // Profile exists, redirect to dashboard
+                router.push("/");
+            } else {
+                console.log("Profile missing, setting step to profile");
+                // Profile missing, go to profile step
+                setStep("profile");
+                
+                // Pre-fill data from Clerk user
+                if (user.primaryEmailAddress?.emailAddress) {
+                    console.log("Pre-filling email:", user.primaryEmailAddress.emailAddress);
+                    authForm.setValue("email", user.primaryEmailAddress.emailAddress);
+                }
+                if (user.fullName) {
+                    console.log("Pre-filling fullName:", user.fullName);
+                    profileForm.setValue("fullName", user.fullName);
+                }
+                if (user.imageUrl) {
+                    console.log("Pre-filling avatar:", user.imageUrl);
+                    setAvatarPreview(user.imageUrl);
+                    profileForm.setValue("avatar", user.imageUrl);
+                }
+            }
+        };
+        checkProfile();
+    }
+  }, [isUserLoaded, user, router]); // removed authForm and profileForm from dependency to avoid loop if they change reference (though they shouldn't)
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -153,6 +196,19 @@ export default function SignUpForm() {
     } finally {
         setIsUploading(false);
     }
+  };
+
+  const handleOAuth = (strategy: 'oauth_google' | 'oauth_facebook') => {
+    console.log("OAuth button clicked:", strategy);
+    if (!isLoaded || !signUp) {
+        console.log("Clerk not loaded yet");
+        return;
+    }
+    return signUp.authenticateWithRedirect({
+        strategy,
+        redirectUrl: "/sign-up",
+        redirectUrlComplete: "/sign-up",
+    });
   };
 
   // Step 1: Create Clerk Account
@@ -251,7 +307,12 @@ export default function SignUpForm() {
   // Step 3: Create Supabase Profile
   const onProfileSubmit = async (data: ProfileValues) => {
     if (!isLoaded) return;
-    if (!signUp.createdUserId) {
+    
+    // For OAuth, user is already signed in so we use user.id
+    // For email/password, we use signUp.createdUserId
+    const userId = user?.id || signUp.createdUserId;
+
+    if (!userId) {
         toast.error("Error: User ID not found. Please restart.");
         return;
     }
@@ -261,7 +322,7 @@ export default function SignUpForm() {
         const parentId = generateParentId();
 
         const { error } = await supabase.from("parents").insert({
-            clerk_id: signUp.createdUserId,
+            clerk_id: userId,
             email: authForm.getValues("email"),
             parent_id: parentId,
             username: data.username,
@@ -287,8 +348,11 @@ export default function SignUpForm() {
             return;
         }
 
-        // Finalize Clerk Session
-        await setActive({ session: signUp.createdSessionId });
+        // Finalize Clerk Session (only needed if not already active)
+        if (signUp.createdSessionId && !user) {
+            await setActive({ session: signUp.createdSessionId });
+        }
+        
         toast.success("Welcome to Qidzo! 🎉", {
             description: "Your parent account is ready to go!",
             duration: 5000,
@@ -335,6 +399,54 @@ export default function SignUpForm() {
 
         {/* Step 1: Auth Form */}
         {step === "auth" && (
+          <>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+                <Button 
+                    variant="outline" 
+                    className="w-full rounded-xl border-2 hover:bg-gray-50 hover:text-gray-900"
+                    onClick={() => handleOAuth('oauth_google')}
+                >
+                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                        <path
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            fill="#4285F4"
+                        />
+                        <path
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.04-3.71 1.04-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            fill="#34A853"
+                        />
+                        <path
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                            fill="#FBBC05"
+                        />
+                        <path
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                            fill="#EA4335"
+                        />
+                    </svg>
+                    Google
+                </Button>
+                <Button 
+                    variant="outline" 
+                    className="w-full rounded-xl border-2 hover:bg-gray-50 hover:text-gray-900"
+                    onClick={() => handleOAuth('oauth_facebook')}
+                >
+                    <svg className="w-5 h-5 mr-2 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036c-2.148 0-2.797 1.66-2.797 3.592v1.4h3.67l-.418 3.667h-3.252v7.98h-4.968Z" />
+                    </svg>
+                    Facebook
+                </Button>
+            </div>
+
+            <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500 font-bold tracking-wider">Or register with</span>
+                </div>
+            </div>
+
           <Form {...authForm}>
             <form onSubmit={authForm.handleSubmit(onAuthSubmit)} className="space-y-4">
               <FormField
@@ -410,7 +522,7 @@ export default function SignUpForm() {
                 className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white font-bold py-6 rounded-xl text-lg shadow-lg shadow-brand-purple/20 transition-all hover:scale-[1.02]"
                 disabled={isLoading}
               >
-                {isLoading ? <Loader2 className="animate-spin" /> : "Create Account"}
+                {isLoading ? <Loader2 className="animate-spin" /> : "Next"}
               </Button>
 
               <div className="text-center mt-4">
@@ -419,6 +531,7 @@ export default function SignUpForm() {
               </div>
             </form>
           </Form>
+          </>
         )}
 
         {/* Step 2: Verification Form */}
@@ -601,54 +714,12 @@ export default function SignUpForm() {
                 )}
               />
 
-              {/* Avatar Upload */}
-              <FormItem>
-                <FormLabel className="font-bold text-gray-700">Profile Picture (optional)</FormLabel>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0]
-                      if (!file) return
-                      setIsLoading(true)
-                      try {
-                        const fd = new FormData()
-                        fd.append("file", file)
-                        const res = await fetch("/api/upload", {
-                          method: "POST",
-                          body: fd,
-                        })
-                        const json = await res.json()
-                        if (!res.ok) throw new Error(json.error || "Upload failed")
-                        profileForm.setValue("avatar", json.url, { shouldValidate: true })
-                        setAvatarPreview(json.url)
-                        toast.success("Profile picture uploaded!")
-                      } catch (err: any) {
-                        toast.error(err.message || "Failed to upload")
-                      } finally {
-                        setIsLoading(false)
-                      }
-                    }}
-                    className="text-sm"
-                  />
-                  {avatarPreview && (
-                    <img
-                      src={avatarPreview}
-                      alt="avatar preview"
-                      className="w-12 h-12 rounded-full border"
-                    />
-                  )}
-                </div>
-                <FormDescription>We store your image securely.</FormDescription>
-              </FormItem>
-
               <Button 
                 type="submit" 
                 className="w-full bg-hot-pink hover:bg-hot-pink/90 text-white font-bold py-6 rounded-xl text-lg shadow-lg shadow-hot-pink/20 transition-all hover:scale-[1.02]"
                 disabled={isLoading || usernameAvailable === false}
               >
-                {isLoading ? <Loader2 className="animate-spin" /> : "Complete Profile 🎉"}
+                {isLoading ? <Loader2 className="animate-spin" /> : "Create Account 🎉"}
               </Button>
             </form>
           </Form>
