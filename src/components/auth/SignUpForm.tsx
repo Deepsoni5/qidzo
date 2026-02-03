@@ -80,6 +80,7 @@ export default function SignUpForm() {
   const [passwordStrength, setPasswordStrength] = useState<"weak"|"medium"|"strong"|null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false);
+  const [createdUserId, setCreatedUserId] = useState<string | null>(null);
 
   // Forms
   const authForm = useForm<AuthValues>({
@@ -113,36 +114,28 @@ export default function SignUpForm() {
 
   // Handle OAuth Redirect Return
   useEffect(() => {
-    console.log("OAuth Effect Triggered", { isUserLoaded, user: user?.id, step });
 
     if (isUserLoaded && user) {
         const checkProfile = async () => {
-            console.log("Checking profile for user:", user.id);
             // Check if profile exists in Supabase
             const { data, error } = await supabase.from("parents").select("id").eq("clerk_id", user.id).single();
             
-            console.log("Supabase profile check result:", { data, error });
 
             if (data) {
-                console.log("Profile exists, redirecting to home");
                 // Profile exists, redirect to dashboard
                 router.push("/");
             } else {
-                console.log("Profile missing, setting step to profile");
                 // Profile missing, go to profile step
                 setStep("profile");
                 
                 // Pre-fill data from Clerk user
                 if (user.primaryEmailAddress?.emailAddress) {
-                    console.log("Pre-filling email:", user.primaryEmailAddress.emailAddress);
                     authForm.setValue("email", user.primaryEmailAddress.emailAddress);
                 }
                 if (user.fullName) {
-                    console.log("Pre-filling fullName:", user.fullName);
                     profileForm.setValue("fullName", user.fullName);
                 }
                 if (user.imageUrl) {
-                    console.log("Pre-filling avatar:", user.imageUrl);
                     setAvatarPreview(user.imageUrl);
                     profileForm.setValue("avatar", user.imageUrl);
                 }
@@ -199,9 +192,7 @@ export default function SignUpForm() {
   };
 
   const handleOAuth = (strategy: 'oauth_google' | 'oauth_facebook') => {
-    console.log("OAuth button clicked:", strategy);
     if (!isLoaded || !signUp) {
-        console.log("Clerk not loaded yet");
         return;
     }
     return signUp.authenticateWithRedirect({
@@ -255,7 +246,6 @@ export default function SignUpForm() {
       });
 
       if (completeSignUp.status !== "complete") {
-        console.log(JSON.stringify(completeSignUp, null, 2));
         toast.error("Verification failed. Please try again.");
       } else {
         // Don't set active yet, wait for profile creation
@@ -264,6 +254,9 @@ export default function SignUpForm() {
         // Actually, if we don't setActive, we might not be able to get the clerk ID easily?
         // Let's setActive here, but maybe we need it for the user ID.
         // completeSignUp.createdUserId gives the ID.
+        if (completeSignUp.createdUserId) {
+            setCreatedUserId(completeSignUp.createdUserId);
+        }
         
         toast.success("Email verified!");
         setStep("profile");
@@ -309,8 +302,8 @@ export default function SignUpForm() {
     if (!isLoaded) return;
     
     // For OAuth, user is already signed in so we use user.id
-    // For email/password, we use signUp.createdUserId
-    const userId = user?.id || signUp.createdUserId;
+    // For email/password, we use signUp.createdUserId or stored state
+    const userId = user?.id || signUp.createdUserId || createdUserId;
 
     if (!userId) {
         toast.error("Error: User ID not found. Please restart.");
@@ -331,7 +324,8 @@ export default function SignUpForm() {
             date_of_birth: data.dob ? new Date(data.dob) : null,
             avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`,
             subscription_plan: 'FREE',
-            subscription_status: 'ACTIVE'
+            subscription_status: 'ACTIVE',
+            role: 'parent'
         });
 
         if (error) {
@@ -516,6 +510,9 @@ export default function SignUpForm() {
                       I agree to the <a href="#" className="text-brand-purple font-bold hover:underline">Terms</a> & <a href="#" className="text-brand-purple font-bold hover:underline">Privacy Policy</a>
                   </label>
               </div>
+
+              {/* Clerk CAPTCHA Container */}
+              <div id="clerk-captcha" />
 
               <Button 
                 type="submit" 

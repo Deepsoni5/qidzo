@@ -57,7 +57,6 @@ export default function SignInForm() {
         });
         router.push("/");
       } else {
-        // console.log(JSON.stringify(res, null, 2)); // Removed console log
         toast.error("Sign in incomplete", {
           description: "Please check your email for further instructions.",
         });

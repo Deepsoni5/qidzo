@@ -43,7 +43,8 @@ export default function Navbar() {
                 <UserButton 
                     appearance={{
                         elements: {
-                            avatarBox: "w-10 h-10 border-2 border-white shadow-md hover:scale-105 transition-transform duration-200"
+                            avatarBox: "w-10 h-10 border-2 border-white shadow-md hover:scale-105 transition-transform duration-200",
+                            userButtonPopoverFooter: "!hidden"
                         }
                     }}
                 />
