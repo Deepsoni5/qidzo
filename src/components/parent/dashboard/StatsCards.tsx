@@ -1,12 +1,66 @@
-import { Users, FileText, Clock } from "lucide-react";
-import { MOCK_STATS } from "@/lib/mockParentData";
+"use client";
+
+import { Users, FileText, Clock, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
+import { getParentStats } from "@/actions/parent";
+
+interface Child {
+  id: string;
+  total_posts: number;
+  learning_hours?: number; // Optional in case it's missing, but we'll try to sum it
+}
 
 export default function StatsCards() {
+  const { user } = useUser();
+  const [loading, setLoading] = useState(true);
+  const [statsData, setStatsData] = useState({
+    totalChildren: 0,
+    totalPosts: 0,
+    learningHours: 0
+  });
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchStats = async () => {
+      try {
+        const data = await getParentStats();
+        
+        if (data) {
+          setStatsData(data);
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [user]);
+
   const stats = [
-    { label: "Total Children", value: MOCK_STATS.totalChildren, icon: Users, color: "text-brand-purple", bg: "bg-brand-purple/10" },
-    { label: "Posts This Week", value: MOCK_STATS.postsThisWeek, icon: FileText, color: "text-hot-pink", bg: "bg-hot-pink/10" },
-    { label: "Learning Hours", value: `${MOCK_STATS.learningHours}h`, icon: Clock, color: "text-sunshine-yellow", bg: "bg-sunshine-yellow/10" },
+    { label: "Total Children", value: statsData.totalChildren, icon: Users, color: "text-brand-purple", bg: "bg-brand-purple/10" },
+    { label: "Total Posts", value: statsData.totalPosts, icon: FileText, color: "text-hot-pink", bg: "bg-hot-pink/10" },
+    { label: "Learning Hours", value: `${statsData.learningHours.toFixed(1)}h`, icon: Clock, color: "text-sunshine-yellow", bg: "bg-sunshine-yellow/10" },
   ];
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 h-[106px] animate-pulse">
+            <div className="w-16 h-16 rounded-2xl bg-gray-100"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-gray-100 rounded w-24"></div>
+              <div className="h-8 bg-gray-100 rounded w-16"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

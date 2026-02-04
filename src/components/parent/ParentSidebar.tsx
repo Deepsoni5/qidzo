@@ -1,5 +1,5 @@
 "use client";
-import { LayoutDashboard, Users, Settings, Zap } from "lucide-react";
+import { LayoutDashboard, Users, Settings, Zap, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -31,8 +31,14 @@ export default function ParentSidebar() {
         })}
       </div>
       
-      <div className="mt-auto">
-         {/* Footer or extra links could go here */}
+      <div className="mt-auto pt-4 border-t border-gray-100">
+         <Link 
+            href="/"
+            className="flex items-center gap-3 p-3 rounded-2xl font-nunito font-bold cursor-pointer transition-all duration-300 hover:bg-red-50 hover:text-red-500 text-gray-500 group"
+        >
+            <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+            <span className="text-base">Back to Website</span>
+        </Link>
       </div>
     </div>
   );

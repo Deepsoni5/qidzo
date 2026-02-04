@@ -7,21 +7,19 @@ import { supabase } from "@/lib/supabaseClient";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
+import { checkIsParent } from "@/actions/parent";
+
 export default function LeftSidebar() {
   const { user } = useUser();
   const [isParent, setIsParent] = useState(false);
 
   useEffect(() => {
     if (user) {
-      const checkParent = async () => {
-        const { data } = await supabase
-          .from("parents")
-          .select("id")
-          .eq("clerk_id", user.id)
-          .single();
-        if (data) setIsParent(true);
+      const init = async () => {
+        const isParentUser = await checkIsParent();
+        if (isParentUser) setIsParent(true);
       };
-      checkParent();
+      init();
     }
   }, [user]);
 
@@ -31,14 +29,10 @@ export default function LeftSidebar() {
         return;
     }
 
-    // Check if user is a parent
-    const { data: parentData } = await supabase
-        .from("parents")
-        .select("id")
-        .eq("clerk_id", user.id)
-        .single();
+    // Check if user is a parent (using cached action)
+    const isParentUser = await checkIsParent();
 
-    if (parentData) {
+    if (isParentUser) {
         toast("Parents Mode! 🛡️", {
             description: "Parents can only view, react, and comment. Let the kids be the creators! 🎨",
             duration: 4000,

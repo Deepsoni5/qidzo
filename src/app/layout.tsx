@@ -41,7 +41,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Qidzo | Kids' Social Learning & Fun Community",
+  title: "Qidzo | Kid's Social Learning & Fun Community",
   description: "Join Qidzo, the safest and most fun social learning platform for kids! Share drawings, science experiments, and stories while earning magic badges.",
   keywords: [
     "kids social media",
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Qidzo | Kids' Social Learning & Fun Community",
+    title: "Qidzo | Kid's Social Learning & Fun Community",
     description: "The playful place where kids share drawings, science, and stories!",
     images: ["https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=180&h=180&fit=crop&q=80"],
   },

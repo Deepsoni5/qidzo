@@ -1,9 +1,28 @@
-import { Search, Bell, User, ArrowRight } from "lucide-react";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+"use client";
+
+import { Search, Bell, User, ArrowRight, LayoutDashboard } from "lucide-react";
+import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "./ui/button";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { checkIsParent } from "@/actions/parent";
 
 export default function Navbar() {
+  const { user } = useUser();
+  const [isParent, setIsParent] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      const init = async () => {
+        const isParentUser = await checkIsParent();
+        if (isParentUser) setIsParent(true);
+      };
+      init();
+    }
+  }, [user]);
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,13 +60,24 @@ export default function Navbar() {
                 <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-hot-pink border-2 border-white rounded-full animate-pulse"></span>
                 </button>
                 <UserButton 
+                    key={isParent ? "parent" : "children"}
                     appearance={{
                         elements: {
                             avatarBox: "w-10 h-10 border-2 border-white shadow-md hover:scale-105 transition-transform duration-200",
                             userButtonPopoverFooter: "!hidden"
                         }
                     }}
-                />
+                >
+                      <UserButton.MenuItems>
+    {isParent && (
+      <UserButton.Action
+        label="Parent Dashboard"
+        labelIcon={<LayoutDashboard className="h-4 w-4" />}
+        onClick={() => router.push("/parent/dashboard")}
+      />
+    )}
+  </UserButton.MenuItems>
+                </UserButton>
             </SignedIn>
             <SignedOut>
                 <Link href="/sign-in">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Users, User } from "lucide-react";
+import { LayoutDashboard, Users, Settings, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,9 +8,10 @@ export default function ParentMobileNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { label: "Home", icon: Home, href: "/parent/dashboard" },
-    { label: "Children", icon: Users, href: "/parent/children" },
-    { label: "Profile", icon: User, href: "/parent/settings" },
+    { label: "Dashboard", icon: LayoutDashboard, href: "/parent/dashboard", color: "text-brand-purple" },
+    { label: "Children", icon: Users, href: "/parent/children", color: "text-sky-blue" },
+    { label: "Settings", icon: Settings, href: "/parent/settings", color: "text-gray-500" },
+    { label: "Upgrade", icon: Zap, href: "/parent/upgrade", color: "text-sunshine-yellow" },
   ];
 
   return (
@@ -24,7 +25,7 @@ export default function ParentMobileNav() {
                 href={item.href}
                 className={`flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-brand-purple' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              <item.icon className={`w-6 h-6 ${isActive ? 'fill-current' : ''}`} />
+              <item.icon className={`w-6 h-6 ${isActive ? 'fill-current' : ''} ${isActive ? item.color : ''}`} />
               <span className="text-[10px] font-bold font-nunito">{item.label}</span>
             </Link>
           );
