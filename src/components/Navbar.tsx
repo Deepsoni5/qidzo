@@ -1,16 +1,18 @@
 "use client";
 
-import { Search, Bell, User, ArrowRight, LayoutDashboard } from "lucide-react";
+import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { checkIsParent } from "@/actions/parent";
+import { getChildSession, logoutChild } from "@/actions/auth";
 
 export default function Navbar() {
   const { user } = useUser();
   const [isParent, setIsParent] = useState(false);
+  const [kid, setKid] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -21,6 +23,13 @@ export default function Navbar() {
       };
       init();
     }
+    
+    // Check for kid session
+    const checkKid = async () => {
+        const session = await getChildSession();
+        if (session) setKid(session);
+    };
+    checkKid();
   }, [user]);
 
   return (
@@ -80,11 +89,33 @@ export default function Navbar() {
                 </UserButton>
             </SignedIn>
             <SignedOut>
-                <Link href="/sign-in">
-                    <Button className="rounded-full bg-gradient-to-r from-brand-purple to-purple-600 hover:from-brand-purple/90 hover:to-purple-600/90 text-white font-black px-6 pt-5 pb-4 shadow-lg shadow-brand-purple/25 hover:shadow-brand-purple/40 hover:-translate-y-0.5 transition-all duration-300 border-b-4 border-purple-800/20 active:border-b-0 active:translate-y-0.5 flex items-center justify-center gap-2">
-                        Parents Login <ArrowRight className="w-5 h-5" />
-                    </Button>
-                </Link>
+                {kid ? (
+                    <div className="flex items-center gap-3 pl-2 border-l-2 border-gray-100 ml-2">
+                        <div className="hidden sm:flex flex-col items-end">
+                            <span className="font-black text-sm text-gray-700 leading-none mb-1">{kid.username}</span>
+                            <span className="text-[10px] font-bold text-sky-500 uppercase tracking-wider bg-sky-50 px-2 py-0.5 rounded-full">Kid Account</span>
+                        </div>
+                        <div className="w-10 h-10 bg-sky-400 rounded-full flex items-center justify-center text-white font-black text-lg border-2 border-white shadow-md ring-2 ring-sky-100">
+                            {kid.username[0].toUpperCase()}
+                        </div>
+                        <button 
+                            onClick={async () => {
+                                await logoutChild();
+                                window.location.reload();
+                            }}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                            title="Logout"
+                        >
+                            <LogOut className="w-5 h-5" />
+                        </button>
+                    </div>
+                ) : (
+                    <Link href="/login">
+                        <Button className="rounded-full bg-gradient-to-r from-brand-purple to-purple-600 hover:from-brand-purple/90 hover:to-purple-600/90 text-white font-black px-6 pt-5 pb-4 shadow-lg shadow-brand-purple/25 hover:shadow-brand-purple/40 hover:-translate-y-0.5 transition-all duration-300 border-b-4 border-purple-800/20 active:border-b-0 active:translate-y-0.5 flex items-center justify-center gap-2">
+                            Login <ArrowRight className="w-5 h-5" />
+                        </Button>
+                    </Link>
+                )}
             </SignedOut>
           </div>
         </div>

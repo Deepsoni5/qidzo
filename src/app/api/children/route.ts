@@ -90,7 +90,8 @@ export async function POST(req: Request) {
           // Default values are handled by DB or can be explicit here
           xp_points: 0,
           level: 1,
-          is_active: true
+          is_active: true,
+          role: 'children'
         }
       ])
       .select()
