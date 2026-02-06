@@ -8,31 +8,30 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 
 import { checkIsParent } from "@/actions/parent";
+import { getCurrentUserRole } from "@/actions/auth";
 
 export default function LeftSidebar() {
-  const { user } = useUser();
-  const [isParent, setIsParent] = useState(false);
+  const { user } = useUser(); // Still useful for immediate client-side Clerk state
+  const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isChild: boolean } | null>(null);
 
   useEffect(() => {
-    if (user) {
-      const init = async () => {
-        const isParentUser = await checkIsParent();
-        if (isParentUser) setIsParent(true);
-      };
-      init();
-    }
-  }, [user]);
+    const init = async () => {
+      const roleData = await getCurrentUserRole();
+      setUserRole(roleData);
+    };
+    init();
+  }, [user]); // Re-run if Clerk user changes
 
   const handleCreatePost = async () => {
-    if (!user) {
+    // Refresh role check to be sure
+    const currentRole = await getCurrentUserRole();
+    
+    if (currentRole.role === "guest") {
         toast.error("Please log in to create a post!");
         return;
     }
 
-    // Check if user is a parent (using cached action)
-    const isParentUser = await checkIsParent();
-
-    if (isParentUser) {
+    if (currentRole.isParent) {
         toast("Parents Mode! 🛡️", {
             description: "Parents can only view, react, and comment. Let the kids be the creators! 🎨",
             duration: 4000,
@@ -49,10 +48,13 @@ export default function LeftSidebar() {
         return;
     }
 
-    // Logic for kids (navigation or modal open would go here)
-    toast.info("Coming soon! 🚀", {
-        description: "Post creation for kids is under construction!"
-    });
+    if (currentRole.isChild) {
+        // Logic for kids (navigation or modal open would go here)
+        toast.info("Coming soon! 🚀", {
+            description: "Post creation for kids is under construction!"
+        });
+        return;
+    }
   };
 
   const handleComingSoon = (feature: string) => {
@@ -80,7 +82,7 @@ export default function LeftSidebar() {
             { label: "Tutorials", icon: "📺", color: "text-sky-blue hover:bg-sky-blue/10", active: false, action: () => handleComingSoon("Tutorials") },
             { label: "Play Zone", icon: "🎮", color: "text-hot-pink hover:bg-hot-pink/10", active: false, action: () => handleComingSoon("Play Zone") },
             { label: "Friends", icon: "👥", color: "text-grass-green hover:bg-grass-green/10", active: false, action: () => handleComingSoon("Friends") },
-            ...(isParent 
+            ...(userRole?.isParent 
               ? [{ label: "Parent Dashboard", icon: "👨‍👩‍👧‍👦", color: "text-orange-500 hover:bg-orange-500/10", active: false, href: "/parent/dashboard" }]
               : [])
           ].map((item, i) => {
@@ -102,7 +104,7 @@ export default function LeftSidebar() {
         {/* Create Post Button */}
         <button 
             onClick={handleCreatePost}
-            className="w-full mt-6 flex items-center justify-center gap-3 bg-brand-purple hover:bg-brand-purple/90 text-white p-4 rounded-2xl font-nunito font-black text-lg shadow-xl shadow-brand-purple/20 transition-all hover:scale-[1.02] active:scale-95 border-b-4 border-purple-800/20 active:border-b-0 active:translate-y-1 group"
+            className="w-full mt-6 cursor-pointer flex items-center justify-center gap-3 bg-brand-purple hover:bg-brand-purple/90 text-white p-4 rounded-2xl font-nunito font-black text-lg shadow-xl shadow-brand-purple/20 transition-all hover:scale-[1.02] active:scale-95 border-b-4 border-purple-800/20 active:border-b-0 active:translate-y-1 group"
         >
           <div className="bg-white/20 p-1 rounded-lg group-hover:bg-white/30 transition-colors">
             <Plus className="w-6 h-6 stroke-[3px]" />

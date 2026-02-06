@@ -1,13 +1,17 @@
 "use server";
 
 import { supabase } from "@/lib/supabaseClient";
-import { redis } from "@/lib/redis";
+// Redis can still be used for other things, but not strictly needed for stateless JWT
+import { redis } from "@/lib/redis"; 
 import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
-import { randomUUID } from "crypto";
+import { SignJWT, jwtVerify } from "jose";
 
-const SESSION_COOKIE_NAME = "qidzo_child_session_id";
+const SESSION_COOKIE_NAME = "qidzo_child_token"; // Changed name to reflect it's a token
 const SESSION_TTL = 60 * 60 * 24 * 365; // 1 year in seconds
+const JWT_SECRET = new TextEncoder().encode(
+    process.env.JWT_SECRET || "default_secret_please_change_in_production"
+);
 
 export async function loginChild(formData: FormData) {
   const username = formData.get("username") as string;
@@ -35,21 +39,24 @@ export async function loginChild(formData: FormData) {
       return { success: false, error: "Invalid username or password" };
     }
 
-    // 3. Create Session
-    const sessionId = randomUUID();
-    const sessionData = {
+    // 3. Create Session Payload
+    const sessionPayload = {
         id: child.child_id,
         username: child.username,
         role: child.role || "children", // Fallback to "children" if role is missing
         avatar_url: child.avatar_url
     };
 
-    // 4. Store session in Redis
-    await redis.set(`session:child:${sessionId}`, JSON.stringify(sessionData), { ex: SESSION_TTL });
+    // 4. Generate JWT
+    const token = await new SignJWT(sessionPayload)
+        .setProtectedHeader({ alg: 'HS256' })
+        .setIssuedAt()
+        .setExpirationTime('1y') // 1 year expiration
+        .sign(JWT_SECRET);
 
-    // 5. Set session ID in cookie
+    // 5. Set JWT in cookie
     const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE_NAME, sessionId, {
+    cookieStore.set(SESSION_COOKIE_NAME, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
@@ -66,42 +73,58 @@ export async function loginChild(formData: FormData) {
 
 export async function logoutChild() {
     const cookieStore = await cookies();
-    const sessionId = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-    
-    if (sessionId) {
-        // Remove from Redis
-        await redis.del(`session:child:${sessionId}`);
-    }
-
-    // Remove cookie
+    // With JWT, we just delete the cookie. 
+    // If we wanted to blacklist tokens before expiry, we'd store them in Redis here.
     cookieStore.delete(SESSION_COOKIE_NAME);
     return { success: true };
 }
 
 export async function getChildSession() {
     const cookieStore = await cookies();
-    const sessionId = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
     
-    if (!sessionId) return null;
+    if (!token) return null;
 
     try {
-        // Fetch session from Redis
-        const sessionData = await redis.get(`session:child:${sessionId}`);
-        
-        if (!sessionData) {
-            // Session expired or invalid in Redis, but cookie exists
-            // Clean up cookie to avoid confusion
-            // Note: We can't delete cookie in a Server Component directly if it's just rendering, 
-            // but this is a Server Action or utility. 
-            // If called from a Server Component, we can't mutate cookies. 
-            // So we just return null.
-            return null;
-        }
-
-        // Handle both object and string response from Redis (Upstash SDK can auto-parse JSON)
-        return typeof sessionData === 'string' ? JSON.parse(sessionData) : sessionData;
+        // Verify JWT
+        const { payload } = await jwtVerify(token, JWT_SECRET);
+        return payload;
     } catch (error) {
-        console.error("Session retrieval error:", error);
+        // Token invalid or expired
+        console.error("Session verification error:", error);
         return null;
     }
+}
+
+/**
+ * Unified check for current user role (Parent or Child).
+ * Prioritizes checking for Parent (Clerk), then Child (JWT).
+ * Uses Redis caching for Parent check to ensure speed.
+ */
+export async function getCurrentUserRole() {
+    // 1. Check Parent Session (Clerk)
+    // We can't access Clerk `auth()` directly in a simple utility without importing it
+    // But we can rely on `checkIsParent` which we already have in `parent.ts`
+    // However, to avoid circular deps or complexity, let's just do a quick check here if needed
+    // OR, better, let the UI components handle the specific checks. 
+    // BUT the user asked for a unified way.
+    
+    // Let's import the checkIsParent from parent actions dynamically or just reuse the logic if possible.
+    // Actually, `checkIsParent` is already cached with Redis.
+    // So we just need to combine them.
+    
+    const { checkIsParent } = await import("./parent");
+    const isParent = await checkIsParent();
+    
+    if (isParent) {
+        return { role: "parent", isParent: true, isChild: false };
+    }
+
+    // 2. Check Child Session (JWT)
+    const childSession = await getChildSession();
+    if (childSession) {
+        return { role: "child", isParent: false, isChild: true, child: childSession };
+    }
+
+    return { role: "guest", isParent: false, isChild: false };
 }

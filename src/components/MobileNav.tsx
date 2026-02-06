@@ -8,31 +8,29 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 
 import { checkIsParent } from "@/actions/parent";
+import { getCurrentUserRole } from "@/actions/auth";
 
 export default function MobileNav() {
   const { user } = useUser();
-  const [isParent, setIsParent] = useState(false);
+  const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isChild: boolean } | null>(null);
 
   useEffect(() => {
-    if (user) {
-      const init = async () => {
-        const isParentUser = await checkIsParent();
-        if (isParentUser) setIsParent(true);
-      };
-      init();
-    }
+    const init = async () => {
+      const roleData = await getCurrentUserRole();
+      setUserRole(roleData);
+    };
+    init();
   }, [user]);
 
   const handleCreatePost = async () => {
-    if (!user) {
+    const currentRole = await getCurrentUserRole();
+    
+    if (currentRole.role === "guest") {
         toast.error("Please log in to create a post!");
         return;
     }
 
-    // Check if user is a parent (using cached action)
-    const isParentUser = await checkIsParent();
-
-    if (isParentUser) {
+    if (currentRole.isParent) {
         toast("Parents Mode! 🛡️", {
             description: "Parents can only view, react, and comment. Let the kids be the creators! 🎨",
             duration: 4000,
@@ -49,10 +47,13 @@ export default function MobileNav() {
         return;
     }
 
-    // Logic for kids
-    toast.info("Coming soon! 🚀", {
-        description: "Post creation for kids is under construction!"
-    });
+    if (currentRole.isChild) {
+        // Logic for kids
+        toast.info("Coming soon! 🚀", {
+            description: "Post creation for kids is under construction!"
+        });
+        return;
+    }
   };
 
   return (

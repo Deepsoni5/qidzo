@@ -103,7 +103,7 @@ export default function Navbar() {
                                 await logoutChild();
                                 window.location.reload();
                             }}
-                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                            className="p-2 text-gray-400 cursor-pointer hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                             title="Logout"
                         >
                             <LogOut className="w-5 h-5" />
@@ -111,7 +111,7 @@ export default function Navbar() {
                     </div>
                 ) : (
                     <Link href="/login">
-                        <Button className="rounded-full bg-gradient-to-r from-brand-purple to-purple-600 hover:from-brand-purple/90 hover:to-purple-600/90 text-white font-black px-6 pt-5 pb-4 shadow-lg shadow-brand-purple/25 hover:shadow-brand-purple/40 hover:-translate-y-0.5 transition-all duration-300 border-b-4 border-purple-800/20 active:border-b-0 active:translate-y-0.5 flex items-center justify-center gap-2">
+                        <Button className="rounded-full cursor-pointer bg-gradient-to-r from-brand-purple to-purple-600 hover:from-brand-purple/90 hover:to-purple-600/90 text-white font-black px-6 pt-5 pb-4 shadow-lg shadow-brand-purple/25 hover:shadow-brand-purple/40 hover:-translate-y-0.5 transition-all duration-300 border-b-4 border-purple-800/20 active:border-b-0 active:translate-y-0.5 flex items-center justify-center gap-2">
                             Login <ArrowRight className="w-5 h-5" />
                         </Button>
                     </Link>
