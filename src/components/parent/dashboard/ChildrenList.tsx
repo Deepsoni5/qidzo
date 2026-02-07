@@ -91,8 +91,8 @@ export default function ChildrenList() {
               </div>
             </div>
             
-            <Link href={`/parent/child/${child.id}`} className="block w-full text-center bg-brand-purple text-white font-bold py-3 rounded-xl hover:bg-brand-purple/90 transition-colors shadow-lg shadow-brand-purple/20">
-              View Details
+            <Link href={`/child/${child.username}`} target="_blank" className="block w-full text-center bg-brand-purple text-white font-bold py-3 rounded-xl hover:bg-brand-purple/90 transition-colors shadow-lg shadow-brand-purple/20">
+              View Profile 
             </Link>
           </div>
         ))}
