@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut } from "lucide-react";
+import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut, Trophy, Flame, Wand2, Star, Badge } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "./ui/button";
@@ -8,11 +8,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { checkIsParent } from "@/actions/parent";
 import { getChildSession, logoutChild } from "@/actions/auth";
+import { getChildProfile, ChildProfile } from "@/actions/profile";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import Image from "next/image";
 
 export default function Navbar() {
   const { user } = useUser();
   const [isParent, setIsParent] = useState(false);
   const [kid, setKid] = useState<any>(null);
+  const [kidProfile, setKidProfile] = useState<ChildProfile | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -27,10 +31,23 @@ export default function Navbar() {
     // Check for kid session
     const checkKid = async () => {
         const session = await getChildSession();
-        if (session) setKid(session);
+        if (session) {
+            setKid(session);
+            // Fetch detailed profile
+            const profile = await getChildProfile(session.username as string);
+            setKidProfile(profile);
+        }
     };
     checkKid();
   }, [user]);
+
+  // Derived stats
+  const currentLevel = kidProfile?.level || 1;
+  const currentXP = kidProfile?.xp_points || 0;
+  const nextLevelXP = currentLevel * 1000;
+  const progress = Math.min((currentXP / nextLevelXP) * 100, 100);
+  const streak = 7; // Mock streak for now
+  const magics = kidProfile?.total_posts || 0;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
@@ -90,25 +107,104 @@ export default function Navbar() {
             </SignedIn>
             <SignedOut>
                 {kid ? (
-                    <div className="flex items-center gap-3 pl-2 border-l-2 border-gray-100 ml-2">
-                        <div className="hidden sm:flex flex-col items-end">
-                            <span className="font-black text-sm text-gray-700 leading-none mb-1">{kid.username}</span>
-                            <span className="text-[10px] font-bold text-sky-500 uppercase tracking-wider bg-sky-50 px-2 py-0.5 rounded-full">Kid Account</span>
-                        </div>
-                        <div className="w-10 h-10 bg-sky-400 rounded-full flex items-center justify-center text-white font-black text-lg border-2 border-white shadow-md ring-2 ring-sky-100">
-                            {kid.username[0].toUpperCase()}
-                        </div>
-                        <button 
-                            onClick={async () => {
-                                await logoutChild();
-                                window.location.reload();
-                            }}
-                            className="p-2 text-gray-400 cursor-pointer hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                            title="Logout"
-                        >
-                            <LogOut className="w-5 h-5" />
-                        </button>
-                    </div>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <button className="flex items-center gap-3 pl-2 border-l-2 border-gray-100 ml-2 group outline-none cursor-pointer">
+                                <div className="hidden sm:flex flex-col items-end">
+                                    <span className="font-black text-sm text-gray-700 leading-none mb-1 group-hover:text-brand-purple transition-colors">{kid.username}</span>
+                                    <span className="text-[10px] font-bold text-sky-500 uppercase tracking-wider bg-sky-50 px-2 py-0.5 rounded-full group-hover:bg-sky-100 transition-colors">Kid Account</span>
+                                </div>
+                                <div className="w-10 h-10 bg-sky-400 rounded-full flex items-center justify-center text-white font-black text-lg border-2 border-white shadow-md ring-2 ring-sky-100 group-hover:ring-brand-purple/20 transition-all overflow-hidden relative">
+                                    {kidProfile?.avatar ? (
+                                        <Image 
+                                            src={kidProfile.avatar} 
+                                            alt={kid.username} 
+                                            fill 
+                                            className="object-cover"
+                                            unoptimized
+                                        />
+                                    ) : (
+                                        kid.username[0].toUpperCase()
+                                    )}
+                                </div>
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-0 rounded-3xl border-4 border-gray-100 shadow-xl overflow-hidden mr-4" align="end">
+                            {/* Header */}
+                            <div className="bg-gradient-to-br from-sky-400 to-brand-purple p-6 text-white relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                                <div className="flex items-center gap-4 relative z-10">
+                                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-sky-500 font-black text-3xl border-4 border-white/20 shadow-lg overflow-hidden relative">
+                                        {kidProfile?.avatar ? (
+                                            <Image 
+                                                src={kidProfile.avatar} 
+                                                alt={kid.username} 
+                                                fill 
+                                                className="object-cover"
+                                                unoptimized
+                                            />
+                                        ) : (
+                                            kid.username[0].toUpperCase()
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-black text-xl leading-none mb-1">{kidProfile?.name || kid.username}</h4>
+                                        <p className="text-sky-100 font-bold text-sm">@{kid.username}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Stats */}
+                            <div className="p-5 space-y-5 bg-white">
+                                {/* Level Progress */}
+                                <div>
+                                    <div className="flex justify-between items-end mb-2">
+                                        <span className="font-black text-gray-700">Level {currentLevel}</span>
+                                        <span className="text-xs font-bold text-brand-purple">{currentXP} / {nextLevelXP} XP</span>
+                                    </div>
+                                    <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                                        <div className="h-full bg-gradient-to-r from-brand-purple to-hot-pink rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
+                                    </div>
+                                </div>
+
+                                {/* Grid */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-orange-50 p-3 rounded-2xl flex items-center gap-3 border-2 border-orange-100">
+                                        <div className="bg-white p-2 rounded-xl text-orange-500 shadow-sm">
+                                            <Flame className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <div className="font-black text-gray-800 text-lg leading-none">{streak}</div>
+                                            <div className="text-[10px] font-bold text-orange-400 uppercase">Streak</div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-indigo-50 p-3 rounded-2xl flex items-center gap-3 border-2 border-indigo-100">
+                                        <div className="bg-white p-2 rounded-xl text-indigo-500 shadow-sm">
+                                            <Wand2 className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <div className="font-black text-gray-800 text-lg leading-none">{magics}</div>
+                                            <div className="text-[10px] font-bold text-indigo-400 uppercase">Magics</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="p-2 bg-gray-50 border-t border-gray-100">
+                                <button 
+                                    onClick={async () => {
+                                        await logoutChild();
+                                        window.location.reload();
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 p-3 text-red-500 font-black hover:bg-red-50 rounded-2xl transition-colors text-sm cursor-pointer"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    Log Out
+                                </button>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 ) : (
                     <Link href="/login">
                         <Button className="rounded-full cursor-pointer bg-gradient-to-r from-brand-purple to-purple-600 hover:from-brand-purple/90 hover:to-purple-600/90 text-white font-black px-6 pt-5 pb-4 shadow-lg shadow-brand-purple/25 hover:shadow-brand-purple/40 hover:-translate-y-0.5 transition-all duration-300 border-b-4 border-purple-800/20 active:border-b-0 active:translate-y-0.5 flex items-center justify-center gap-2">

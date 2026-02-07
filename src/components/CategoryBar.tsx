@@ -1,27 +1,14 @@
-const categories = [
-  { name: "Art & Drawing", emoji: "🎨", color: "bg-hot-pink" },
-  { name: "Stories", emoji: "📚", color: "bg-sky-blue" },
-  { name: "Music", emoji: "🎵", color: "bg-sunshine-yellow" },
-  { name: "Sports", emoji: "🏃", color: "bg-grass-green" },
-  { name: "Science", emoji: "🧪", color: "bg-brand-purple" },
-  { name: "Puzzles", emoji: "🎮", color: "bg-hot-pink" },
-  { name: "General", emoji: "🌍", color: "bg-sky-blue" },
-];
+import { getCategories } from "@/actions/categories";
+import CategorySelector from "./CategorySelector";
 
-export default function CategoryBar() {
+export default async function CategoryBar() {
+  const categories = await getCategories();
+
   return (
-<div className="sticky top-16 z-40 bg-white/80 backdrop-blur-md py-3 border-b border-gray-100 overflow-x-auto no-scrollbar">
-<div className="max-w-7xl mx-auto px-4 flex gap-3 min-w-max">
-{categories.map((cat) => (
-<button
-key={cat.name}
-className={`flex items-center gap-2 px-4 py-2 rounded-xl ${cat.color} text-white font-nunito font-black text-xs shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all border-2 border-white/20 whitespace-nowrap`}
->
-<span className="text-base">{cat.emoji}</span>
-<span>{cat.name}</span>
-</button>
-))}
-</div>
-</div>
+    <div className="sticky top-16 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100">
+      <div className="max-w-7xl mx-auto overflow-x-auto pb-3 pt-3 px-4 sm:px-6 lg:px-8 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 transition-colors">
+        <CategorySelector categories={categories} />
+      </div>
+    </div>
   );
 }

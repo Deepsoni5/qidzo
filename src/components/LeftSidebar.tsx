@@ -9,10 +9,12 @@ import Link from "next/link";
 
 import { checkIsParent } from "@/actions/parent";
 import { getCurrentUserRole } from "@/actions/auth";
+import { CreatePostModal } from "./CreatePostModal";
 
 export default function LeftSidebar() {
   const { user } = useUser(); // Still useful for immediate client-side Clerk state
-  const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isChild: boolean } | null>(null);
+  const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isChild: boolean, child?: any } | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -49,10 +51,7 @@ export default function LeftSidebar() {
     }
 
     if (currentRole.isChild) {
-        // Logic for kids (navigation or modal open would go here)
-        toast.info("Coming soon! 🚀", {
-            description: "Post creation for kids is under construction!"
-        });
+        setIsCreateModalOpen(true);
         return;
     }
   };
@@ -73,6 +72,7 @@ export default function LeftSidebar() {
   };
 
   return (
+    <>
     <div className="hidden xl:block w-64 shrink-0">
       <div className="sticky top-40 bg-white p-6 rounded-[32px] border-4 border-gray-100 shadow-xl shadow-gray-200/20">
         <h3 className="font-nunito font-black text-xl mb-6 text-gray-900">Explore! 🚀</h3>
@@ -101,24 +101,23 @@ export default function LeftSidebar() {
           })}
         </ul>
 
-        {/* Create Post Button */}
         <button 
             onClick={handleCreatePost}
-            className="w-full mt-6 cursor-pointer flex items-center justify-center gap-3 bg-brand-purple hover:bg-brand-purple/90 text-white p-4 rounded-2xl font-nunito font-black text-lg shadow-xl shadow-brand-purple/20 transition-all hover:scale-[1.02] active:scale-95 border-b-4 border-purple-800/20 active:border-b-0 active:translate-y-1 group"
+            className="w-full mt-8 bg-gradient-to-r from-brand-purple to-hot-pink text-white font-black py-4 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
         >
-          <div className="bg-white/20 p-1 rounded-lg group-hover:bg-white/30 transition-colors">
-            <Plus className="w-6 h-6 stroke-[3px]" />
-          </div>
+          <Plus className="w-6 h-6 stroke-[3px]" />
           <span>Create Post</span>
         </button>
-
-        <div className="mt-8 p-4 bg-sunshine-yellow/10 rounded-[24px] border-2 border-sunshine-yellow/20">
-          <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1 text-center">Pro Tip! 💡</p>
-          <p className="text-[11px] font-bold text-amber-900 text-center leading-relaxed">
-            Completing challenges earns you 2x XP this week!
-          </p>
-        </div>
       </div>
     </div>
+    
+    {userRole?.isChild && userRole.child?.id && (
+        <CreatePostModal 
+            isOpen={isCreateModalOpen} 
+            onClose={() => setIsCreateModalOpen(false)} 
+            childId={userRole.child.id}
+        />
+    )}
+    </>
   );
 }

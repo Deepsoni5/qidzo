@@ -1,38 +1,9 @@
 import Navbar from "@/components/Navbar";
 import CategoryBar from "@/components/CategoryBar";
-import PostCard from "@/components/PostCard";
+import Feed from "@/components/Feed";
 import Sidebar from "@/components/Sidebar";
 import MobileNav from "@/components/MobileNav";
 import LeftSidebar from "@/components/LeftSidebar";
-
-const SAMPLE_POSTS = [
-  {
-    user: { name: "Leo", avatar: "🦁", age: 8, timeAgo: "2h ago" },
-    category: "Art & Drawing",
-    text: "I drew my favorite superhero today! I call him Captain Sparkle! ✨🦸‍♂️",
-    image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80",
-    likes: 12,
-    comments: 5,
-    badge: "Master Artist 🎨"
-  },
-  {
-    user: { name: "Zoe", avatar: "🦄", age: 10, timeAgo: "4h ago" },
-    category: "Science",
-    text: "Look at my volcano experiment! It actually erupted with pink lava! 🌋💖",
-    image: "https://images.unsplash.com/photo-1530210124550-912dc1381cb8?w=800&q=80",
-    likes: 24,
-    comments: 8,
-    badge: "Future Scientist 🧪"
-  },
-  {
-    user: { name: "Sam", avatar: "🦊", age: 7, timeAgo: "1h ago" },
-    category: "Stories",
-    text: "My first story about a dragon who loved eating broccoli! 🐉🥦",
-    image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80",
-    likes: 18,
-    comments: 3
-  }
-];
 
 export default function Home() {
   return (
@@ -49,11 +20,7 @@ export default function Home() {
 
             {/* Main Feed */}
             <div className="flex-1 max-w-2xl mx-auto lg:mx-0">
-              <div className="space-y-6">
-                {SAMPLE_POSTS.map((post, i) => (
-                  <PostCard key={i} post={post} />
-                ))}
-              </div>
+              <Feed />
             </div>
 
             {/* Right Sidebar */}
