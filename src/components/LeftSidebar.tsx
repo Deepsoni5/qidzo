@@ -73,41 +73,64 @@ export default function LeftSidebar() {
 
   return (
     <>
-    <div className="hidden xl:block w-64 shrink-0">
-      <div className="sticky top-40 bg-white p-6 rounded-[32px] border-4 border-gray-100 shadow-xl shadow-gray-200/20">
-        <h3 className="font-nunito font-black text-xl mb-6 text-gray-900">Explore! 🚀</h3>
-        <ul className="space-y-4">
-          {[
-            { label: "Home", icon: "🏠", color: "text-brand-purple bg-brand-purple/10", active: true, href: "/" },
-            { label: "Tutorials", icon: "📺", color: "text-sky-blue hover:bg-sky-blue/10", active: false, action: () => handleComingSoon("Tutorials") },
-            { label: "Play Zone", icon: "🎮", color: "text-hot-pink hover:bg-hot-pink/10", active: false, action: () => handleComingSoon("Play Zone") },
-            { label: "Friends", icon: "👥", color: "text-grass-green hover:bg-grass-green/10", active: false, action: () => handleComingSoon("Friends") },
-            ...(userRole?.isParent 
-              ? [{ label: "Parent Dashboard", icon: "👨‍👩‍👧‍👦", color: "text-orange-500 hover:bg-orange-500/10", active: false, href: "/parent/dashboard" }]
-              : [])
-          ].map((item, i) => {
-            const Component = item.href ? Link : 'button';
-            return (
-                <Component 
-                    href={item.href as string} 
-                    onClick={item.action}
-                    key={i} 
-                    className={`w-full flex items-center gap-3 p-3 rounded-2xl font-nunito font-black cursor-pointer transition-all duration-300 text-left ${item.color} ${item.active ? 'scale-105 shadow-sm' : 'hover:scale-105'}`}
-                >
-                <span className="text-xl">{item.icon}</span>
-                <span className="text-sm tracking-tight">{item.label}</span>
-                </Component>
-            )
-          })}
-        </ul>
+    <div className="hidden xl:block w-68 shrink-0">
+      <div className="sticky top-24 p-2">
+        
+        {/* Main Card */}
+        <div className="bg-white/90 backdrop-blur-xl p-5 rounded-[32px] border-[3px] border-white ring-4 ring-gray-50 shadow-2xl shadow-brand-purple/5 relative overflow-hidden">
+            
+            {/* Decorative Background Elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-purple/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-hot-pink/5 rounded-full blur-2xl translate-y-1/3 -translate-x-1/3 pointer-events-none" />
 
-        <button 
-            onClick={handleCreatePost}
-            className="w-full mt-8 bg-gradient-to-r from-brand-purple to-hot-pink text-white font-black py-4 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <Plus className="w-6 h-6 stroke-[3px]" />
-          <span>Create Post</span>
-        </button>
+            <h3 className="relative font-nunito font-black text-xl mb-4 text-gray-800 flex items-center gap-2 pl-2">
+                Explore! <span className="hover:animate-spin cursor-default">🚀</span>
+            </h3>
+
+            <ul className="space-y-1.5 relative z-10">
+              {[
+                { label: "Home", icon: "🏠", color: "text-brand-purple", bg: "bg-brand-purple/10", active: true, href: "/" },
+                { label: "Tutorials", icon: "📺", color: "text-sky-blue", bg: "bg-sky-blue/10", active: false, action: () => handleComingSoon("Tutorials") },
+                { label: "Play Zone", icon: "🎮", color: "text-hot-pink", bg: "bg-hot-pink/10", active: false, action: () => handleComingSoon("Play Zone") },
+                { label: "Friends", icon: "👥", color: "text-grass-green", bg: "bg-grass-green/10", active: false, action: () => handleComingSoon("Friends") },
+                ...(userRole?.isParent 
+                  ? [{ label: "Parent Dashboard", icon: "👨‍👩‍👧‍👦", color: "text-orange-500", bg: "bg-orange-500/10", active: false, href: "/parent/dashboard" }]
+                  : [])
+              ].map((item, i) => {
+                const Component = item.href ? Link : 'button';
+                return (
+                    <Component 
+                        href={item.href as string} 
+                        onClick={item.action}
+                        key={i} 
+                        className={`w-full group flex items-center gap-3 p-2.5 rounded-2xl font-nunito font-bold cursor-pointer transition-all duration-300 text-left border-2 border-transparent hover:border-gray-100 hover:bg-white hover:shadow-lg hover:shadow-gray-200/40 ${item.active ? 'bg-white shadow-lg shadow-gray-200/40 border-gray-100 scale-105' : 'hover:scale-[1.02]'}`}
+                    >
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110 ${item.bg} ${item.color}`}>
+                            {item.icon}
+                        </div>
+                        <span className={`text-base tracking-tight text-gray-600 group-hover:text-gray-900 ${item.active ? 'text-gray-900' : ''}`}>
+                            {item.label}
+                        </span>
+                        
+                        {/* Active Indicator Dot */}
+                        {item.active && (
+                            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-purple" />
+                        )}
+                    </Component>
+                )
+              })}
+            </ul>
+
+            <div className="mt-5 relative z-10">
+                <button 
+                    onClick={handleCreatePost}
+                    className="group relative w-full overflow-hidden bg-gradient-to-br from-brand-purple to-hot-pink text-white font-black text-base py-3.5 rounded-2xl shadow-xl shadow-brand-purple/30 hover:shadow-2xl hover:shadow-hot-pink/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer border-b-4 border-black/10"
+                >
+                    <Plus className="w-6 h-6 stroke-[3px] group-hover:rotate-90 transition-transform duration-300" />
+                    <span className="relative">Create Post</span>
+                </button>
+            </div>
+        </div>
       </div>
     </div>
     
