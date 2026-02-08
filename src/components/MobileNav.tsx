@@ -73,9 +73,9 @@ export default function MobileNav() {
   return (
     <>
     <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/90 backdrop-blur-xl border-t border-gray-100 pb-safe">
-      <div className="flex justify-around items-center h-16 px-4">
+      <div className="grid grid-cols-5 items-center h-16 px-2">
         {/* 1. Home */}
-        <Link href="/" className="flex flex-col items-center gap-1 text-brand-purple">
+        <Link href="/" className="flex flex-col items-center justify-center gap-1 text-brand-purple w-full">
           <Home className="w-6 h-6" />
           <span className="text-[10px] font-bold uppercase tracking-wide">Home</span>
         </Link>
@@ -83,14 +83,14 @@ export default function MobileNav() {
         {/* 2. Tutorials */}
         <button 
           onClick={() => handleComingSoon("Tutorials")}
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-sky-blue transition-colors"
+          className="flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-sky-blue transition-colors w-full"
         >
           <MonitorPlay className="w-6 h-6" />
           <span className="text-[10px] font-bold uppercase tracking-wide">Tutorials</span>
         </button>
         
         {/* 3. Create Button (Center) */}
-        <div className="relative -top-6">
+        <div className="flex justify-center items-center w-full relative -top-6">
           <button 
               onClick={handleCreatePost}
               className="w-14 h-14 bg-brand-purple rounded-2xl flex items-center justify-center text-white shadow-xl shadow-brand-purple/40 ring-4 ring-white active:scale-95 transition-transform border-b-4 border-black/10"
@@ -102,7 +102,7 @@ export default function MobileNav() {
         {/* 4. Play Zone */}
         <button 
           onClick={() => handleComingSoon("Play Zone")}
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-hot-pink transition-colors"
+          className="flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-hot-pink transition-colors w-full"
         >
           <Gamepad2 className="w-6 h-6" />
           <span className="text-[10px] font-bold uppercase tracking-wide">Play</span>
@@ -111,7 +111,7 @@ export default function MobileNav() {
         {/* 5. Friends */}
         <button 
           onClick={() => handleComingSoon("Friends")}
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-grass-green transition-colors"
+          className="flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-grass-green transition-colors w-full"
         >
           <Users className="w-6 h-6" />
           <span className="text-[10px] font-bold uppercase tracking-wide">Friends</span>
