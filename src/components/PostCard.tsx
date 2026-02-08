@@ -4,6 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { toggleLike, hasLikedPost } from "@/actions/likes";
+import { toast } from "sonner"; // Assuming sonner is used, or generic toast
+import { useUser } from "@clerk/nextjs"; // Parent check
+// import { useChildAuth } from ... // We need to know if child is logged in on client side? 
+// Actually, we can just try the action and handle error.
 
 interface FeedPost {
   id: string;
@@ -53,6 +59,73 @@ export default function PostCard({ post }: { post: FeedPost }) {
   // Use a deterministic color if category color is missing or invalid
   const categoryColor = post.category?.color || "#8B5CF6";
   const avatarUrl = post.child?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.child?.username || "kid"}`;
+
+  const [likesCount, setLikesCount] = useState(post.likes_count);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const { isSignedIn: isParentSignedIn } = useUser();
+
+  // Check if liked on mount
+  useEffect(() => {
+    // Only check if we think we might be logged in (optimisation?)
+    // Or just always check. 
+    const checkLikeStatus = async () => {
+        const liked = await hasLikedPost(post.post_id);
+        setIsLiked(liked);
+    };
+    checkLikeStatus();
+  }, [post.post_id]);
+
+  const handleLike = async () => {
+    if (isLikeLoading) return;
+
+    // Optimistic UI Update
+    const prevIsLiked = isLiked;
+    const prevCount = likesCount;
+
+    setIsLiked(!prevIsLiked);
+    setLikesCount(prevIsLiked ? prevCount - 1 : prevCount + 1);
+    setIsLikeLoading(true);
+
+    try {
+        const result = await toggleLike(post.post_id);
+        
+        if (!result.success) {
+            // Revert on failure
+            setIsLiked(prevIsLiked);
+            setLikesCount(prevCount);
+            
+            if (result.error === "Must be logged in to like posts.") {
+                 // Check if it's a parent trying to like
+                 if (isParentSignedIn) {
+                     // Should not happen if parent logic works, but just in case
+                     toast.error("Could not verify parent session. Please refresh.");
+                 } else {
+                     toast.error("Please log in to like posts! 🔐");
+                 }
+            } else {
+                toast.error("Oops! Couldn't like that post. 🐛");
+            }
+        } else {
+            // Sync with server result just in case
+            if (result.likesCount !== undefined) {
+                setLikesCount(result.likesCount);
+            }
+            if (result.isLiked !== undefined) {
+                setIsLiked(result.isLiked);
+            }
+            
+            // Success toast removed as per request
+        }
+    } catch (err) {
+        // Revert
+        setIsLiked(prevIsLiked);
+        setLikesCount(prevCount);
+        toast.error("Something went wrong.");
+    } finally {
+        setIsLikeLoading(false);
+    }
+  };
 
   return (
     <div 
@@ -140,9 +213,26 @@ export default function PostCard({ post }: { post: FeedPost }) {
         {/* Bottom Bar */}
         <div className="p-5 flex items-center justify-between bg-gray-50/50 mt-2">
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border-2 border-gray-100 hover:border-hot-pink hover:text-hot-pink transition-all group shadow-sm cursor-pointer active:scale-95">
-              <Heart className="w-5 h-5 text-gray-400 group-hover:text-hot-pink group-hover:fill-hot-pink transition-colors" />
-              <span className="text-sm font-black text-gray-600 group-hover:text-hot-pink">{post.likes_count || 0}</span>
+            <button 
+                onClick={handleLike}
+                disabled={isLikeLoading}
+                className={cn(
+                    "flex items-center gap-2 px-4 py-2 bg-white rounded-full border-2 border-gray-100 hover:border-hot-pink transition-all group shadow-sm cursor-pointer active:scale-95",
+                    isLiked ? "border-hot-pink text-hot-pink" : "text-gray-600"
+                )}
+            >
+              <Heart 
+                className={cn(
+                    "w-5 h-5 transition-colors",
+                    isLiked ? "fill-hot-pink text-hot-pink" : "text-gray-400 group-hover:text-hot-pink"
+                )} 
+              />
+              <span className={cn(
+                  "text-sm font-black group-hover:text-hot-pink",
+                  isLiked ? "text-hot-pink" : "text-gray-600"
+              )}>
+                  {likesCount || 0}
+              </span>
             </button>
             <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border-2 border-gray-100 hover:border-sky-blue hover:text-sky-blue transition-all group shadow-sm cursor-pointer active:scale-95">
               <MessageCircle className="w-5 h-5 text-gray-400 group-hover:text-sky-blue transition-colors" />
