@@ -1,8 +1,9 @@
 "use server";
 
 import { supabase } from "@/lib/supabaseClient";
-import { getOrSetCache } from "@/lib/redis";
+import { getOrSetCache, invalidateCache } from "@/lib/redis";
 import { FeedPost } from "./feed";
+import { revalidatePath } from "next/cache";
 
 export interface ChildProfile {
   id: string;
@@ -14,6 +15,8 @@ export interface ChildProfile {
   level: number;
   xp_points: number;
   total_posts: number;
+  total_likes_received: number;
+  total_comments_made: number;
   created_at: string;
 }
 
@@ -38,6 +41,14 @@ export async function getChildProfile(username: string) {
     },
     300 // 5 minutes
   );
+}
+
+export async function refreshChildProfile(username: string) {
+  const cacheKey = `profile:${username}`;
+  await invalidateCache(cacheKey);
+  const profile = await getChildProfile(username);
+  revalidatePath('/'); // Optional: revalidate current path if needed, but client state update is better
+  return profile;
 }
 
 export async function getChildPosts(childId: string) {

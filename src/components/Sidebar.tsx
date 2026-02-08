@@ -1,20 +1,12 @@
 import { getChildSession } from "@/actions/auth";
 import { getChildProfile } from "@/actions/profile";
-import { Trophy, Flame, Star, Zap, Crown, Target, Palette, FlaskConical, Wand2 } from "lucide-react";
-import Link from "next/link";
+import { Trophy, Crown } from "lucide-react";
 import Image from "next/image";
+import { UserStatsCard } from "./UserStatsCard";
 
 export default async function Sidebar() {
   const session = await getChildSession();
   const profile = session ? await getChildProfile(session.username as string) : null;
-
-  // Fallback/Demo data if no profile (or for the leaderboard)
-  const currentLevel = profile?.level || 1;
-  const currentXP = profile?.xp_points || 0;
-  const nextLevelXP = currentLevel * 1000; // Simple progression logic
-  const progress = Math.min((currentXP / nextLevelXP) * 100, 100);
-  const streak = 7; // We don't have this in DB yet, keeping the "7" the user liked
-  const totalPosts = profile?.total_posts || 0;
   
   return (
     <div className="hidden lg:flex flex-col gap-6 sticky top-28 h-[calc(100vh-120px)] overflow-y-auto beautiful-scrollbar pb-10 pr-2">
@@ -38,61 +30,8 @@ export default async function Sidebar() {
         </div>
       </div>
 
-      {/* 2. Your Magic Stats (Restored & Enhanced) */}
-      <div className="bg-white rounded-[32px] border-4 border-brand-purple/10 shadow-xl shadow-brand-purple/5 p-6 relative">
-        {/* Decorative background blobs - reduced size and blur to prevent overflow/cutoff issues if any */}
-        <div className="absolute -top-6 -right-6 w-24 h-24 bg-brand-purple/5 rounded-full blur-xl pointer-events-none"></div>
-        <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-hot-pink/5 rounded-full blur-xl pointer-events-none"></div>
-
-        <div className="flex items-center justify-between mb-6 relative z-10">
-            <div>
-                <h3 className="font-nunito font-black text-2xl text-gray-900 leading-tight">Your Magic ✨</h3>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mt-1">
-                    {profile ? `@${profile.username}` : "Welcome Wizard!"}
-                </p>
-            </div>
-            <div className="flex items-center gap-1.5 bg-gradient-to-r from-orange-100 to-red-50 text-orange-600 px-3 py-1.5 rounded-2xl border border-orange-100 shadow-sm shrink-0">
-                <Flame className="w-5 h-5 fill-orange-500 text-orange-600 animate-pulse" />
-                <span className="font-black text-lg">{streak}</span>
-            </div>
-        </div>
-
-        <div className="space-y-6 relative z-10">
-            {/* XP Bar */}
-            <div>
-                <div className="flex justify-between items-end mb-2">
-                    <span className="text-sm font-black text-gray-700">Level {currentLevel}</span>
-                    <span className="text-xs font-bold text-brand-purple">{currentXP} / {nextLevelXP} XP</span>
-                </div>
-                <div className="h-4 bg-gray-100 rounded-full p-1 shadow-inner border border-gray-50 overflow-hidden">
-                    <div 
-                        className="h-full bg-gradient-to-r from-brand-purple to-hot-pink rounded-full shadow-sm relative transition-all duration-1000 ease-out"
-                        style={{ width: `${progress}%` }}
-                    >
-                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/white-diamond.png')] opacity-30"></div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Stats Grid - Magic Created Added */}
-            <div className="grid grid-cols-2 gap-3">
-                <div className="bg-indigo-50 rounded-2xl p-3 flex flex-col items-center justify-center border-2 border-indigo-100 hover:border-indigo-300 transition-colors cursor-pointer group">
-                    <div className="bg-white p-2 rounded-xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                        <Wand2 className="w-6 h-6 text-indigo-500" />
-                    </div>
-                    <span className="font-black text-indigo-900 text-lg leading-none mb-1">{totalPosts}</span>
-                    <span className="font-bold text-indigo-400 text-[10px] uppercase tracking-wide text-center">Magic Created</span>
-                </div>
-                <div className="bg-emerald-50 rounded-2xl p-3 flex flex-col items-center justify-center border-2 border-emerald-100 hover:border-emerald-300 transition-colors cursor-pointer group">
-                    <div className="bg-white p-2 rounded-xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                        <FlaskConical className="w-6 h-6 text-emerald-500" />
-                    </div>
-                    <span className="font-black text-emerald-900 text-lg leading-none mb-1">2</span>
-                    <span className="font-bold text-emerald-400 text-[10px] uppercase tracking-wide text-center">Badges</span>
-                </div>
-            </div>
-        </div>
-      </div>
+      {/* 2. Your Magic Stats (Client Component) */}
+      <UserStatsCard initialProfile={profile} />
 
       {/* 3. Top Wizards Leaderboard (Restored & Enhanced) */}
       <div className="bg-white rounded-[32px] border-4 border-gray-100 shadow-xl shadow-gray-200/50 p-6">

@@ -8,8 +8,7 @@ import { useState, useEffect } from "react";
 import { toggleLike, hasLikedPost } from "@/actions/likes";
 import { toast } from "sonner"; // Assuming sonner is used, or generic toast
 import { useUser } from "@clerk/nextjs"; // Parent check
-// import { useChildAuth } from ... // We need to know if child is logged in on client side? 
-// Actually, we can just try the action and handle error.
+import CommentsModal from "@/components/comments/CommentsModal";
 
 interface FeedPost {
   id: string;
@@ -61,9 +60,20 @@ export default function PostCard({ post }: { post: FeedPost }) {
   const avatarUrl = post.child?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.child?.username || "kid"}`;
 
   const [likesCount, setLikesCount] = useState(post.likes_count);
+  const [commentsCount, setCommentsCount] = useState(post.comments_count);
   const [isLiked, setIsLiked] = useState(false);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const { isSignedIn: isParentSignedIn } = useUser();
+
+  // Sync state with props when server data changes
+  useEffect(() => {
+    setLikesCount(post.likes_count);
+  }, [post.likes_count]);
+
+  useEffect(() => {
+    setCommentsCount(post.comments_count);
+  }, [post.comments_count]);
 
   // Check if liked on mount
   useEffect(() => {
@@ -234,9 +244,12 @@ export default function PostCard({ post }: { post: FeedPost }) {
                   {likesCount || 0}
               </span>
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border-2 border-gray-100 hover:border-sky-blue hover:text-sky-blue transition-all group shadow-sm cursor-pointer active:scale-95">
+            <button 
+              onClick={() => setIsCommentsOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border-2 border-gray-100 hover:border-sky-blue hover:text-sky-blue transition-all group shadow-sm cursor-pointer active:scale-95"
+            >
               <MessageCircle className="w-5 h-5 text-gray-400 group-hover:text-sky-blue transition-colors" />
-              <span className="text-sm font-black text-gray-600 group-hover:text-sky-blue">{post.comments_count || 0}</span>
+              <span className="text-sm font-black text-gray-600 group-hover:text-sky-blue">{commentsCount || 0}</span>
             </button>
           </div>
           
@@ -244,6 +257,15 @@ export default function PostCard({ post }: { post: FeedPost }) {
             Share Magic <Sparkles className="w-4 h-4" />
           </button>
         </div>
+
+      <CommentsModal 
+        postId={post.post_id} 
+        isOpen={isCommentsOpen} 
+        onClose={() => setIsCommentsOpen(false)}
+        categoryColor={categoryColor}
+        onCommentAdded={(count) => setCommentsCount(count)}
+        onCommentDeleted={(count) => setCommentsCount(count)}
+      />
     </div>
   );
 }
