@@ -35,13 +35,15 @@ export function UserStatsCard({ initialProfile }: UserStatsCardProps) {
   if (!profile) {
     // Fallback for non-logged in or no profile users
     return (
-      <div className="bg-white rounded-[32px] border-4 border-brand-purple/10 shadow-xl shadow-brand-purple/5 p-6 relative overflow-hidden group">
-         {/* Decorative background blobs */}
-         <div className="absolute -top-6 -right-6 w-24 h-24 bg-brand-purple/5 rounded-full blur-xl pointer-events-none transition-all duration-500 group-hover:bg-brand-purple/10"></div>
-         <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-hot-pink/5 rounded-full blur-xl pointer-events-none transition-all duration-500 group-hover:bg-hot-pink/10"></div>
+      <div className="bg-white rounded-[32px] border-4 border-brand-purple/10 shadow-xl shadow-brand-purple/5 p-6 relative group w-full">
+         {/* Decorative background blobs wrapper - using absolute positioning to avoid overflow issues on main container */}
+         <div className="absolute inset-0 overflow-hidden rounded-[28px] pointer-events-none">
+            <div className="absolute -top-6 -right-6 w-24 h-24 bg-brand-purple/5 rounded-full blur-xl transition-all duration-500 group-hover:bg-brand-purple/10"></div>
+            <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-hot-pink/5 rounded-full blur-xl transition-all duration-500 group-hover:bg-hot-pink/10"></div>
+         </div>
 
          <div className="text-center py-2 relative z-10">
-            <div className="w-16 h-16 bg-brand-purple/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl animate-bounce-slow">
+            <div className="w-16 h-16 bg-brand-purple/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl animate-bounce">
                 🔐
             </div>
             <h3 className="font-nunito font-black text-xl text-gray-900 mb-2 leading-tight">
