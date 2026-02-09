@@ -48,6 +48,7 @@ export default function KidsLoginPage() {
           },
           icon: <span className="text-2xl">❌</span>,
         });
+        setIsLoading(false);
       }
     } catch (error) {
       toast.error("Something went wrong 😵", {
@@ -60,7 +61,6 @@ export default function KidsLoginPage() {
             borderRadius: '16px',
           }
       });
-    } finally {
       setIsLoading(false);
     }
   }
