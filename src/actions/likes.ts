@@ -73,20 +73,16 @@ export async function toggleLike(postId: string) {
       }
       
       // Decrement post likes count
-      const { data: postData, error: decrementError } = await supabase.rpc('decrement_likes', { row_id: postId });
+      // Manual Decrement
+      const { data: currentPost } = await supabase.from('posts').select('likes_count').eq('post_id', postId).single();
+      const currentCount = currentPost?.likes_count || 0;
+      const newCount = Math.max(0, currentCount - 1);
       
-      // If RPC doesn't exist (it might not), fall back to manual update
-      if (decrementError) {
-         // Manual Decrement
-         const { data: currentPost } = await supabase.from('posts').select('likes_count').eq('post_id', postId).single();
-         const currentCount = currentPost?.likes_count || 0;
-         const newCount = Math.max(0, currentCount - 1);
-         
-         await supabase.from('posts').update({ likes_count: newCount }).eq('post_id', postId);
-         newLikesCount = newCount;
-      } else {
-         newLikesCount = postData;
+      const { error: updateError } = await supabase.from('posts').update({ likes_count: newCount }).eq('post_id', postId);
+      if (updateError) {
+          console.error("Error updating likes count (decrement):", updateError);
       }
+      newLikesCount = newCount;
 
       // REVERSE XP (Subtract 5 XP from Post Owner) & DECREMENT TOTAL LIKES
       const { data: postForXp } = await supabase.from('posts').select('child_id').eq('post_id', postId).single();
@@ -140,7 +136,10 @@ export async function toggleLike(postId: string) {
       const postOwnerId = currentPost?.child_id;
       const newCount = currentCount + 1;
       
-      await supabase.from('posts').update({ likes_count: newCount }).eq('post_id', postId);
+      const { error: updateError } = await supabase.from('posts').update({ likes_count: newCount }).eq('post_id', postId);
+      if (updateError) {
+          console.error("Error updating likes count (increment):", updateError);
+      }
       newLikesCount = newCount;
 
       // AWARD XP to Post Owner (5 XP) & INCREMENT TOTAL LIKES
@@ -163,18 +162,11 @@ export async function toggleLike(postId: string) {
     }
 
     // 3. Invalidate/Update Caches
-    // Invalidate Feed Cache (a bit aggressive, but needed for consistency)
-    // Actually, we might want to just return the new count and let UI update optimistically?
-    // But for "working condition", invalidating is safer.
-    // However, invalidating ALL feed pages is bad.
-    // Let's just return success and new count.
+    // Invalidate Feed Cache to ensure counts are fresh on reload
+    await invalidateCache("feed:posts:*");
     
-    // We should invalidate the specific post if we cache individual posts
-    // We cache pages of posts... `feed:posts:${page}:${limit}...`
-    // It's hard to find which page the post is on.
-    // Ideally, we invalidate all feed caches or accept eventual consistency.
-    // For now, let's invalidate the generic feed keys if possible or rely on short TTL (60s).
-    
+    // removed revalidatePath("/") to prevent page reload
+
     return { success: true, likesCount: newLikesCount, isLiked: !isLiked };
 
   } catch (error) {

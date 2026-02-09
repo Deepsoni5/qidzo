@@ -197,7 +197,7 @@ export default function Feed() {
         <CreatePostModal 
           isOpen={isCreateModalOpen} 
           onClose={() => setIsCreateModalOpen(false)} 
-          childId={userRole.child.child_id}
+          childId={userRole.child.id}
         />
       )}
     </div>
