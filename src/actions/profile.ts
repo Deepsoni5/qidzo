@@ -65,7 +65,6 @@ export async function refreshChildProfile(username: string) {
   const cacheKey = `profile:${username}`;
   await invalidateCache(cacheKey);
   const profile = await getChildProfile(username);
-  revalidatePath('/'); // Optional: revalidate current path if needed, but client state update is better
   return profile;
 }
 
