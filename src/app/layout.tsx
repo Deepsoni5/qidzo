@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     siteName: "Qidzo",
     images: [
       {
-        url: "https://images.unsplash.com/photo-1530210124550-912dc1381cb8?w=1200&h=630&fit=crop&q=80",
+        url: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=1200&h=630&fit=crop&q=80",
         width: 1200,
         height: 630,
         alt: "Qidzo - Fun Learning & Creativity for Kids",
