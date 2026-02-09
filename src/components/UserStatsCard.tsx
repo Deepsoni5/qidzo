@@ -35,12 +35,26 @@ export function UserStatsCard({ initialProfile }: UserStatsCardProps) {
   if (!profile) {
     // Fallback for non-logged in or no profile users
     return (
-      <div className="bg-white rounded-[32px] border-4 border-brand-purple/10 shadow-xl shadow-brand-purple/5 p-6 relative overflow-hidden">
-         <div className="text-center py-4">
-            <h3 className="font-nunito font-black text-xl text-gray-900 mb-2">Welcome Wizard! 🧙‍♂️</h3>
-            <p className="text-sm text-gray-500 mb-4">Log in to see your magic stats!</p>
-            <Link href="/sign-in" className="inline-block bg-brand-purple text-white font-bold py-2 px-6 rounded-full hover:bg-brand-purple/90 transition-colors">
-                Sign In
+      <div className="bg-white rounded-[32px] border-4 border-brand-purple/10 shadow-xl shadow-brand-purple/5 p-6 relative overflow-hidden group">
+         {/* Decorative background blobs */}
+         <div className="absolute -top-6 -right-6 w-24 h-24 bg-brand-purple/5 rounded-full blur-xl pointer-events-none transition-all duration-500 group-hover:bg-brand-purple/10"></div>
+         <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-hot-pink/5 rounded-full blur-xl pointer-events-none transition-all duration-500 group-hover:bg-hot-pink/10"></div>
+
+         <div className="text-center py-2 relative z-10">
+            <div className="w-16 h-16 bg-brand-purple/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl animate-bounce-slow">
+                🔐
+            </div>
+            <h3 className="font-nunito font-black text-xl text-gray-900 mb-2 leading-tight">
+                Login To View<br/>Your Stats 📊
+            </h3>
+            <p className="text-sm text-gray-500 font-bold mb-6">
+                Unlock your magic potential!
+            </p>
+            <Link 
+                href="/login" 
+                className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-brand-purple to-hot-pink text-white font-black py-3 px-6 rounded-xl shadow-lg shadow-brand-purple/20 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+            >
+                Login Now 🚀
             </Link>
          </div>
       </div>
