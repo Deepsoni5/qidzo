@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { refreshChildProfile, ChildProfile } from "@/actions/profile";
-import { Trophy, MessageCircle, Heart, RotateCw, Sparkles } from "lucide-react";
+import { Trophy, MessageCircle, Heart, RotateCw, Sparkles, Users, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -87,7 +87,7 @@ export function UserStatsCard({ initialProfile }: UserStatsCardProps) {
         <button 
             onClick={handleRefresh} 
             disabled={isRefreshing}
-            className={`p-2 rounded-xl bg-gray-50 text-gray-400 hover:text-brand-purple hover:bg-brand-purple/10 transition-all ${isRefreshing ? 'animate-spin text-brand-purple' : ''}`}
+            className={`p-2 rounded-xl bg-gray-50 text-gray-400 hover:text-brand-purple hover:bg-brand-purple/10 transition-all cursor-pointer ${isRefreshing ? 'animate-spin text-brand-purple' : ''}`}
             title="Refresh Stats"
         >
             <RotateCw className="w-5 h-5" />
@@ -113,6 +113,20 @@ export function UserStatsCard({ initialProfile }: UserStatsCardProps) {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
+            {/* Followers */}
+            <div className="bg-brand-purple/5 rounded-2xl p-3 border border-brand-purple/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                <Users className="w-6 h-6 text-brand-purple" />
+                <span className="font-black text-xl text-gray-800">{profile.followers_count || 0}</span>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Followers</span>
+            </div>
+
+            {/* Following */}
+            <div className="bg-hot-pink/5 rounded-2xl p-3 border border-hot-pink/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                <UserCheck className="w-6 h-6 text-hot-pink" />
+                <span className="font-black text-xl text-gray-800">{profile.following_count || 0}</span>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Following</span>
+            </div>
+
             {/* Total Likes */}
             <div className="bg-pink-50 rounded-2xl p-3 border border-pink-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
                 <Heart className="w-6 h-6 text-hot-pink fill-hot-pink/20" />

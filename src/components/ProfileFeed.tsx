@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Grid, Image as ImageIcon, Video } from "lucide-react";
 import PostCard from "@/components/PostCard";
 import { FeedPost } from "@/actions/feed";
 import { cn } from "@/lib/utils";
+import { getCurrentUserRole } from "@/actions/auth";
 
 interface ProfileFeedProps {
   posts: FeedPost[];
@@ -15,6 +16,17 @@ type TabType = "all" | "photos" | "videos";
 
 export default function ProfileFeed({ posts, profileName }: ProfileFeedProps) {
   const [activeTab, setActiveTab] = useState<TabType>("all");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const role = await getCurrentUserRole();
+      if (role.isChild && role.child) {
+        setCurrentUserId(role.child.id);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const filteredPosts = posts.filter((post) => {
     if (activeTab === "all") return true;
@@ -68,7 +80,7 @@ export default function ProfileFeed({ posts, profileName }: ProfileFeedProps) {
       {/* Posts Feed */}
       <div className="space-y-6">
         {filteredPosts.length > 0 ? (
-          filteredPosts.map((post) => <PostCard key={post.id} post={post} />)
+          filteredPosts.map((post) => <PostCard key={post.id} post={post} currentUserId={currentUserId} />)
         ) : (
           <div className="text-center py-12 bg-white rounded-[32px] border-4 border-dashed border-gray-200">
             <div className="text-6xl mb-4 grayscale opacity-50">

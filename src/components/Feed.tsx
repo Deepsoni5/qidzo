@@ -26,6 +26,9 @@ export default function Feed() {
     rootMargin: "200px",
   });
 
+  // Get current user ID (only needed for children to hide follow button on own posts)
+  const currentUserId = userRole?.isChild ? (userRole.child.id as string) : null;
+
   // Reset feed when categories change
   useEffect(() => {
     setPosts([]);
@@ -122,7 +125,7 @@ export default function Feed() {
   return (
     <div className="space-y-6">
       {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
+        <PostCard key={post.id} post={post} currentUserId={currentUserId} />
       ))}
 
       {/* Loading State & Skeleton */}

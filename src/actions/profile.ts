@@ -18,6 +18,8 @@ export interface ChildProfile {
   total_likes_received: number;
   total_comments_made: number;
   created_at: string;
+  followers_count: number;
+  following_count: number;
 }
 
 export async function getChildProfile(username: string) {
@@ -37,7 +39,23 @@ export async function getChildProfile(username: string) {
         return null;
       }
 
-      return data as ChildProfile;
+      // Fetch Followers Count
+      const { count: followersCount, error: followersError } = await supabase
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_child_id", data.child_id);
+
+      // Fetch Following Count
+      const { count: followingCount, error: followingError } = await supabase
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("follower_child_id", data.child_id);
+
+      return {
+        ...data,
+        followers_count: followersCount || 0,
+        following_count: followingCount || 0,
+      } as ChildProfile;
     },
     300 // 5 minutes
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut, Trophy, Flame, Wand2, Star, Badge } from "lucide-react";
+import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut, Trophy, Flame, Wand2, Star, Badge, Users, UserCheck, Heart, MessageCircle } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "./ui/button";
@@ -158,34 +158,48 @@ export default function Navbar() {
                             <div className="p-5 space-y-5 bg-white">
                                 {/* Level Progress */}
                                 <div>
-                                    <div className="flex justify-between items-end mb-2">
-                                        <span className="font-black text-gray-700">Level {currentLevel}</span>
-                                        <span className="text-xs font-bold text-brand-purple">{currentXP} / {nextLevelXP} XP</span>
+                                  <div className="flex justify-between items-end mb-2">
+                                    <span className="text-sm font-black text-gray-700">Level {currentLevel}</span>
+                                    <span className="text-xs font-bold text-brand-purple">{currentXP} / {nextLevelXP} XP</span>
+                                  </div>
+                                  <div className="h-4 bg-gray-100 rounded-full p-1 shadow-inner border border-gray-50 overflow-hidden">
+                                    <div 
+                                      className="h-full bg-gradient-to-r from-brand-purple to-hot-pink rounded-full shadow-sm transition-all duration-1000 ease-out relative overflow-hidden"
+                                      style={{ width: `${progress}%` }}
+                                    >
+                                        <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]"></div>
                                     </div>
-                                    <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-gradient-to-r from-brand-purple to-hot-pink rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
-                                    </div>
+                                  </div>
                                 </div>
 
                                 {/* Grid */}
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-orange-50 p-3 rounded-2xl flex items-center gap-3 border-2 border-orange-100">
-                                        <div className="bg-white p-2 rounded-xl text-orange-500 shadow-sm">
-                                            <Flame className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <div className="font-black text-gray-800 text-lg leading-none">{streak}</div>
-                                            <div className="text-[10px] font-bold text-orange-400 uppercase">Streak</div>
-                                        </div>
+                                    {/* Followers */}
+                                    <div className="bg-brand-purple/5 rounded-2xl p-3 border border-brand-purple/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                                        <Users className="w-6 h-6 text-brand-purple" />
+                                        <span className="font-black text-xl text-gray-800">{kidProfile?.followers_count || 0}</span>
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Followers</span>
                                     </div>
-                                    <div className="bg-indigo-50 p-3 rounded-2xl flex items-center gap-3 border-2 border-indigo-100">
-                                        <div className="bg-white p-2 rounded-xl text-indigo-500 shadow-sm">
-                                            <Wand2 className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <div className="font-black text-gray-800 text-lg leading-none">{magics}</div>
-                                            <div className="text-[10px] font-bold text-indigo-400 uppercase">Magics</div>
-                                        </div>
+
+                                    {/* Following */}
+                                    <div className="bg-hot-pink/5 rounded-2xl p-3 border border-hot-pink/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                                        <UserCheck className="w-6 h-6 text-hot-pink" />
+                                        <span className="font-black text-xl text-gray-800">{kidProfile?.following_count || 0}</span>
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Following</span>
+                                    </div>
+
+                                    {/* Total Likes */}
+                                    <div className="bg-pink-50 rounded-2xl p-3 border border-pink-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                                        <Heart className="w-6 h-6 text-hot-pink fill-hot-pink/20" />
+                                        <span className="font-black text-xl text-gray-800">{kidProfile?.total_likes_received || 0}</span>
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Likes Get</span>
+                                    </div>
+
+                                    {/* Total Comments */}
+                                    <div className="bg-sky-50 rounded-2xl p-3 border border-sky-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                                        <MessageCircle className="w-6 h-6 text-sky-blue fill-sky-blue/20" />
+                                        <span className="font-black text-xl text-gray-800">{kidProfile?.total_comments_made || 0}</span>
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Comments</span>
                                     </div>
                                 </div>
                             </div>

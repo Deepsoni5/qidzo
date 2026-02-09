@@ -2,13 +2,15 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Trophy, ArrowLeft } from "lucide-react";
+import { Trophy, ArrowLeft, Users, UserCheck } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
 import LeftSidebar from "@/components/LeftSidebar";
 import Sidebar from "@/components/Sidebar";
 import ProfileFeed from "@/components/ProfileFeed";
 import { getChildProfile, getChildPosts } from "@/actions/profile";
+import { getCurrentUserRole } from "@/actions/auth";
+import { FollowButton } from "@/components/FollowButton";
 
 interface PageProps {
   params: Promise<{ username: string }>;
@@ -33,6 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ChildProfilePage({ params }: PageProps) {
   const { username } = await params;
   const profile = await getChildProfile(username);
+  const userRole = await getCurrentUserRole();
 
   if (!profile) {
     notFound();
@@ -44,6 +47,11 @@ export default async function ChildProfilePage({ params }: PageProps) {
   const totalLikes = posts.reduce((acc, post) => acc + (post.likes_count || 0), 0);
   
   const avatarUrl = profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.username}`;
+
+  // Determine if we should show the follow button
+  // Hide ONLY if the current logged-in child is viewing their own profile
+  const isOwnProfile = userRole.isChild && userRole.child?.id === profile.child_id;
+  const showFollowButton = !isOwnProfile;
 
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -117,9 +125,13 @@ export default async function ChildProfilePage({ params }: PageProps) {
                         
                         {/* Action Buttons */}
                         <div className="flex gap-3">
-                             <button className="bg-brand-purple text-white px-6 py-2.5 rounded-full font-black shadow-lg shadow-brand-purple/20 hover:scale-105 active:scale-95 transition-all cursor-pointer hover:bg-brand-purple/90">
-                                Follow
-                             </button>
+                             {showFollowButton && (
+                                <FollowButton 
+                                  targetId={profile.child_id} 
+                                  targetType="CHILD" 
+                                  className="px-6 py-2.5 text-sm shadow-lg shadow-brand-purple/20"
+                                />
+                             )}
                              <button className="bg-gray-100 text-gray-600 px-4 py-2.5 rounded-full font-black hover:bg-gray-200 transition-all cursor-pointer hover:scale-105 active:scale-95">
                                 👋 Say Hi
                              </button>
@@ -127,14 +139,22 @@ export default async function ChildProfilePage({ params }: PageProps) {
                     </div>
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-4 mt-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
                         <div className="bg-sky-50/50 rounded-2xl p-4 text-center border-2 border-sky-100 hover:border-sky-200 transition-colors group cursor-default">
                             <div className="text-sky-500 font-black text-2xl group-hover:scale-110 transition-transform duration-300">{profile.total_posts}</div>
                             <div className="text-sky-900/60 text-xs font-bold uppercase tracking-wide">Magic Created</div>
                         </div>
-                        <div className="bg-pink-50/50 rounded-2xl p-4 text-center border-2 border-pink-100 hover:border-pink-200 transition-colors group cursor-default">
-                            <div className="text-hot-pink font-black text-2xl group-hover:scale-110 transition-transform duration-300">{totalLikes}</div>
-                            <div className="text-pink-900/60 text-xs font-bold uppercase tracking-wide">Sparkles</div>
+                        <div className="bg-brand-purple/5 rounded-2xl p-4 text-center border-2 border-brand-purple/10 hover:border-brand-purple/20 transition-colors group cursor-default">
+                            <div className="text-brand-purple font-black text-2xl group-hover:scale-110 transition-transform duration-300">{profile.followers_count}</div>
+                            <div className="text-brand-purple/60 text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-1">
+                                <Users className="w-3 h-3" /> Followers
+                            </div>
+                        </div>
+                        <div className="bg-hot-pink/5 rounded-2xl p-4 text-center border-2 border-hot-pink/10 hover:border-hot-pink/20 transition-colors group cursor-default">
+                            <div className="text-hot-pink font-black text-2xl group-hover:scale-110 transition-transform duration-300">{profile.following_count}</div>
+                            <div className="text-hot-pink/60 text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-1">
+                                <UserCheck className="w-3 h-3" /> Following
+                            </div>
                         </div>
                         <div className="bg-amber-50/50 rounded-2xl p-4 text-center border-2 border-amber-100 hover:border-amber-200 transition-colors group cursor-default">
                             <div className="text-amber-500 font-black text-2xl group-hover:scale-110 transition-transform duration-300">{profile.xp_points}</div>

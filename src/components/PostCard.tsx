@@ -9,6 +9,7 @@ import { toggleLike, hasLikedPost } from "@/actions/likes";
 import { toast } from "sonner"; // Assuming sonner is used, or generic toast
 import { useUser } from "@clerk/nextjs"; // Parent check
 import CommentsModal from "@/components/comments/CommentsModal";
+import { FollowButton } from "@/components/FollowButton";
 
 interface FeedPost {
   id: string;
@@ -52,7 +53,7 @@ const DynamicIcon = ({ name, className }: { name: string; className?: string }) 
   return <IconComponent className={className} />;
 };
 
-export default function PostCard({ post }: { post: FeedPost }) {
+export default function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId?: string | null }) {
   const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
   
   // Use a deterministic color if category color is missing or invalid
@@ -65,6 +66,12 @@ export default function PostCard({ post }: { post: FeedPost }) {
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const { isSignedIn: isParentSignedIn } = useUser();
+  
+  // Determine if we should show the follow button
+  // Show if:
+  // 1. User is not identified as the post author (guest, parent, or other child)
+  // 2. Explicitly hide ONLY if currentUserId matches post.child_id
+  const showFollowButton = !currentUserId || currentUserId !== post.child_id;
 
   // Sync state with props when server data changes
   useEffect(() => {
@@ -158,11 +165,16 @@ export default function PostCard({ post }: { post: FeedPost }) {
              </div>
           </Link>
           <div>
-            <Link href={`/child/${post.child?.username}`} className="hover:underline decoration-brand-purple decoration-2 underline-offset-2">
-               <h3 className="font-nunito font-extrabold text-gray-900 text-lg leading-tight">
-                 {post.child?.name}
-               </h3>
-            </Link>
+            <div className="flex items-center gap-2 mb-0.5">
+                <Link href={`/child/${post.child?.username}`} className="hover:underline decoration-brand-purple decoration-2 underline-offset-2">
+                    <h3 className="font-nunito font-extrabold text-gray-900 text-lg leading-tight">
+                      {post.child?.name}
+                    </h3>
+                 </Link>
+                 {showFollowButton && (
+                    <FollowButton targetId={post.child_id} targetType="CHILD" />
+                 )}
+             </div>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded-lg bg-sunshine-yellow text-amber-900 text-[10px] font-black uppercase">
                 Lvl {post.child?.level || 1}
