@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { checkIsParent } from "@/actions/parent";
 import { getCurrentUserRole } from "@/actions/auth";
 import { CreatePostModal } from "./CreatePostModal";
@@ -14,12 +15,15 @@ import { CreatePostModal } from "./CreatePostModal";
 export default function LeftSidebar() {
   const { user } = useUser(); // Still useful for immediate client-side Clerk state
   const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isChild: boolean, child?: any } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     const init = async () => {
+      setIsLoading(true);
       const roleData = await getCurrentUserRole();
       setUserRole(roleData);
+      setIsLoading(false);
     };
     init();
   }, [user]); // Re-run if Clerk user changes
@@ -88,7 +92,15 @@ export default function LeftSidebar() {
             </h3>
 
             <ul className="space-y-1.5 relative z-10">
-              {[
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="w-full flex items-center gap-3 p-2.5 rounded-2xl border-2 border-transparent">
+                        <Skeleton className="w-10 h-10 rounded-xl" />
+                        <Skeleton className="h-5 w-24 rounded-lg" />
+                    </div>
+                ))
+              ) : (
+                [
                 { label: "Home", icon: "🏠", color: "text-brand-purple", bg: "bg-brand-purple/10", active: true, href: "/" },
                 { label: "Tutorials", icon: "📺", color: "text-sky-blue", bg: "bg-sky-blue/10", active: false, action: () => handleComingSoon("Tutorials") },
                 { label: "Play Zone", icon: "🎮", color: "text-hot-pink", bg: "bg-hot-pink/10", active: false, action: () => handleComingSoon("Play Zone") },
@@ -118,7 +130,7 @@ export default function LeftSidebar() {
                         )}
                     </Component>
                 )
-              })}
+              }))}
             </ul>
 
             <div className="mt-5 relative z-10">
