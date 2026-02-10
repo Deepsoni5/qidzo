@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useSignIn } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
+import { useSignIn, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,9 +29,18 @@ type Values = z.infer<typeof schema>;
 
 export default function SignInForm() {
   const { isLoaded, signIn, setActive } = useSignIn();
+  const { user } = useUser();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Bouncer: Redirect if already logged in
+  useEffect(() => {
+    if (isLoaded && user) {
+        // If user is already logged in, redirect to dashboard immediately
+        router.replace("/parent/dashboard");
+    }
+  }, [isLoaded, user, router]);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),

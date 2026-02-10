@@ -351,7 +351,7 @@ export default function SignUpForm() {
             description: "Your parent account is ready to go!",
             duration: 5000,
         });
-        router.push("/"); 
+        router.push("/parent/dashboard"); 
 
     } catch (err: any) {
         console.error(err);
