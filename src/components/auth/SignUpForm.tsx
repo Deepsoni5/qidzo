@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type ChangeEvent } from "react";
 import { useSignUp, useSignIn, useUser } from "@clerk/nextjs";
+import { invalidateParentCache } from "@/actions/parent";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -347,6 +348,9 @@ export default function SignUpForm() {
             await setActive({ session: signUp.createdSessionId });
         }
         
+        // Invalidate cache to ensure Navbar updates immediately
+        await invalidateParentCache(userId);
+
         toast.success("Welcome to Qidzo! 🎉", {
             description: "Your parent account is ready to go!",
             duration: 5000,
