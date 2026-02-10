@@ -18,18 +18,14 @@ export async function checkIsParent() {
     const user = await currentUser();
     if (!user) return false;
 
-    return await getOrSetCache(
-      KEYS.IS_PARENT(user.id),
-      async () => {
-        const { data } = await supabase
-          .from("parents")
-          .select("id")
-          .eq("clerk_id", user.id)
-          .single();
-        return !!data;
-      },
-      3600 // 1 hour cache
-    );
+    // Direct DB check - No caching for critical auth checks to prevent race conditions
+    const { data } = await supabase
+        .from("parents")
+        .select("id")
+        .eq("clerk_id", user.id)
+        .single();
+    
+    return !!data;
   } catch (error) {
     console.error("Error in checkIsParent:", error);
     return false;

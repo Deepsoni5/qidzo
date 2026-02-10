@@ -6,6 +6,7 @@ import { redis } from "@/lib/redis";
 import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
+import { clerkClient } from "@clerk/nextjs/server";
 
 const SESSION_COOKIE_NAME = "qidzo_child_token"; // Changed name to reflect it's a token
 const SESSION_TTL = 60 * 60 * 24 * 365; // 1 year in seconds
@@ -127,4 +128,22 @@ export async function getCurrentUserRole() {
     }
 
     return { role: "guest", isParent: false, isChild: false };
+}
+
+export async function updateClerkUserMetadata(userId: string, firstName: string, lastName: string) {
+    try {
+        const client = await clerkClient();
+        await client.users.updateUser(userId, {
+            firstName,
+            lastName,
+            unsafeMetadata: {
+                role: "parent",
+                onboarding_complete: true
+            }
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update Clerk user metadata:", error);
+        return { success: false, error: JSON.stringify(error) };
+    }
 }

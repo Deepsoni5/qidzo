@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type ChangeEvent } from "react";
 import { useSignUp, useSignIn, useUser } from "@clerk/nextjs";
+import { updateClerkUserMetadata } from "@/actions/auth";
 import { invalidateParentCache } from "@/actions/parent";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -82,6 +83,7 @@ export default function SignUpForm() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false);
   const [createdUserId, setCreatedUserId] = useState<string | null>(null);
+  const [createdSessionId, setCreatedSessionId] = useState<string | null>(null);
 
   // Forms
   const authForm = useForm<AuthValues>({
@@ -258,6 +260,9 @@ export default function SignUpForm() {
         if (completeSignUp.createdUserId) {
             setCreatedUserId(completeSignUp.createdUserId);
         }
+        if (completeSignUp.createdSessionId) {
+            setCreatedSessionId(completeSignUp.createdSessionId);
+        }
         
         toast.success("Email verified!");
         setStep("profile");
@@ -304,9 +309,12 @@ export default function SignUpForm() {
     
     // For OAuth, user is already signed in so we use user.id
     // For email/password, we use signUp.createdUserId or stored state
-    const userId = user?.id || signUp.createdUserId || createdUserId;
+    const userId = user?.id || signUp?.createdUserId || createdUserId;
+
+    
 
     if (!userId) {
+        console.error("[SignUp] Error: User ID not found");
         toast.error("Error: User ID not found. Please restart.");
         return;
     }
@@ -314,7 +322,24 @@ export default function SignUpForm() {
 
     try {
         const parentId = generateParentId();
+        const avatarUrl = data.avatar || "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
+        // 1. Update Clerk User Metadata (Critical for UI Sync)
+        const [firstName, ...lastNameParts] = data.fullName.trim().split(' ');
+        const lastName = lastNameParts.join(' ');
+
+        // Use Server Action to update Clerk User Metadata (Robust & Secure)
+        // This works even if client-side session is not yet active or signUp state is lost
+        const updateRes = await updateClerkUserMetadata(userId, firstName, lastName);
+        
+        if (updateRes.success) {
+            console.log("[SignUp] Clerk Metadata updated successfully");
+        } else {
+            console.error("[SignUp] Failed to update Clerk Metadata:", updateRes.error);
+            // Non-blocking, proceed with DB insert
+        }
+
+        console.log("[SignUp] Inserting parent into Supabase...");
         const { error } = await supabase.from("parents").insert({
             clerk_id: userId,
             email: authForm.getValues("email"),
@@ -323,7 +348,7 @@ export default function SignUpForm() {
             name: data.fullName,
             phone: data.phone,
             date_of_birth: data.dob ? new Date(data.dob) : null,
-            avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`,
+            avatar: avatarUrl,
             subscription_plan: 'FREE',
             subscription_status: 'ACTIVE',
             role: 'parent'
@@ -344,8 +369,11 @@ export default function SignUpForm() {
         }
 
         // Finalize Clerk Session (only needed if not already active)
-        if (signUp.createdSessionId && !user) {
-            await setActive({ session: signUp.createdSessionId });
+        if (!user && (signUp?.createdSessionId || createdSessionId)) {
+            const sessionId = signUp?.createdSessionId || createdSessionId;
+            if (sessionId) {
+                await setActive({ session: sessionId });
+            }
         }
         
         // Invalidate cache to ensure Navbar updates immediately
