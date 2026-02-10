@@ -154,5 +154,5 @@ export async function getChildDetails(childId: string) {
 export async function invalidateParentCache(userId: string) {
   await invalidateCache(KEYS.PARENT_STATS(userId));
   await invalidateCache(KEYS.PARENT_CHILDREN(userId));
-  // Note: IS_PARENT rarely changes, so we might not need to invalidate it often
+  await invalidateCache(KEYS.IS_PARENT(userId));
 }
