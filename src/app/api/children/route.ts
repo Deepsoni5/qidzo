@@ -85,7 +85,7 @@ export async function POST(req: Request) {
           birth_date,
           age,
           gender,
-          avatar,
+          avatar: avatar || "https://cdn-icons-png.flaticon.com/512/847/847969.png",
           preferred_categories,
           // Default values are handled by DB or can be explicit here
           xp_points: 0,
