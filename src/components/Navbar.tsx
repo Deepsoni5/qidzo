@@ -97,22 +97,20 @@ export default function Navbar() {
                         }
                     }}
                 >
-                  <UserButton.MenuItems>
-                    {userRole?.isParent && (
-                      <>
-                        <UserButton.Action
-                          label="Parent Dashboard"
-                          labelIcon={<LayoutDashboard className="h-4 w-4" />}
-                          onClick={() => router.push("/parent/dashboard")}
-                        />
-                        <UserButton.Action
-                          label="Add Child"
-                          labelIcon={<UserPlus className="h-4 w-4" />}
-                          onClick={() => router.push("/parent/add-child")}
-                        />
-                      </>
-                    )}
-                  </UserButton.MenuItems>
+                 {userRole?.isParent && (
+    <UserButton.MenuItems>
+      <UserButton.Action
+        label="Parent Dashboard"
+        labelIcon={<LayoutDashboard className="h-4 w-4" />}
+        onClick={() => router.push("/parent/dashboard")}
+      />
+      <UserButton.Action
+        label="Add Child"
+        labelIcon={<UserPlus className="h-4 w-4" />}
+        onClick={() => router.push("/parent/add-child")}
+      />
+    </UserButton.MenuItems>
+  )}
                 </UserButton>
             </SignedIn>
             <SignedOut>
