@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { checkIsParent } from "@/actions/parent";
+import { getCurrentUserRole } from "@/actions/auth";
 import { getChildSession, logoutChild } from "@/actions/auth";
 import { getChildProfile, ChildProfile } from "@/actions/profile";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -14,19 +14,17 @@ import Image from "next/image";
 
 export default function Navbar() {
   const { user } = useUser();
-  const [isParent, setIsParent] = useState(false);
+  const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isChild: boolean, child?: any } | null>(null);
   const [kid, setKid] = useState<any>(null);
   const [kidProfile, setKidProfile] = useState<ChildProfile | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    if (user) {
-      const init = async () => {
-        const isParentUser = await checkIsParent();
-        if (isParentUser) setIsParent(true);
-      };
-      init();
-    }
+    const init = async () => {
+      const roleData = await getCurrentUserRole();
+      setUserRole(roleData);
+    };
+    init();
     
     // Check for kid session
     const checkKid = async () => {
@@ -86,7 +84,7 @@ export default function Navbar() {
                 <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-hot-pink border-2 border-white rounded-full animate-pulse"></span>
                 </button>
                 <UserButton 
-                    key={isParent ? "parent" : "children"}
+                    key={userRole?.isParent ? "parent" : "children"}
                     appearance={{
                         elements: {
                             avatarBox: "w-10 h-10 border-2 border-white shadow-md hover:scale-105 transition-transform duration-200",
@@ -95,7 +93,7 @@ export default function Navbar() {
                     }}
                 >
                       <UserButton.MenuItems>
-    {isParent && (
+    {userRole?.isParent && (
       <>
         <UserButton.Action
           label="Parent Dashboard"
