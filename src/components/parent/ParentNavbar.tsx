@@ -1,9 +1,11 @@
 "use client";
-import { Search, Bell, ArrowLeft } from "lucide-react";
+import { Search, Bell, ArrowLeft, LayoutDashboard, UserPlus } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ParentNavbar() {
+  const router = useRouter();
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,7 +56,20 @@ export default function ParentNavbar() {
                         userButtonPopoverFooter: "!hidden"
                     }
                 }}
-            />
+            >
+                <UserButton.MenuItems>
+                    <UserButton.Action
+                        label="Parent Dashboard"
+                        labelIcon={<LayoutDashboard className="h-4 w-4" />}
+                        onClick={() => router.push("/parent/dashboard")}
+                    />
+                    <UserButton.Action
+                        label="Add Child"
+                        labelIcon={<UserPlus className="h-4 w-4" />}
+                        onClick={() => router.push("/parent/add-child")}
+                    />
+                </UserButton.MenuItems>
+            </UserButton>
           </div>
         </div>
       </div>

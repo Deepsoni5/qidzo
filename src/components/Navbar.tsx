@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut, Trophy, Flame, Wand2, Star, Badge, Users, UserCheck, Heart, MessageCircle } from "lucide-react";
+import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut, Trophy, Flame, Wand2, Star, Badge, Users, UserCheck, Heart, MessageCircle, UserPlus } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "./ui/button";
@@ -96,11 +96,18 @@ export default function Navbar() {
                 >
                       <UserButton.MenuItems>
     {isParent && (
-      <UserButton.Action
-        label="Parent Dashboard"
-        labelIcon={<LayoutDashboard className="h-4 w-4" />}
-        onClick={() => router.push("/parent/dashboard")}
-      />
+      <>
+        <UserButton.Action
+          label="Parent Dashboard"
+          labelIcon={<LayoutDashboard className="h-4 w-4" />}
+          onClick={() => router.push("/parent/dashboard")}
+        />
+        <UserButton.Action
+          label="Add Child"
+          labelIcon={<UserPlus className="h-4 w-4" />}
+          onClick={() => router.push("/parent/add-child")}
+        />
+      </>
     )}
   </UserButton.MenuItems>
                 </UserButton>
