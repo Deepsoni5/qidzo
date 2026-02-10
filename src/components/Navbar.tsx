@@ -22,6 +22,7 @@ export default function Navbar() {
   useEffect(() => {
     const init = async () => {
       const roleData = await getCurrentUserRole();
+      console.log("🔍 Navbar Role Data:", roleData); // DEBUG
       setUserRole(roleData);
     };
     init();
@@ -38,6 +39,11 @@ export default function Navbar() {
     };
     checkKid();
   }, [user]);
+
+  // Add this to see the state
+  console.log("👤 User:", user?.id);
+  console.log("🎭 UserRole State:", userRole);
+  console.log("👨‍👩‍👧 Is Parent?:", userRole?.isParent);
 
   // Derived stats
   const currentLevel = kidProfile?.level || 1;
@@ -84,7 +90,6 @@ export default function Navbar() {
                 <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-hot-pink border-2 border-white rounded-full animate-pulse"></span>
                 </button>
                 <UserButton 
-                    key={userRole?.isParent ? "parent" : "children"}
                     appearance={{
                         elements: {
                             avatarBox: "w-10 h-10 border-2 border-white shadow-md hover:scale-105 transition-transform duration-200",
@@ -92,22 +97,22 @@ export default function Navbar() {
                         }
                     }}
                 >
-                      <UserButton.MenuItems>
-    {userRole?.isParent && (
-      <>
-        <UserButton.Action
-          label="Parent Dashboard"
-          labelIcon={<LayoutDashboard className="h-4 w-4" />}
-          onClick={() => router.push("/parent/dashboard")}
-        />
-        <UserButton.Action
-          label="Add Child"
-          labelIcon={<UserPlus className="h-4 w-4" />}
-          onClick={() => router.push("/parent/add-child")}
-        />
-      </>
-    )}
-  </UserButton.MenuItems>
+                  <UserButton.MenuItems>
+                    {userRole?.isParent && (
+                      <>
+                        <UserButton.Action
+                          label="Parent Dashboard"
+                          labelIcon={<LayoutDashboard className="h-4 w-4" />}
+                          onClick={() => router.push("/parent/dashboard")}
+                        />
+                        <UserButton.Action
+                          label="Add Child"
+                          labelIcon={<UserPlus className="h-4 w-4" />}
+                          onClick={() => router.push("/parent/add-child")}
+                        />
+                      </>
+                    )}
+                  </UserButton.MenuItems>
                 </UserButton>
             </SignedIn>
             <SignedOut>
