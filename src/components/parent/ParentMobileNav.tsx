@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, Users, Settings, Zap } from "lucide-react";
+import { LayoutDashboard, Users, Settings, Zap, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,6 +8,7 @@ export default function ParentMobileNav() {
   const pathname = usePathname();
 
   const navItems = [
+    { label: "Website", icon: ArrowLeft, href: "/", color: "text-red-500" },
     { label: "Dashboard", icon: LayoutDashboard, href: "/parent/dashboard", color: "text-brand-purple" },
     { label: "Children", icon: Users, href: "/parent/children", color: "text-sky-blue" },
     { label: "Settings", icon: Settings, href: "/parent/settings", color: "text-gray-500" },
