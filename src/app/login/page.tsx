@@ -90,7 +90,7 @@ export default function KidsLoginPage() {
                     <span className="text-3xl">🦄</span>
                 </div>
                 <h1 className="text-2xl font-black text-white tracking-tight">
-                    Welcome Back!
+                    Kids Login
                 </h1>
             </div>
             

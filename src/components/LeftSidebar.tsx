@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ import { getCurrentUserRole } from "@/actions/auth";
 import { CreatePostModal } from "./CreatePostModal";
 
 export default function LeftSidebar() {
+  const router = useRouter();
   const { user } = useUser(); // Still useful for immediate client-side Clerk state
   const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isChild: boolean, child?: any } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,6 +62,29 @@ export default function LeftSidebar() {
     }
   };
 
+  const handlePlayZone = async () => {
+    const currentRole = await getCurrentUserRole();
+    
+    if (currentRole?.isChild && currentRole.child?.focus_mode) {
+        toast("Exam Mode is Enabled! 🎓", {
+            description: "Focus on your studies and earn rewards! Play Zone is temporarily locked. ✨",
+            duration: 6000,
+            style: {
+                background: '#F0F9FF', // sky-50
+                border: '3px solid #0EA5E9', // sky-blue
+                color: '#075985', // sky-900
+                fontSize: '16px',
+                fontFamily: 'Nunito, sans-serif',
+                fontWeight: 'bold'
+            },
+            className: "rounded-2xl shadow-xl"
+        });
+        return;
+    }
+
+    router.push("/playzone");
+   };
+
   const handleComingSoon = (feature: string) => {
     toast.info(`${feature} is Coming Soon! 🚧`, {
         description: "We're building something awesome for you! Stay tuned.",
@@ -103,7 +128,7 @@ export default function LeftSidebar() {
                 [
                 { label: "Home", icon: "🏠", color: "text-brand-purple", bg: "bg-brand-purple/10", active: true, href: "/" },
                 { label: "Tutorials", icon: "📺", color: "text-sky-blue", bg: "bg-sky-blue/10", active: false, action: () => handleComingSoon("Tutorials") },
-                { label: "Play Zone", icon: "🎮", color: "text-hot-pink", bg: "bg-hot-pink/10", active: false, action: () => handleComingSoon("Play Zone") },
+                { label: "Play Zone", icon: "🎮", color: "text-hot-pink", bg: "bg-hot-pink/10", active: false, action: handlePlayZone },
                 { label: "Friends", icon: "👥", color: "text-grass-green", bg: "bg-grass-green/10", active: false, action: () => handleComingSoon("Friends") },
                 ...(userRole?.isParent 
                   ? [{ label: "Parent Dashboard", icon: "👨‍👩‍👧‍👦", color: "text-orange-500", bg: "bg-orange-500/10", active: false, href: "/parent/dashboard" }]

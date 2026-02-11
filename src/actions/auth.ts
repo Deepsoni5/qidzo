@@ -124,7 +124,22 @@ export async function getCurrentUserRole() {
     // 2. Check Child Session (JWT)
     const childSession = await getChildSession();
     if (childSession) {
-        return { role: "child", isParent: false, isChild: true, child: childSession };
+        // Fetch latest child data to get focus_mode (ensure real-time)
+        const { data: childData } = await supabase
+            .from("children")
+            .select("focus_mode")
+            .eq("child_id", childSession.id)
+            .single();
+
+        return { 
+            role: "child", 
+            isParent: false, 
+            isChild: true, 
+            child: {
+                ...childSession,
+                focus_mode: childData?.focus_mode || false
+            } 
+        };
     }
 
     return { role: "guest", isParent: false, isChild: false };

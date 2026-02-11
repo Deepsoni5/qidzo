@@ -1,10 +1,11 @@
 "use server";
 
 import { supabase } from "@/lib/supabaseClient";
-import { getOrSetCache, invalidateCache } from "@/lib/redis";
+import { invalidateCache } from "@/lib/redis";
 import { currentUser } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
 
-// Cache Keys
+// Cache Keys for other features
 const KEYS = {
   IS_PARENT: (userId: string) => `user:role:parent:${userId}`,
   PARENT_STATS: (userId: string) => `parent:stats:${userId}`,
@@ -21,7 +22,7 @@ export async function checkIsParent() {
     // Direct DB check - No caching for critical auth checks to prevent race conditions
     const { data } = await supabase
         .from("parents")
-        .select("id")
+        .select("parent_id")
         .eq("clerk_id", user.id)
         .single();
     
@@ -38,38 +39,33 @@ export async function getParentStats() {
     const user = await currentUser();
     if (!user) return null;
 
-    return await getOrSetCache(
-      KEYS.PARENT_STATS(user.id),
-      async () => {
-        // 1. Get parent_id
-        const { data: parentData, error: parentError } = await supabase
-          .from("parents")
-          .select("parent_id")
-          .eq("clerk_id", user.id)
-          .single();
+    // Direct DB fetch to ensure real-time accuracy for parent dashboard
+    // 1. Get parent_id
+    const { data: parentData, error: parentError } = await supabase
+      .from("parents")
+      .select("parent_id")
+      .eq("clerk_id", user.id)
+      .single();
 
-        if (parentError || !parentData) return null;
+    if (parentError || !parentData) return null;
 
-        // 2. Get children stats
-        const { data: childrenData, error: childrenError } = await supabase
-          .from("children")
-          .select("total_posts, learning_hours")
-          .eq("parent_id", parentData.parent_id);
+    // 2. Get children stats
+    const { data: childrenData, error: childrenError } = await supabase
+      .from("children")
+      .select("total_posts, learning_hours")
+      .eq("parent_id", parentData.parent_id);
 
-        if (childrenError || !childrenData) return null;
+    if (childrenError || !childrenData) return null;
 
-        const totalChildren = childrenData.length;
-        const totalPosts = childrenData.reduce((sum, child: any) => sum + (child.total_posts || 0), 0);
-        const learningHours = childrenData.reduce((sum, child: any) => sum + (child.learning_hours || 0), 0);
+    const totalChildren = childrenData.length;
+    const totalPosts = childrenData.reduce((sum, child: any) => sum + (child.total_posts || 0), 0);
+    const learningHours = childrenData.reduce((sum, child: any) => sum + (child.learning_hours || 0), 0);
 
-        return {
-          totalChildren,
-          totalPosts,
-          learningHours
-        };
-      },
-      600 // 10 minutes cache
-    );
+    return {
+      totalChildren,
+      totalPosts,
+      learningHours
+    };
   } catch (error) {
     console.error("Error in getParentStats:", error);
     return null;
@@ -82,26 +78,21 @@ export async function getMyChildren() {
     const user = await currentUser();
     if (!user) return [];
 
-    return await getOrSetCache(
-      KEYS.PARENT_CHILDREN(user.id),
-      async () => {
-        const { data: parentData } = await supabase
-          .from("parents")
-          .select("parent_id")
-          .eq("clerk_id", user.id)
-          .single();
+    // Direct DB fetch to ensure real-time accuracy for parent dashboard
+    const { data: parentData } = await supabase
+      .from("parents")
+      .select("parent_id")
+      .eq("clerk_id", user.id)
+      .single();
 
-        if (!parentData) return [];
+    if (!parentData) return [];
 
-        const { data } = await supabase
-          .from("children")
-          .select("*")
-          .eq("parent_id", parentData.parent_id);
+    const { data } = await supabase
+      .from("children")
+      .select("*")
+      .eq("parent_id", parentData.parent_id);
 
-        return data || [];
-      },
-      600 // 10 minutes cache
-    );
+    return data || [];
   } catch (error) {
     console.error("Error in getMyChildren:", error);
     return [];
@@ -146,9 +137,47 @@ export async function getChildDetails(childId: string) {
   }
 }
 
-// 5. Invalidate Cache (Call this when data changes)
+// 5. Invalidate Cache (Required by other components)
 export async function invalidateParentCache(userId: string) {
   await invalidateCache(KEYS.PARENT_STATS(userId));
   await invalidateCache(KEYS.PARENT_CHILDREN(userId));
   await invalidateCache(KEYS.IS_PARENT(userId));
+}
+
+// 6. Toggle Child Focus Mode
+export async function toggleChildFocusMode(childId: string, enabled: boolean) {
+  try {
+    const user = await currentUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    // 1. Get parent ID to verify ownership
+    const { data: parentData } = await supabase
+      .from("parents")
+      .select("parent_id")
+      .eq("clerk_id", user.id)
+      .single();
+
+    if (!parentData) return { success: false, error: "Parent not found" };
+
+    // 2. Update child focus_mode
+    const { error } = await supabase
+      .from("children")
+      .update({ focus_mode: enabled })
+      .eq("id", childId)
+      .eq("parent_id", parentData.parent_id);
+
+    if (error) {
+      console.error("Error toggling focus mode:", error);
+      return { success: false, error: "Failed to update focus mode" };
+    }
+
+    // Revalidate paths to clear Next.js router cache
+    revalidatePath("/parent/dashboard");
+    revalidatePath("/");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in toggleChildFocusMode:", error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
 }

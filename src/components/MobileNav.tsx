@@ -1,6 +1,7 @@
 "use client";
 
 import { Home, Plus, Trophy, User, Users, LayoutDashboard, MonitorPlay, Gamepad2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
@@ -12,6 +13,7 @@ import { getCurrentUserRole } from "@/actions/auth";
 import { CreatePostModal } from "./CreatePostModal";
 
 export default function MobileNav() {
+  const router = useRouter();
   const { user } = useUser();
   const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isChild: boolean, child?: any } | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -54,6 +56,29 @@ export default function MobileNav() {
         return;
     }
   };
+
+  const handlePlayZone = async () => {
+    const currentRole = await getCurrentUserRole();
+    
+    if (currentRole?.isChild && currentRole.child?.focus_mode) {
+        toast("Exam Mode is Enabled! 🎓", {
+            description: "Focus on your studies and earn rewards! Play Zone is temporarily locked. ✨",
+            duration: 6000,
+            style: {
+                background: '#F0F9FF', // sky-50
+                border: '3px solid #0EA5E9', // sky-blue
+                color: '#075985', // sky-900
+                fontSize: '16px',
+                fontFamily: 'Nunito, sans-serif',
+                fontWeight: 'bold'
+            },
+            className: "rounded-2xl shadow-xl"
+        });
+        return;
+    }
+
+    router.push("/playzone");
+   };
 
   const handleComingSoon = (feature: string) => {
     toast.info(`${feature} is Coming Soon! 🚧`, {
@@ -101,7 +126,7 @@ export default function MobileNav() {
 
         {/* 4. Play Zone */}
         <button 
-          onClick={() => handleComingSoon("Play Zone")}
+          onClick={handlePlayZone}
           className="flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-hot-pink transition-colors w-full"
         >
           <Gamepad2 className="w-6 h-6" />

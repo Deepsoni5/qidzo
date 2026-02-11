@@ -1,10 +1,11 @@
 "use client";
 
-import { Plus, Star, Loader2 } from "lucide-react";
+import { Plus, Star, Loader2, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { getMyChildren } from "@/actions/parent";
+import { AdvancedSetupModal } from "./AdvancedSetupModal";
 
 interface Child {
   id: string;
@@ -15,29 +16,38 @@ interface Child {
   level: number;
   total_posts: number;
   xp_points: number;
+  focus_mode?: boolean;
 }
 
 export default function ChildrenList() {
   const { user } = useUser();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedChild, setSelectedChild] = useState<Child | null>(null);
+  const [isAdvancedModalOpen, setIsAdvancedModalOpen] = useState(false);
+
+  const fetchChildren = async () => {
+    try {
+      const data = await getMyChildren();
+      if (data) {
+        setChildren(data);
+        // Also update selectedChild if it's currently open
+        if (selectedChild) {
+          const updatedSelectedChild = data.find((c: Child) => c.id === selectedChild.id);
+          if (updatedSelectedChild) {
+            setSelectedChild(updatedSelectedChild);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
-
-    const fetchChildren = async () => {
-      try {
-        const data = await getMyChildren();
-        if (data) {
-          setChildren(data);
-        }
-      } catch (err) {
-        console.error("Unexpected error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchChildren();
   }, [user]);
 
@@ -91,16 +101,27 @@ export default function ChildrenList() {
               </div>
             </div>
             
-            <Link href={`/child/${child.username}`} target="_blank" className="block w-full text-center bg-brand-purple text-white font-bold py-3 rounded-xl hover:bg-brand-purple/90 transition-colors shadow-lg shadow-brand-purple/20">
-              View Profile 
-            </Link>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <Link href={`/child/${child.username}`} target="_blank" className="bg-brand-purple text-white font-bold py-3 px-2 rounded-xl hover:bg-brand-purple/90 transition-all active:scale-95 shadow-lg shadow-brand-purple/20 text-sm flex items-center justify-center cursor-pointer">
+                View Profile 
+              </Link>
+              <button 
+                onClick={() => {
+                  setSelectedChild(child);
+                  setIsAdvancedModalOpen(true);
+                }}
+                className="bg-gray-100 cursor-pointer text-gray-700 font-bold py-3 px-2 rounded-xl hover:bg-gray-200 transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
+              >
+                <Settings2 className="w-4 h-4" /> Setup
+              </button>
+            </div>
           </div>
         ))}
         
         {/* Add Child Card */}
         <Link 
           href="/parent/add-child"
-          className="bg-gray-50 border-2 border-dashed border-gray-200 p-6 rounded-3xl flex flex-col items-center justify-center gap-4 text-gray-400 hover:border-brand-purple hover:text-brand-purple hover:bg-brand-purple/5 transition-all group h-full min-h-[240px]"
+          className="bg-gray-50 border-2 border-dashed border-gray-200 p-6 rounded-3xl flex flex-col items-center justify-center gap-4 text-gray-400 hover:border-brand-purple hover:text-brand-purple hover:bg-brand-purple/5 transition-all group h-full min-h-[240px] cursor-pointer"
         >
           <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
             <Plus className="w-8 h-8" />
@@ -108,6 +129,18 @@ export default function ChildrenList() {
           <span className="font-bold">Add Another Child</span>
         </Link>
       </div>
+
+      {selectedChild && (
+        <AdvancedSetupModal 
+          isOpen={isAdvancedModalOpen}
+          onClose={() => {
+            setIsAdvancedModalOpen(false);
+            setSelectedChild(null);
+          }}
+          onUpdate={fetchChildren}
+          child={selectedChild}
+        />
+      )}
     </div>
   );
 }
