@@ -54,7 +54,7 @@ export function UserStatsCard({ initialProfile }: UserStatsCardProps) {
             </p>
             <Link 
                 href="/login" 
-                className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-brand-purple to-hot-pink text-white font-black py-3 px-6 rounded-xl shadow-lg shadow-brand-purple/20 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+                className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-brand-purple to-purple-600 text-white font-black py-3 px-6 rounded-xl shadow-lg shadow-brand-purple/20 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
             >
                 Login Now 🚀
             </Link>
