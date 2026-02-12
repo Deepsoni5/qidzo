@@ -222,9 +222,15 @@ export default function SignUpForm() {
         description: "Please check your email for the verification code.",
       });
     } catch (err: any) {
-      // console.error(JSON.stringify(err, null, 2));
+      const errorCode = err.errors?.[0]?.code;
+      let userMsg = err.errors?.[0]?.message || "Something went wrong. Please try again.";
+
+      if (errorCode === "form_identifier_exists") {
+        userMsg = "This email is already registered! Please try logging in instead.";
+      }
+
       toast.error("Sign up failed 🛑", {
-        description: err.errors?.[0]?.message || "Something went wrong. Please try again.",
+        description: userMsg,
       });
     } finally {
       setIsLoading(false);

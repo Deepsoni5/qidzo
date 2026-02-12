@@ -65,6 +65,12 @@ export default function SignInForm() {
           description: "It's great to see you again.",
         });
         router.push("/");
+      } else if (res.status === "needs_first_factor" || res.status === "needs_second_factor") {
+        // This often happens when a user signed up with Google/Facebook and tries to use a password
+        toast.error("Social Login Detected! 🌐", {
+          description: "It looks like you usually log in with Google or Facebook. Please use the social login buttons above!",
+          duration: 6000,
+        });
       } else {
         toast.error("Sign in incomplete", {
           description: "Please check your email for further instructions.",
@@ -86,6 +92,10 @@ export default function SignInForm() {
         userMsg = "Incorrect password. Please try again.";
       } else if (errorCode === "too_many_attempts") {
         userMsg = "Too many failed attempts. Please try again later.";
+      } else if (errorCode === "user_already_exists" || errorCode === "identifier_already_in_use") {
+        userMsg = "This email is already registered with a password. Please use your email and password below.";
+      } else if (errorCode === "strategy_for_user_invalid") {
+        userMsg = "Social login detected! Please use Google or Facebook to sign in.";
       } else if (errorMsg) {
         userMsg = errorMsg;
       }
