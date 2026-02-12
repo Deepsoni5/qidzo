@@ -85,3 +85,93 @@ export async function createPost(params: CreatePostParams) {
         return { success: false, error: error.message };
     }
 }
+
+/**
+ * Soft deletes a post by setting is_active to false.
+ * Also decrements the child's total_posts count and xp_points (-10).
+ */
+export async function deletePost(postId: string, childId: string) {
+    try {
+        // 1. Soft delete the post
+        const { error: deleteError } = await supabase
+            .from('posts')
+            .update({ is_active: false })
+            .eq('post_id', postId)
+            .eq('child_id', childId);
+
+        if (deleteError) throw deleteError;
+
+        // 2. Decrement Child Stats (Total Posts, XP)
+        const { data: child, error: fetchError } = await supabase
+            .from('children')
+            .select('total_posts, xp_points')
+            .eq('child_id', childId)
+            .single();
+        
+        if (fetchError) throw fetchError;
+
+        if (child) {
+            const { error: updateError } = await supabase
+                .from('children')
+                .update({
+                    total_posts: Math.max(0, (child.total_posts || 0) - 1),
+                    xp_points: Math.max(0, (child.xp_points || 0) - 10)
+                })
+                .eq('child_id', childId);
+                
+            if (updateError) {
+                console.error("Failed to decrement child stats:", updateError);
+            }
+        }
+
+        // 3. Clear relevant caches
+        await redis.del(`feed:all`);
+        // We don't have the categoryId here easily without fetching the post first, 
+        // but clearing the main feed is usually enough for most cases or we can fetch it.
+        
+        revalidatePath("/");
+        revalidatePath("/playzone");
+
+        return { success: true };
+
+    } catch (error: any) {
+        console.error("Delete Post Error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Updates an existing post.
+ */
+export async function updatePost(postId: string, childId: string, updates: {
+    title?: string;
+    content?: string;
+    categoryId?: string;
+}) {
+    try {
+        const { error } = await supabase
+            .from('posts')
+            .update({
+                title: updates.title,
+                content: updates.content,
+                category_id: updates.categoryId,
+                updated_at: new Date().toISOString()
+            })
+            .eq('post_id', postId)
+            .eq('child_id', childId);
+
+        if (error) throw error;
+
+        // Clear relevant caches
+        await redis.del(`feed:all`);
+        
+        revalidatePath("/");
+        revalidatePath("/playzone");
+        revalidatePath(`/child/${childId}`);
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Update Post Error:", error);
+        return { success: false, error: error.message };
+    }
+}

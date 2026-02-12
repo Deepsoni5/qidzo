@@ -40,10 +40,7 @@ export default function Navbar() {
     checkKid();
   }, [user]);
 
-  // Add this to see the state
-  console.log("👤 User:", user?.id);
-  console.log("🎭 UserRole State:", userRole);
-  console.log("👨‍👩‍👧 Is Parent?:", userRole?.isParent);
+  
 
   // Derived stats
   const currentLevel = kidProfile?.level || 1;
