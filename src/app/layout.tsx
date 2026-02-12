@@ -15,6 +15,8 @@ import Script from "next/script";
 import Navbar from "@/components/Navbar";
 import { Viewport } from "next";
 import { Toaster } from "@/components/ui/sonner";
+import ScreenTimeTracker from "@/components/utils/ScreenTimeTracker";
+import ScreenTimeGuard from "@/components/utils/ScreenTimeGuard";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -122,7 +124,10 @@ export default function RootLayout({
           data-debug="true"
           data-custom-data='{"appName": "YourApp", "version": "1.0.0", "greeting": "hi"}'
         />
-        {children}
+        <ScreenTimeGuard>
+          {children}
+          <ScreenTimeTracker />
+        </ScreenTimeGuard>
         <VisualEditsMessenger />
         <Toaster richColors closeButton position="top-right" />
       </body>

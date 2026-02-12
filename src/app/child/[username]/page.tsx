@@ -50,7 +50,7 @@ export default async function ChildProfilePage({ params }: PageProps) {
 
   // Determine if we should show the follow button
   // Hide ONLY if the current logged-in child is viewing their own profile
-  const isOwnProfile = userRole.isChild && userRole.child?.id === profile.child_id;
+  const isOwnProfile = userRole.isChild && (userRole.child as any)?.id === profile.child_id;
   const showFollowButton = !isOwnProfile;
 
   return (

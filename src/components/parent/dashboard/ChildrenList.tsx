@@ -100,7 +100,7 @@ export default function ChildrenList() {
                 <p className="text-xl font-black text-gray-900 font-nunito">{child.xp_points || 0}</p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3 mb-6">
               <Link href={`/child/${child.username}`} target="_blank" className="bg-brand-purple text-white font-bold py-3 px-2 rounded-xl hover:bg-brand-purple/90 transition-all active:scale-95 shadow-lg shadow-brand-purple/20 text-sm flex items-center justify-center cursor-pointer">
                 View Profile 
