@@ -2,6 +2,7 @@
 import { Search, Bell, ArrowLeft, LayoutDashboard, UserPlus } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function ParentNavbar() {
@@ -12,16 +13,20 @@ export default function ParentNavbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center gap-6">
-            <Link href="/parent/dashboard" className="flex-shrink-0 flex items-center gap-2">
-                <div className="w-10 h-10 bg-brand-purple rounded-xl flex items-center justify-center text-white font-nunito text-2xl font-black shadow-lg shadow-brand-purple/30 border-b-4 border-black/10">
-                Q
-                </div>
-                <div className="flex flex-col">
-                    <span className="text-xl font-nunito font-black text-brand-purple hidden sm:block tracking-tight leading-none">
-                    Qidzo
-                    </span>
-                    <span className="text-xs font-bold text-gray-500 hidden sm:block">Parents</span>
-                </div>
+            <Link href="/parent/dashboard" className="flex-shrink-0 flex items-center gap-3 relative">
+                 <Image 
+                     src="/f_q_logo.png" 
+                     alt="Qidzo Logo" 
+                     width={200} 
+                     height={80} 
+                     className="h-[80px] w-auto object-contain hover:scale-105 transition-transform absolute top-1/2 -translate-y-1/2"
+                     priority
+                   />
+                   <div className="h-16 w-[160px]" />
+                 <div className="flex flex-col border-l-2 border-gray-100 pl-3">
+                    <span className="text-xs font-black text-brand-purple uppercase tracking-widest leading-none">Parents</span>
+                    <span className="text-[10px] font-bold text-gray-400 leading-none mt-0.5">Control Center</span>
+               </div>
             </Link>
 
             <Link href="/" className="hidden md:flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-brand-purple transition-colors bg-gray-100 hover:bg-brand-purple/10 px-3 py-1.5 rounded-xl">

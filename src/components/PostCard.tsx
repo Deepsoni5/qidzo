@@ -247,6 +247,7 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
                     src={avatarUrl} 
                     alt={post.child?.name || "User"} 
                     fill
+                    sizes="56px"
                     className="object-cover"
                   />
                </div>
@@ -350,6 +351,8 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
                   src={post.media_url}
                   alt="Post content"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  loading="lazy"
                   className="object-contain transition-transform duration-700 group-hover:scale-105"
                 />
              </div>

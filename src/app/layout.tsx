@@ -43,6 +43,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://qidzo.com"),
   title: "Qidzo | Kid's Social Learning & Fun Community",
   description: "Join Qidzo, the safest and most fun social learning platform for kids! Share drawings, science experiments, and stories while earning magic badges.",
   keywords: [
@@ -69,7 +70,7 @@ export const metadata: Metadata = {
     siteName: "Qidzo",
     images: [
       {
-        url: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=1200&h=630&fit=crop&q=80",
+        url: "/f_q_logo.png",
         width: 1200,
         height: 630,
         alt: "Qidzo - Fun Learning & Creativity for Kids",
@@ -82,16 +83,16 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Qidzo | Kid's Social Learning & Fun Community",
     description: "The playful place where kids share drawings, science, and stories!",
-    images: ["https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=180&h=180&fit=crop&q=80"],
+    images: ["/f_q_logo.png"],
   },
 
   icons: {
     icon: [
-      { url: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=32&h=32&fit=crop&q=80", sizes: "32x32", type: "image/png" },
-      { url: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=16&h=16&fit=crop&q=80", sizes: "16x16", type: "image/png" }
+      { url: "/f.png", sizes: "32x32", type: "image/png" },
+      { url: "/f.png", sizes: "16x16", type: "image/png" }
     ],
     apple: [
-      { url: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=180&h=180&fit=crop&q=80", sizes: "180x180", type: "image/png" }
+      { url: "/f.png", sizes: "180x180", type: "image/png" }
     ],
   },
 };
