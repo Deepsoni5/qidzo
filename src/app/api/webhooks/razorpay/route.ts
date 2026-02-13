@@ -60,33 +60,53 @@ export async function POST(req: Request) {
     }
 
     // Handle One-time Payment (Add More Kid)
-    if (event === "order.paid") {
-      const order = payload.payload.order.entity;
-      const notes = order.notes;
+    if (event === "order.paid" || event === "payment.captured") {
+      const entity = event === "order.paid" ? payload.payload.order.entity : payload.payload.payment.entity;
+      const notes = entity.notes;
 
-      if (notes.type === "add_child_slot") {
+      console.log("Processing one-time payment for notes:", notes);
+
+      if (notes?.type === "add_child_slot") {
         const parentId = notes.parent_id;
+        
+        if (!parentId) {
+          console.error("Missing parent_id in one-time payment notes");
+          return NextResponse.json({ error: "Missing parent_id" }, { status: 400 });
+        }
 
         // Increment max_children_slots by 1
-        const { error } = await supabase.rpc('increment_child_slots', { 
+        console.log(`Incrementing slots for parent: ${parentId}`);
+        const { error: rpcError } = await supabase.rpc('increment_child_slots', { 
           p_id: parentId 
         });
 
-        if (error) {
+        if (rpcError) {
+          console.warn("RPC failed, falling back to manual update:", rpcError);
           // Fallback if RPC doesn't exist yet
-          const { data: parent } = await supabase
+          const { data: parent, error: fetchError } = await supabase
             .from("parents")
             .select("max_children_slots")
             .eq("parent_id", parentId)
             .single();
           
-          await supabase
-            .from("parents")
-            .update({ max_children_slots: (parent?.max_children_slots || 0) + 1 })
-            .eq("parent_id", parentId);
+          if (fetchError) {
+            console.error("Manual fetch failed:", fetchError);
+          } else {
+            const currentSlots = parent?.max_children_slots || 0;
+            const { error: updateError } = await supabase
+              .from("parents")
+              .update({ max_children_slots: currentSlots + 1 })
+              .eq("parent_id", parentId);
+            
+            if (updateError) {
+              console.error("Manual update failed:", updateError);
+            } else {
+              console.log(`Successfully added slot via fallback for parent ${parentId}`);
+            }
+          }
+        } else {
+          console.log(`Successfully added slot via RPC for parent ${parentId}`);
         }
-        
-        console.log(`Successfully added slot to parent ${parentId}`);
       }
     }
 
