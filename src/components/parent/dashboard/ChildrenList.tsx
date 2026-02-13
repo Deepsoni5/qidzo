@@ -1,11 +1,13 @@
 "use client";
 
-import { Plus, Star, Loader2, Settings2 } from "lucide-react";
+import { Plus, Star, Loader2, Settings2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { getMyChildren } from "@/actions/parent";
+import { getMyChildren, getParentProfile } from "@/actions/parent";
 import { AdvancedSetupModal } from "./AdvancedSetupModal";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface Child {
   id: string;
@@ -21,28 +23,48 @@ interface Child {
 
 export default function ChildrenList() {
   const { user } = useUser();
+  const router = useRouter();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [isAdvancedModalOpen, setIsAdvancedModalOpen] = useState(false);
+  const [parentProfile, setParentProfile] = useState<any>(null);
 
   const fetchChildren = async () => {
     try {
-      const data = await getMyChildren();
-      if (data) {
-        setChildren(data);
-        // Also update selectedChild if it's currently open
-        if (selectedChild) {
-          const updatedSelectedChild = data.find((c: Child) => c.id === selectedChild.id);
-          if (updatedSelectedChild) {
-            setSelectedChild(updatedSelectedChild);
-          }
+      const [childrenData, profileData] = await Promise.all([
+        getMyChildren(),
+        getParentProfile()
+      ]);
+      
+      if (childrenData) setChildren(childrenData);
+      if (profileData) setParentProfile(profileData);
+
+      // Also update selectedChild if it's currently open
+      if (selectedChild && childrenData) {
+        const updatedSelectedChild = childrenData.find((c: Child) => c.id === selectedChild.id);
+        if (updatedSelectedChild) {
+          setSelectedChild(updatedSelectedChild);
         }
       }
     } catch (err) {
       console.error("Unexpected error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddChildClick = (e: React.MouseEvent) => {
+    if (!parentProfile || parentProfile.max_children_slots <= 0) {
+      e.preventDefault();
+      toast.error("No slots available!", {
+        description: "Please Upgrade to Plan or Add Kid profile slot to continue.",
+        icon: <AlertCircle className="w-5 h-5 text-red-500" />,
+        action: {
+          label: "Upgrade",
+          onClick: () => router.push("/parent/upgrade")
+        }
+      });
     }
   };
 
@@ -65,6 +87,7 @@ export default function ChildrenList() {
         <h2 className="text-xl font-black font-nunito text-gray-900">My Children</h2>
         <Link 
           href="/parent/add-child"
+          onClick={handleAddChildClick}
           className="flex items-center gap-2 text-sm font-bold text-brand-purple hover:bg-brand-purple/5 px-3 py-1.5 rounded-xl transition-colors"
         >
           <Plus className="w-4 h-4" /> Add Child
@@ -121,6 +144,7 @@ export default function ChildrenList() {
         {/* Add Child Card */}
         <Link 
           href="/parent/add-child"
+          onClick={handleAddChildClick}
           className="bg-gray-50 border-2 border-dashed border-gray-200 p-6 rounded-3xl flex flex-col items-center justify-center gap-4 text-gray-400 hover:border-brand-purple hover:text-brand-purple hover:bg-brand-purple/5 transition-all group h-full min-h-[240px] cursor-pointer"
         >
           <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">

@@ -10,10 +10,11 @@ import confetti from "canvas-confetti";
 import * as LucideIcons from "lucide-react";
 import { 
   User, Calendar, Upload, Lock, Heart, Check, ChevronRight, 
-  ChevronLeft, Loader2, RefreshCw, Eye, EyeOff, X
+  ChevronLeft, Loader2, RefreshCw, Eye, EyeOff, X, AlertCircle
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { getParentProfile } from "@/actions/parent";
 
 // Types
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -64,6 +65,23 @@ export default function AddChildPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [createdChild, setCreatedChild] = useState<any>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+
+  // Check slots on mount
+  useEffect(() => {
+    async function checkSlots() {
+      const profile = await getParentProfile();
+      if (profile && profile.max_children_slots <= 0) {
+        toast.error("No slots available!", {
+          description: "Please Upgrade to Plan or Add Kid profile slot to continue.",
+          icon: <AlertCircle className="w-5 h-5 text-red-500" />,
+        });
+        router.push("/parent/upgrade");
+      }
+    }
+    if (user) {
+      checkSlots();
+    }
+  }, [user, router]);
 
   // Load from localStorage on mount
   useEffect(() => {

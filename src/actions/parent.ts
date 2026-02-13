@@ -89,6 +89,25 @@ export async function getParentStats() {
   }
 }
 
+export async function getParentProfile() {
+  try {
+    const user = await currentUser();
+    if (!user) return null;
+
+    const { data, error } = await supabase
+      .from("parents")
+      .select("*")
+      .eq("clerk_id", user.id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error in getParentProfile:", error);
+    return null;
+  }
+}
+
 // 3. Get Children List
 export async function getMyChildren() {
   try {

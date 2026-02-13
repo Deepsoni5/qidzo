@@ -33,10 +33,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1. Fetch the correct custom parent_id using the clerk_id
+    // 1. Fetch the correct custom parent_id and available slots using the clerk_id
     const { data: parentData, error: parentError } = await supabase
         .from('parents')
-        .select('parent_id')
+        .select('parent_id, max_children_slots')
         .eq('clerk_id', clerk_id)
         .single();
 
@@ -45,6 +45,13 @@ export async function POST(req: Request) {
             { error: 'Parent profile not found' },
             { status: 404 }
         );
+    }
+
+    if (parentData.max_children_slots <= 0) {
+      return NextResponse.json(
+        { error: 'No children slots available. Please upgrade your plan.' },
+        { status: 403 }
+      );
     }
 
     const parent_id = parentData.parent_id;
@@ -107,6 +114,17 @@ export async function POST(req: Request) {
             child_id_length: child_id?.length
         });
         throw error;
+    }
+
+    // 2. Decrement max_children_slots
+    const { error: updateError } = await supabase
+      .from('parents')
+      .update({ max_children_slots: parentData.max_children_slots - 1 })
+      .eq('parent_id', parent_id);
+
+    if (updateError) {
+      console.error('Error decrementing parent slots:', updateError);
+      // We don't throw here to avoid failing the whole request if the child was already created
     }
 
     // Invalidate Cache for this parent
