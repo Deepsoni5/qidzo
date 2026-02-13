@@ -74,39 +74,36 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: "Missing parent_id" }, { status: 400 });
         }
 
-        // Increment max_children_slots by 1
+        // INCREMENT SLOTS MANUALLY WITHOUT RPC
         console.log(`Incrementing slots for parent: ${parentId}`);
-        const { error: rpcError } = await supabase.rpc('increment_child_slots', { 
-          p_id: parentId 
-        });
-
-        if (rpcError) {
-          console.warn("RPC failed, falling back to manual update:", rpcError);
-          // Fallback if RPC doesn't exist yet
-          const { data: parent, error: fetchError } = await supabase
-            .from("parents")
-            .select("max_children_slots")
-            .eq("parent_id", parentId)
-            .single();
-          
-          if (fetchError) {
-            console.error("Manual fetch failed:", fetchError);
-          } else {
-            const currentSlots = parent?.max_children_slots || 0;
-            const { error: updateError } = await supabase
-              .from("parents")
-              .update({ max_children_slots: currentSlots + 1 })
-              .eq("parent_id", parentId);
-            
-            if (updateError) {
-              console.error("Manual update failed:", updateError);
-            } else {
-              console.log(`Successfully added slot via fallback for parent ${parentId}`);
-            }
-          }
-        } else {
-          console.log(`Successfully added slot via RPC for parent ${parentId}`);
+        
+        // 1. Fetch current slots
+        const { data: parent, error: fetchError } = await supabase
+          .from("parents")
+          .select("max_children_slots")
+          .eq("parent_id", parentId)
+          .single();
+        
+        if (fetchError) {
+          console.error("Fetch current slots failed:", fetchError);
+          return NextResponse.json({ error: "Fetch failed" }, { status: 500 });
         }
+
+        const currentSlots = parent?.max_children_slots || 0;
+        const newSlots = currentSlots + 1;
+
+        // 2. Update with new value
+        const { error: updateError } = await supabase
+          .from("parents")
+          .update({ max_children_slots: newSlots })
+          .eq("parent_id", parentId);
+        
+        if (updateError) {
+          console.error("Manual update failed:", updateError);
+          return NextResponse.json({ error: "Update failed" }, { status: 500 });
+        }
+
+        console.log(`Successfully incremented slots: ${currentSlots} -> ${newSlots} for parent ${parentId}`);
       }
     }
 
