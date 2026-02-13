@@ -234,20 +234,20 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
 
   return (
     <div 
-      className="bg-white rounded-[32px] shadow-xl shadow-gray-200/30 border-4 overflow-hidden mb-8 hover:shadow-2xl transition-all duration-300"
+      className="bg-white rounded-3xl sm:rounded-[32px] shadow-xl shadow-gray-200/30 border-4 overflow-hidden mb-4 sm:mb-8 hover:shadow-2xl transition-all duration-300"
       style={{ borderColor: categoryColor }}
     >
       {/* Post Header */}
-      <div className="p-5 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="p-4 sm:p-5 flex items-center justify-between">
+        <div className="flex items-center gap-3 sm:gap-4">
           <Link href={`/child/${post.child?.username}`} className="block relative group">
-             <div className="w-14 h-14 rounded-full p-1 bg-gradient-to-br from-brand-purple to-hot-pink group-hover:scale-105 transition-transform duration-200">
+             <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full p-1 bg-gradient-to-br from-brand-purple to-hot-pink group-hover:scale-105 transition-transform duration-200">
                <div className="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center shadow-inner relative">
                   <Image 
                     src={avatarUrl} 
                     alt={post.child?.name || "User"} 
                     fill
-                    sizes="56px"
+                    sizes="(max-width: 640px) 48px, 56px"
                     className="object-cover"
                   />
                </div>
@@ -256,7 +256,7 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
           <div>
             <div className="flex items-center gap-2 mb-0.5">
                 <Link href={`/child/${post.child?.username}`} className="hover:underline decoration-brand-purple decoration-2 underline-offset-2">
-                    <h3 className="font-nunito font-extrabold text-gray-900 text-lg leading-tight">
+                    <h3 className="font-nunito font-extrabold text-gray-900 text-base sm:text-lg leading-tight">
                       {post.child?.name}
                     </h3>
                  </Link>
@@ -265,16 +265,16 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
                  )}
              </div>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-lg bg-sunshine-yellow text-amber-900 text-[10px] font-black uppercase">
+              <span className="px-1.5 py-0.5 rounded-lg bg-sunshine-yellow text-amber-900 text-[9px] sm:text-[10px] font-black uppercase">
                 Lvl {post.child?.level || 1}
               </span>
-              <p className="text-xs font-bold text-gray-400">
+              <p className="text-[10px] sm:text-xs font-bold text-gray-400">
                 {timeAgo}
               </p>
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2 relative">
+        <div className="flex flex-col items-end gap-1.5 sm:gap-2 relative">
           {isOwner && (
             <div className="relative">
               <button 
@@ -283,11 +283,11 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
                   setIsMenuOpen(!isMenuOpen);
                 }}
                 className={cn(
-                  "p-2 rounded-full transition-all cursor-pointer active:scale-90",
+                  "p-1.5 sm:p-2 rounded-full transition-all cursor-pointer active:scale-90",
                   isMenuOpen ? "bg-brand-purple/10 text-brand-purple" : "hover:bg-gray-50 text-gray-400"
                 )}
               >
-                {isMenuOpen ? <X className="w-6 h-6" /> : <MoreHorizontal className="w-6 h-6" />}
+                {isMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <MoreHorizontal className="w-5 h-5 sm:w-6 sm:h-6" />}
               </button>
 
               {/* Bubbly Dropdown Menu */}
@@ -323,21 +323,21 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
           )}
           
           <div 
-            className="px-4 py-1.5 rounded-full text-white text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1"
+            className="px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1"
             style={{ backgroundColor: categoryColor }}
           >
-            <DynamicIcon name={post.category?.icon} className="w-3 h-3" />
+            <DynamicIcon name={post.category?.icon} className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             {post.category?.name}
           </div>
         </div>
       </div>
 
       {/* Post Content */}
-      <div className="px-6 pb-4">
+      <div className="px-4 sm:px-6 pb-3 sm:pb-4">
         {post.title && (
-            <h4 className="font-black text-xl mb-2 text-gray-900">{post.title}</h4>
+            <h4 className="font-black text-lg sm:text-xl mb-1.5 sm:mb-2 text-gray-900">{post.title}</h4>
         )}
-        <p className="text-gray-800 font-bold text-lg leading-relaxed font-nunito whitespace-pre-wrap">
+        <p className="text-gray-800 font-bold text-base sm:text-lg leading-relaxed font-nunito whitespace-pre-wrap">
           {post.content}
         </p>
       </div>
@@ -368,24 +368,24 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
       )}
 
         {/* Bottom Bar */}
-        <div className="p-5 flex items-center justify-between bg-gray-50/50 mt-2">
-          <div className="flex items-center gap-2">
+        <div className="p-4 sm:p-5 flex items-center justify-between bg-gray-50/50 mt-1 sm:mt-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button 
                 onClick={handleLike}
                 disabled={isLikeLoading}
                 className={cn(
-                    "flex items-center gap-2 px-4 py-2 bg-white rounded-full border-2 border-gray-100 hover:border-hot-pink transition-all group shadow-sm cursor-pointer active:scale-95",
+                    "flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border-2 border-gray-100 hover:border-hot-pink transition-all group shadow-sm cursor-pointer active:scale-95",
                     isLiked ? "border-hot-pink text-hot-pink" : "text-gray-600"
                 )}
             >
               <Heart 
                 className={cn(
-                    "w-5 h-5 transition-colors",
+                    "w-4 h-4 sm:w-5 sm:h-5 transition-colors",
                     isLiked ? "fill-hot-pink text-hot-pink" : "text-gray-400 group-hover:text-hot-pink"
                 )} 
               />
               <span className={cn(
-                  "text-sm font-black group-hover:text-hot-pink",
+                  "text-xs sm:text-sm font-black group-hover:text-hot-pink",
                   isLiked ? "text-hot-pink" : "text-gray-600"
               )}>
                   {likesCount || 0}
@@ -393,15 +393,15 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
             </button>
             <button 
               onClick={() => setIsCommentsOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border-2 border-gray-100 hover:border-sky-blue hover:text-sky-blue transition-all group shadow-sm cursor-pointer active:scale-95"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border-2 border-gray-100 hover:border-sky-blue hover:text-sky-blue transition-all group shadow-sm cursor-pointer active:scale-95"
             >
-              <MessageCircle className="w-5 h-5 text-gray-400 group-hover:text-sky-blue transition-colors" />
-              <span className="text-sm font-black text-gray-600 group-hover:text-sky-blue">{commentsCount || 0}</span>
+              <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-sky-blue transition-colors" />
+              <span className="text-xs sm:text-sm font-black text-gray-600 group-hover:text-sky-blue">{commentsCount || 0}</span>
             </button>
           </div>
           
-          <button className="bg-brand-purple text-white px-6 py-2.5 rounded-full font-nunito font-black text-sm shadow-lg shadow-brand-purple/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-2">
-            Share Magic <Sparkles className="w-4 h-4" />
+          <button className="bg-brand-purple text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-nunito font-black text-xs sm:text-sm shadow-lg shadow-brand-purple/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2">
+            Share Magic <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
 

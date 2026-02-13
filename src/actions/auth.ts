@@ -9,6 +9,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { clerkClient } from "@clerk/nextjs/server";
 
 const SESSION_COOKIE_NAME = "qidzo_child_token"; // Changed name to reflect it's a token
+const ADMIN_SESSION_COOKIE_NAME = "qidzo_admin_token";
 const SESSION_TTL = 60 * 60 * 24 * 365; // 1 year in seconds
 const JWT_SECRET = new TextEncoder().encode(
     process.env.JWT_SECRET || "default_secret_please_change_in_production"
@@ -160,5 +161,60 @@ export async function updateClerkUserMetadata(userId: string, firstName: string,
     } catch (error) {
         console.error("Failed to update Clerk user metadata:", error);
         return { success: false, error: JSON.stringify(error) };
+    }
+}
+
+export async function loginAdmin(formData: FormData) {
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+    const ADMIN_PASS = process.env.ADMIN_PASS;
+
+    if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
+        const sessionPayload = {
+            email,
+            role: "admin",
+            isAdmin: true
+        };
+
+        const token = await new SignJWT(sessionPayload)
+            .setProtectedHeader({ alg: 'HS256' })
+            .setIssuedAt()
+            .setExpirationTime('24h') // Admin session lasts 24 hours
+            .sign(JWT_SECRET);
+
+        const cookieStore = await cookies();
+        cookieStore.set(ADMIN_SESSION_COOKIE_NAME, token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24, // 24 hours
+            path: "/",
+        });
+
+        return { success: true };
+    }
+
+    return { success: false, error: "Invalid admin credentials" };
+}
+
+export async function logoutAdmin() {
+    const cookieStore = await cookies();
+    cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
+    return { success: true };
+}
+
+export async function getAdminSession() {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(ADMIN_SESSION_COOKIE_NAME)?.value;
+    
+    if (!token) return null;
+
+    try {
+        const { payload } = await jwtVerify(token, JWT_SECRET);
+        return payload;
+    } catch (error) {
+        return null;
     }
 }

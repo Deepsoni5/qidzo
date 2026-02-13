@@ -1,11 +1,11 @@
 "use client";
 
-import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut, Trophy, Flame, Wand2, Star, Badge, Users, UserCheck, Heart, MessageCircle, UserPlus } from "lucide-react";
+import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut, Trophy, Flame, Wand2, Star, Badge, Users, UserCheck, Heart, MessageCircle, UserPlus, Settings, Shield, FileText, RefreshCw } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { getCurrentUserRole } from "@/actions/auth";
 import { getChildSession, logoutChild } from "@/actions/auth";
 import { getChildProfile, ChildProfile } from "@/actions/profile";
@@ -14,6 +14,7 @@ import Image from "next/image";
 
 export default function Navbar() {
   const { user } = useUser();
+  const pathname = usePathname();
   const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isChild: boolean, child?: any } | null>(null);
   const [kid, setKid] = useState<any>(null);
   const [kidProfile, setKidProfile] = useState<ChildProfile | null>(null);
@@ -48,6 +49,11 @@ export default function Navbar() {
   const progress = Math.min((currentXP / nextLevelXP) * 100, 100);
   const streak = 7; // Mock streak for now
   const magics = kidProfile?.total_posts || 0;
+
+  // Don't display navbar on admin routes
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
@@ -85,14 +91,10 @@ export default function Navbar() {
           {/* Icons */}
           <div className="flex items-center gap-2 sm:gap-4">
             <SignedIn>
-                <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors relative hover:scale-110 active:scale-95 duration-200">
-                <Bell className="w-6 h-6" />
-                <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-hot-pink border-2 border-white rounded-full animate-pulse"></span>
-                </button>
                 <UserButton 
                     appearance={{
                         elements: {
-                            avatarBox: "w-10 h-10 border-2 border-white shadow-md hover:scale-105 transition-transform duration-200",
+                            avatarBox: "w-10 h-10 border-2 border-white shadow-md hover:scale-105 transition-transform duration-200 cursor-pointer",
                             userButtonPopoverFooter: "!hidden"
                         }
                     }}
@@ -235,6 +237,39 @@ export default function Navbar() {
                     </Link>
                 )}
             </SignedOut>
+
+            <Popover>
+                <PopoverTrigger asChild>
+                    <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors relative hover:scale-110 active:scale-95 duration-200 outline-none cursor-pointer">
+                        <Settings className="w-6 h-6" />
+                    </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-2 rounded-3xl border-4 border-gray-100 shadow-xl overflow-hidden mt-2 mr-4" align="end">
+                    <div className="p-3">
+                        <h4 className="font-black text-gray-900 mb-3 px-2">Settings</h4>
+                        <div className="space-y-1">
+                            <Link href="/privacy" className="flex items-center gap-3 p-2 hover:bg-sky-50 rounded-2xl transition-colors group cursor-pointer">
+                                <div className="w-8 h-8 bg-sky-100 rounded-xl flex items-center justify-center text-sky-600 group-hover:bg-sky-200 transition-colors">
+                                    <Shield className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-bold text-gray-700 group-hover:text-sky-700">Privacy Policy</span>
+                            </Link>
+                            <Link href="/terms" className="flex items-center gap-3 p-2 hover:bg-brand-purple/5 rounded-2xl transition-colors group cursor-pointer">
+                                <div className="w-8 h-8 bg-brand-purple/10 rounded-xl flex items-center justify-center text-brand-purple group-hover:bg-brand-purple/20 transition-colors">
+                                    <FileText className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-bold text-gray-700 group-hover:text-brand-purple">Terms & Conditions</span>
+                            </Link>
+                            <Link href="/refund" className="flex items-center gap-3 p-2 hover:bg-hot-pink/5 rounded-2xl transition-colors group cursor-pointer">
+                                <div className="w-8 h-8 bg-hot-pink/10 rounded-xl flex items-center justify-center text-hot-pink group-hover:bg-hot-pink/20 transition-colors">
+                                    <RefreshCw className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-bold text-gray-700 group-hover:text-hot-pink">Refund Policy</span>
+                            </Link>
+                        </div>
+                    </div>
+                </PopoverContent>
+            </Popover>
           </div>
         </div>
       </div>
