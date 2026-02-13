@@ -1,5 +1,5 @@
 "use client";
-import { Search, Bell, ArrowLeft, LayoutDashboard, UserPlus } from "lucide-react";
+import { Search, Bell, ArrowLeft, LayoutDashboard, UserPlus, HelpCircle, Mail } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import Image from "next/image";
@@ -50,6 +50,9 @@ export default function ParentNavbar() {
 
           {/* Icons */}
           <div className="flex items-center gap-2 sm:gap-4">
+            <Link href="/contact" className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors hover:scale-110 active:scale-95 duration-200" title="Contact Us">
+              <Mail className="w-6 h-6" />
+            </Link>
             <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors relative hover:scale-110 active:scale-95 duration-200">
               <Bell className="w-6 h-6" />
               <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-hot-pink border-2 border-white rounded-full animate-pulse"></span>

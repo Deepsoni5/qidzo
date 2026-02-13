@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut, Trophy, Flame, Wand2, Star, Badge, Users, UserCheck, Heart, MessageCircle, UserPlus, Settings, Shield, FileText, RefreshCw } from "lucide-react";
+import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut, Trophy, Flame, Wand2, Star, Badge, Users, UserCheck, Heart, MessageCircle, UserPlus, Shield, FileText, RefreshCw, Mail, ChevronDown } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "./ui/button";
@@ -241,12 +241,12 @@ export default function Navbar() {
             <Popover>
                 <PopoverTrigger asChild>
                     <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors relative hover:scale-110 active:scale-95 duration-200 outline-none cursor-pointer">
-                        <Settings className="w-6 h-6" />
+                        <ChevronDown className="w-6 h-6" />
                     </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-2 rounded-3xl border-4 border-gray-100 shadow-xl overflow-hidden mt-2 mr-4" align="end">
                     <div className="p-3">
-                        <h4 className="font-black text-gray-900 mb-3 px-2">Settings</h4>
+                        <h4 className="font-black text-gray-900 mb-3 px-2">Support & Info</h4>
                         <div className="space-y-1">
                             <Link href="/privacy" className="flex items-center gap-3 p-2 hover:bg-sky-50 rounded-2xl transition-colors group cursor-pointer">
                                 <div className="w-8 h-8 bg-sky-100 rounded-xl flex items-center justify-center text-sky-600 group-hover:bg-sky-200 transition-colors">
@@ -265,6 +265,12 @@ export default function Navbar() {
                                     <RefreshCw className="w-4 h-4" />
                                 </div>
                                 <span className="text-sm font-bold text-gray-700 group-hover:text-hot-pink">Refund Policy</span>
+                            </Link>
+                            <Link href="/contact" className="flex items-center gap-3 p-2 hover:bg-green-50 rounded-2xl transition-colors group cursor-pointer">
+                                <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center text-green-600 group-hover:bg-green-200 transition-colors">
+                                    <Mail className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-bold text-gray-700 group-hover:text-green-700">Contact Us</span>
                             </Link>
                         </div>
                     </div>
