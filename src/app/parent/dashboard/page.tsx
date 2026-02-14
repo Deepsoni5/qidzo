@@ -12,6 +12,7 @@ import PostsList from "@/components/parent/dashboard/PostsList";
 import PricingSection from "@/components/parent/pricing/PricingSection";
 import { Sparkles, ArrowRight, UserPlus, Baby } from "lucide-react";
 import { getParentProfile } from "@/actions/parent";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ParentDashboard() {
   const { user, isLoaded } = useUser();
@@ -96,6 +97,12 @@ export default function ParentDashboard() {
         </div>
 
         {/* Dynamic Upgrade Banner */}
+        {!parentProfile ? (
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <Skeleton className="h-28 w-full sm:w-72 rounded-3xl" />
+            <Skeleton className="h-28 flex-1 rounded-3xl" />
+          </div>
+        ) : (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           {/* Slots Counter */}
           <div className="bg-white border-2 border-gray-100 rounded-3xl p-4 flex items-center gap-4 shadow-sm">
@@ -143,6 +150,7 @@ export default function ParentDashboard() {
             <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-hot-pink/20 rounded-full blur-xl" />
           </Link>
         </div>
+        )}
       </div>
 
       <StatsCards />

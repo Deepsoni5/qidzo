@@ -75,7 +75,7 @@ export default function Navbar() {
 
 
           {/* Search */}
-          <div className="flex-1 max-w-md mx-4 sm:mx-8 hidden sm:block">
+          <div className="flex-1 max-w-full sm:max-w-md mx-3 sm:mx-8 block">
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="w-5 h-5 text-gray-400 group-focus-within:text-brand-purple transition-colors" />

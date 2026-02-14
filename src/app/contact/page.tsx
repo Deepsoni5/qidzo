@@ -101,7 +101,7 @@ export default function ContactPage() {
               className="lg:col-span-1 space-y-6"
             >
               <div className="bg-white p-8 rounded-[40px] border-4 border-gray-100 shadow-xl shadow-gray-200/50 space-y-8">
-                <h3 className="text-2xl font-black font-nunito text-gray-900">Madhyavarti Solutions</h3>
+                <h3 className="text-2xl font-black font-nunito text-gray-900">Qidzo</h3>
                 
                 <div className="space-y-6">
                   <div className="flex items-start gap-4">
@@ -110,7 +110,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="font-black text-gray-900">Email Us</p>
-                      <p className="text-gray-500 font-bold text-sm">wecare@madhyavarti.com</p>
+                      <p className="text-gray-500 font-bold text-sm">wecare@qidzo.com</p>
                     </div>
                   </div>
 

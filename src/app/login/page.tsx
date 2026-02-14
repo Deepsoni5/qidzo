@@ -18,8 +18,8 @@ export default function KidsLoginPage() {
     try {
       const result = await loginChild(formData);
       if (result.success) {
-        toast.success("Woohoo! You're in! 🚀", {
-          description: "Get ready for some serious fun!",
+        toast.success("You're in! 🎉", {
+          description: "Be kind, stay safe, and share only kid‑friendly content. No adult content. Your activity is monitored for safety.",
           style: {
             background: '#F0FDF4', // green-50
             border: '2px solid #22C55E', // green-500
@@ -27,7 +27,7 @@ export default function KidsLoginPage() {
             fontSize: '1.1rem',
             borderRadius: '16px',
           },
-          icon: <span className="text-2xl">🎉</span>,
+          icon: <span className="text-2xl">🛡️</span>,
           duration: 3000,
         });
         

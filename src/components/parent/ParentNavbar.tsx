@@ -13,7 +13,7 @@ export default function ParentNavbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center gap-6">
-            <Link href="/parent/dashboard" className="flex-shrink-0 flex items-center gap-3 relative">
+            <Link href="/" className="flex-shrink-0 flex items-center gap-3 relative">
                  <Image 
                      src="/f_q_logo.png" 
                      alt="Qidzo Logo" 

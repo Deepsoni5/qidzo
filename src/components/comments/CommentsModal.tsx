@@ -11,6 +11,8 @@ import { formatDistanceToNow } from "date-fns";
 import { Send, Trash2, Loader2, Sparkles } from "lucide-react";
 import { getComments, addComment, deleteComment } from "@/actions/comments";
 import { useUser } from "@clerk/nextjs";
+import { getCurrentUserRole } from "@/actions/auth";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Comment {
   id: string;
@@ -55,6 +57,15 @@ export default function CommentsModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useUser(); // For optimistic UI and checks
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [isParent, setIsParent] = useState(false);
+
+  useEffect(() => {
+    const initRole = async () => {
+      const role = await getCurrentUserRole();
+      setIsParent(!!role?.isParent && !role?.isChild);
+    };
+    initRole();
+  }, []);
 
   // Fetch comments when modal opens
   useEffect(() => {
@@ -82,6 +93,22 @@ export default function CommentsModal({
   };
 
   const handleSubmit = async () => {
+    if (isParent) {
+      toast("Parents Mode! 🛡️", {
+        description: "Parents cannot comment. Let kids be the creators! 🎨",
+        duration: 4000,
+        style: {
+          background: '#FDF2F8',
+          border: '2px solid #EC4899',
+          color: '#831843',
+          fontSize: '16px',
+          fontFamily: 'Nunito, sans-serif',
+          fontWeight: 'bold'
+        },
+        className: "rounded-2xl shadow-xl"
+      });
+      return;
+    }
     if (!newComment.trim()) return;
 
     const content = newComment;
@@ -269,22 +296,49 @@ export default function CommentsModal({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
+                  if (isParent) {
+                    toast("Parents Mode! 🛡️", {
+                      description: "Parents cannot comment. Let kids be the creators! 🎨",
+                      duration: 4000,
+                      style: {
+                        background: '#FDF2F8',
+                        border: '2px solid #EC4899',
+                        color: '#831843',
+                        fontSize: '16px',
+                        fontFamily: 'Nunito, sans-serif',
+                        fontWeight: 'bold'
+                      },
+                      className: "rounded-2xl shadow-xl"
+                    });
+                    return;
+                  }
                   handleSubmit();
                 }
               }}
+              readOnly={isParent}
+              title={isParent ? "Parents cannot comment. Let kids be the creators! 🎨" : undefined}
             />
-            <Button 
-              size="icon" 
-              onClick={handleSubmit} 
-              disabled={!newComment.trim() || isSubmitting}
-              className="absolute right-2 bottom-2 h-8 w-8 rounded-xl bg-gradient-to-br from-brand-purple to-hot-pink hover:opacity-90 transition-opacity shadow-md disabled:opacity-50 disabled:shadow-none cursor-pointer"
-            >
-              {isSubmitting ? (
-                <Loader2 className="w-4 h-4 animate-spin text-white" />
-              ) : (
-                <Send className="w-4 h-4 text-white ml-0.5" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  size="icon" 
+                  onClick={handleSubmit} 
+                  disabled={!newComment.trim() || isSubmitting || isParent}
+                  className="absolute right-2 bottom-2 h-8 w-8 rounded-xl bg-gradient-to-br from-brand-purple to-hot-pink hover:opacity-90 transition-opacity shadow-md disabled:opacity-50 disabled:shadow-none cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  ) : (
+                    <Send className="w-4 h-4 text-white ml-0.5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              {isParent && (
+                <TooltipContent side="top" className="text-center font-bold">
+                  Parents cannot comment.<br/>Let kids be the creators! 🎨
+                </TooltipContent>
               )}
-            </Button>
+            </Tooltip>
           </div>
           <p className="text-[10px] text-gray-400 mt-2 text-center font-medium flex items-center justify-center gap-1">
             <Sparkles className="w-3 h-3 text-yellow-400" />

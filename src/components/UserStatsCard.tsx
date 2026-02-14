@@ -47,7 +47,7 @@ export function UserStatsCard({ initialProfile }: UserStatsCardProps) {
                 🔐
             </div>
             <h3 className="font-nunito font-black text-xl text-gray-900 mb-2 leading-tight">
-                Login To View<br/>Your Stats 📊
+                Login with Kids account<br/>to view stats 📊
             </h3>
             <p className="text-sm text-gray-500 font-bold mb-6">
                 Unlock your magic potential!

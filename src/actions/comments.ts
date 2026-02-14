@@ -46,6 +46,11 @@ export async function addComment(postId: string, content: string) {
     if (!userType) {
       return { success: false, error: "Must be logged in to comment." };
     }
+    
+    // Only kids can comment
+    if (userType === 'PARENT') {
+      return { success: false, error: "Only kids can comment. Parents can view but not comment." };
+    }
 
     // 2. Validate Content
     if (!content || content.length === 0 || content.length > 500) {
