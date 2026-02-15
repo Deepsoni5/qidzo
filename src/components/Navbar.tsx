@@ -11,6 +11,7 @@ import { getChildSession, logoutChild } from "@/actions/auth";
 import { getChildProfile, ChildProfile } from "@/actions/profile";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import Image from "next/image";
+import type { GlobalSearchResult } from "@/actions/search";
 
 export default function Navbar() {
   const { user } = useUser();
@@ -19,6 +20,11 @@ export default function Navbar() {
   const [kid, setKid] = useState<any>(null);
   const [kidProfile, setKidProfile] = useState<ChildProfile | null>(null);
   const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<GlobalSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -40,6 +46,30 @@ export default function Navbar() {
     checkKid();
   }, [user]);
 
+  useEffect(() => {
+    const q = searchTerm.trim();
+    if (!q) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timeout = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        setSearchResults(data.results || []);
+        setShowSearchResults(true);
+      } catch (e) {
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [searchTerm]);
   
 
   // Derived stats
@@ -66,25 +96,135 @@ export default function Navbar() {
                 alt="Qidzo Logo" 
                 width={220} 
                 height={88} 
-                className="h-[88px] w-auto object-contain hover:scale-105 transition-transform absolute top-1/2 -translate-y-1/2"
+                className="h-[64px] sm:h-[88px] w-auto object-contain hover:scale-105 transition-transform absolute top-1/2 -translate-y-1/2"
                 priority
               />
               {/* Invisible spacer to maintain layout flow if needed */}
-              <div className="h-16 w-[180px]" />
+              <div className="h-16 w-[140px] sm:w-[180px]" />
             </Link>
 
 
           {/* Search */}
-          <div className="flex-1 max-w-full sm:max-w-md mx-3 sm:mx-8 block">
+          <div className="flex-1 max-w-xs xs:max-w-sm sm:max-w-md mx-2 sm:mx-8 block">
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="w-5 h-5 text-gray-400 group-focus-within:text-brand-purple transition-colors" />
               </div>
               <input
                 type="text"
-                className="block w-full pl-11 pr-4 py-2.5 border-2 border-brand-purple bg-gray-50 rounded-full text-sm placeholder-gray-400 focus:outline-none focus:bg-white focus:border-brand-purple focus:ring-4 focus:ring-brand-purple/10 transition-all duration-300 font-bold text-gray-700 shadow-sm group-hover:shadow-md"
-                placeholder="Search for magic... ✨"
+                value={searchTerm}
+                onChange={(e) => {
+                  setIsNavigating(false);
+                  setSearchTerm(e.target.value);
+                }}
+                onFocus={() => searchResults.length > 0 && setShowSearchResults(true)}
+                className="block w-full pl-11 pr-10 py-2.5 border-2 border-brand-purple bg-gray-50 rounded-full text-sm placeholder-gray-400 focus:outline-none focus:bg-white focus:border-brand-purple focus:ring-4 focus:ring-brand-purple/10 transition-all duration-300 font-bold text-gray-700 shadow-sm group-hover:shadow-md"
+                placeholder="Search kids & posts... ✨"
               />
+
+              {isNavigating && (
+                <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                  <RefreshCw className="w-4 h-4 text-brand-purple animate-spin" />
+                </div>
+              )}
+
+              {showSearchResults && (searchResults.length > 0 || isSearching) && (
+                <div className="absolute mt-3 left-0 right-0 bg-white rounded-3xl shadow-2xl border-2 border-gray-100 overflow-hidden z-40">
+                  <div className="max-h-80 overflow-y-auto beautiful-scrollbar">
+                    {isSearching && (
+                      <div className="px-4 py-3 text-xs font-bold text-gray-400">
+                        Searching for “{searchTerm.trim()}”...
+                      </div>
+                    )}
+                    {!isSearching && searchResults.length === 0 && (
+                      <div className="px-4 py-6 text-center text-xs font-bold text-gray-400">
+                        No magic found. Try another word!
+                      </div>
+                    )}
+                    {!isSearching && searchResults.length > 0 && (
+                      <>
+                        {searchResults
+                          .filter((r) => r.type === "child")
+                          .map((child) => (
+                            <button
+                              key={`child-${child.id}`}
+                              onClick={() => {
+                                setIsNavigating(true);
+                                setShowSearchResults(false);
+                                setSearchTerm("");
+                                router.push(`/child/${child.username}`);
+                              }}
+                              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-all cursor-pointer"
+                            >
+                              <div className="w-10 h-10 rounded-full bg-brand-purple/10 flex items-center justify-center overflow-hidden">
+                                {child.avatar ? (
+                                  <Image
+                                    src={child.avatar}
+                                    alt={child.name}
+                                    width={40}
+                                    height={40}
+                                    className="object-cover w-full h-full"
+                                  />
+                                ) : (
+                                  <span className="font-black text-brand-purple text-sm">
+                                    {child.name?.[0] || "K"}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex-1 text-left">
+                                <p className="text-sm font-black text-gray-900 leading-tight">
+                                  {child.name}
+                                </p>
+                                <p className="text-[11px] font-bold text-gray-400">
+                                  @{child.username} · Level {child.level} · {child.total_posts} posts
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+
+                        {searchResults.some((r) => r.type === "post") && (
+                          <div className="px-4 pt-2 pb-1 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                            Posts
+                          </div>
+                        )}
+
+                        {searchResults
+                          .filter((r) => r.type === "post")
+                          .map((post) => (
+                            <button
+                              key={`post-${post.id}`}
+                              onClick={() => {
+                                setIsNavigating(true);
+                                setShowSearchResults(false);
+                                setSearchTerm("");
+                                if (post.child?.username) {
+                                  router.push(`/child/${post.child.username}?postId=${post.post_id}`);
+                                } else {
+                                  router.push("/");
+                                }
+                              }}
+                              className="w-full px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition-all cursor-pointer"
+                            >
+                              <div className="w-9 h-9 rounded-2xl bg-sky-blue/10 flex items-center justify-center text-sky-blue flex-shrink-0">
+                                <MessageCircle className="w-4 h-4" />
+                              </div>
+                              <div className="flex-1 text-left">
+                                <p className="text-sm font-black text-gray-900 leading-snug line-clamp-2">
+                                  {post.title || "Untitled Post"}
+                                </p>
+                                <p className="text-[11px] font-bold text-gray-400 line-clamp-1 mt-0.5">
+                                  {post.child?.name && post.child?.username
+                                    ? `${post.child.name} · @${post.child.username}`
+                                    : "Qidzo Post"}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

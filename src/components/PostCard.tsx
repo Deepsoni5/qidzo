@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Trophy, MoreHorizontal, Sparkles, Pencil, Trash2, X, AlertCircle } from "lucide-react";
+import { Heart, MessageCircle, Trophy, MoreHorizontal, Sparkles, Pencil, Trash2, X, AlertCircle, Link2, Share2 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -73,6 +73,7 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   
   // Edit form state
   const [editTitle, setEditTitle] = useState(post.title || "");
@@ -400,10 +401,124 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
             </button>
           </div>
           
-          <button className="bg-brand-purple text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-nunito font-black text-xs sm:text-sm shadow-lg shadow-brand-purple/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2">
+          <button
+            onClick={() => setIsShareOpen(true)}
+            className="bg-brand-purple text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-nunito font-black text-xs sm:text-sm shadow-lg shadow-brand-purple/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2"
+          >
             Share Magic <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
+
+      {isShareOpen && (
+        <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center p-4 sm:p-6">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setIsShareOpen(false)}
+          />
+          <div className="relative w-full max-w-sm bg-white rounded-[28px] shadow-2xl border-4 border-white overflow-hidden animate-in slide-in-from-bottom-8 zoom-in duration-300">
+            <div className="px-5 pt-4 pb-3 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-black text-hot-pink uppercase tracking-[0.18em] mb-0.5">
+                  Share Magic
+                </p>
+                <h3 className="text-sm font-black text-gray-900 font-nunito">
+                  Send this post to your friends ✨
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsShareOpen(false)}
+                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  onClick={async () => {
+                    const origin =
+                      typeof window !== "undefined" ? window.location.origin : "";
+                    const shareUrl = `${origin}/child/${post.child.username}?postId=${post.post_id}`;
+                    const text = `${post.child.name}'s magic on Qidzo ✨`;
+                    const url = `https://wa.me/?text=${encodeURIComponent(
+                      `${text} ${shareUrl}`
+                    )}`;
+                    window.open(url, "_blank", "noopener,noreferrer");
+                  }}
+                  className="flex flex-col items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-2xl py-3 cursor-pointer transition-all active:scale-95"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  <span className="text-[11px] font-black uppercase tracking-wide">
+                    WhatsApp
+                  </span>
+                </button>
+
+                <button
+                  onClick={async () => {
+                    const origin =
+                      typeof window !== "undefined" ? window.location.origin : "";
+                    const shareUrl = `${origin}/child/${post.child.username}?postId=${post.post_id}`;
+                    await navigator.clipboard.writeText(shareUrl);
+                    toast.success("Link copied for Instagram 🎨", {
+                      description: "Paste it in your story or bio to share the magic!",
+                    });
+                  }}
+                  className="flex flex-col items-center gap-1.5 bg-gradient-to-br from-hot-pink/10 to-sunshine-yellow/10 hover:from-hot-pink/20 hover:to-sunshine-yellow/20 text-hot-pink rounded-2xl py-3 cursor-pointer transition-all active:scale-95"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  <span className="text-[11px] font-black uppercase tracking-wide">
+                    Instagram
+                  </span>
+                </button>
+
+                <button
+                  onClick={async () => {
+                    const origin =
+                      typeof window !== "undefined" ? window.location.origin : "";
+                    const shareUrl = `${origin}/child/${post.child.username}?postId=${post.post_id}`;
+                    await navigator.clipboard.writeText(shareUrl);
+                    toast.success("Magic link copied! ✨");
+                  }}
+                  className="flex flex-col items-center gap-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl py-3 cursor-pointer transition-all active:scale-95"
+                >
+                  <Link2 className="w-5 h-5" />
+                  <span className="text-[11px] font-black uppercase tracking-wide">
+                    Copy Link
+                  </span>
+                </button>
+              </div>
+
+              <button
+                onClick={async () => {
+                  const origin =
+                    typeof window !== "undefined" ? window.location.origin : "";
+                  const shareUrl = `${origin}/child/${post.child.username}?postId=${post.post_id}`;
+                  const text = `${post.child.name}'s magic on Qidzo ✨`;
+
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: text,
+                        text,
+                        url: shareUrl,
+                      });
+                    } catch {
+                    }
+                  } else {
+                    await navigator.clipboard.writeText(shareUrl);
+                    toast.success("Magic link copied! ✨");
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-black text-white font-black text-sm shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>More ways to share</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <CommentsModal 
         postId={post.post_id} 

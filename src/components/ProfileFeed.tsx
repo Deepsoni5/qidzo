@@ -10,20 +10,22 @@ import { getCurrentUserRole } from "@/actions/auth";
 interface ProfileFeedProps {
   posts: FeedPost[];
   profileName: string;
+  highlightPostId?: string;
 }
 
 type TabType = "all" | "photos" | "videos";
 
-export default function ProfileFeed({ posts, profileName }: ProfileFeedProps) {
+export default function ProfileFeed({ posts, profileName, highlightPostId }: ProfileFeedProps) {
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
       const role = await getCurrentUserRole();
-      if (role.isChild && role.child) {
-        setCurrentUserId(role.child.id);
-      }
+      const child = role.child as any;
+      if (role.isChild && child && child.id) {
+        setCurrentUserId(String(child.id));
+      } 
     };
     fetchUser();
   }, []);
@@ -34,6 +36,25 @@ export default function ProfileFeed({ posts, profileName }: ProfileFeedProps) {
     if (activeTab === "videos") return post.media_type === "VIDEO";
     return true;
   });
+
+  const orderedPosts =
+    highlightPostId
+      ? [...filteredPosts].sort((a, b) => {
+          if (a.post_id === highlightPostId) return -1;
+          if (b.post_id === highlightPostId) return 1;
+          return 0;
+        })
+      : filteredPosts;
+
+  useEffect(() => {
+    if (!highlightPostId) return;
+    const el = document.getElementById(`post-${highlightPostId}`);
+    if (el) {
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 200);
+    }
+  }, [highlightPostId, orderedPosts.length]);
 
   return (
     <div>
@@ -77,10 +98,21 @@ export default function ProfileFeed({ posts, profileName }: ProfileFeedProps) {
         </button>
       </div>
 
-      {/* Posts Feed */}
       <div className="space-y-6">
-        {filteredPosts.length > 0 ? (
-          filteredPosts.map((post) => <PostCard key={post.id} post={post} currentUserId={currentUserId} />)
+        {orderedPosts.length > 0 ? (
+          orderedPosts.map((post) => (
+            <div
+              key={post.id}
+              id={`post-${post.post_id}`}
+              className={cn(
+                highlightPostId === post.post_id
+                  ? "ring-4 ring-brand-purple/40 rounded-[32px] scale-[1.01] transition-all duration-500"
+                  : ""
+              )}
+            >
+              <PostCard post={post} currentUserId={currentUserId} />
+            </div>
+          ))
         ) : (
           <div className="text-center py-12 bg-white rounded-[32px] border-4 border-dashed border-gray-200">
             <div className="text-6xl mb-4 grayscale opacity-50">
@@ -96,7 +128,7 @@ export default function ProfileFeed({ posts, profileName }: ProfileFeedProps) {
         )}
       </div>
 
-      {filteredPosts.length > 0 && (
+      {orderedPosts.length > 0 && (
         <div className="text-center py-8 text-gray-400 font-bold font-nunito">
           That's all the magic for now! ✨
         </div>

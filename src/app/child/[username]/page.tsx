@@ -14,6 +14,7 @@ import { FollowButton } from "@/components/FollowButton";
 
 interface PageProps {
   params: Promise<{ username: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -32,8 +33,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function ChildProfilePage({ params }: PageProps) {
+export default async function ChildProfilePage({ params, searchParams }: PageProps) {
   const { username } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const profile = await getChildProfile(username);
   const userRole = await getCurrentUserRole();
 
@@ -42,6 +44,11 @@ export default async function ChildProfilePage({ params }: PageProps) {
   }
 
   const posts = await getChildPosts(profile.child_id);
+  const rawPostId =
+    resolvedSearchParams && typeof resolvedSearchParams.postId === "string"
+      ? (resolvedSearchParams.postId as string)
+      : undefined;
+  const highlightPostId = rawPostId;
 
   // Calculate stats
   const totalLikes = posts.reduce((acc, post) => acc + (post.likes_count || 0), 0);
@@ -165,7 +172,7 @@ export default async function ChildProfilePage({ params }: PageProps) {
               </div>
 
               {/* Client-side Feed with Tabs */}
-              <ProfileFeed posts={posts} profileName={profile.name} />
+              <ProfileFeed posts={posts} profileName={profile.name} highlightPostId={highlightPostId} />
 
             </div>
 

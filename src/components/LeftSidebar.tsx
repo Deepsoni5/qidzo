@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
@@ -163,8 +163,8 @@ export default function LeftSidebar() {
                     onClick={handleCreatePost}
                     className="group relative w-full overflow-hidden bg-gradient-to-r from-brand-purple to-purple-600 text-white font-black text-base py-3.5 rounded-2xl shadow-xl shadow-brand-purple/25 hover:shadow-2xl hover:shadow-brand-purple/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer border-b-4 border-purple-800/20"
                 >
-                    <Plus className="w-6 h-6 stroke-[3px] group-hover:rotate-90 transition-transform duration-300" />
-                    <span className="relative">Create Post</span>
+                    <Sparkles className="w-6 h-6 text-sunshine-yellow fill-sunshine-yellow group-hover:rotate-6 transition-transform duration-300" />
+                    <span className="relative">Create Magic</span>
                 </button>
             </div>
         </div>

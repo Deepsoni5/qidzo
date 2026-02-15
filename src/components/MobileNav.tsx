@@ -1,6 +1,6 @@
 "use client";
-
-import { Home, Plus, Trophy, User, Users, LayoutDashboard, MonitorPlay, Gamepad2 } from "lucide-react";
+ 
+import { Home, Plus, Trophy, User, Users, LayoutDashboard, MonitorPlay, Gamepad2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
@@ -120,7 +120,7 @@ export default function MobileNav() {
               onClick={handleCreatePost}
               className="w-14 h-14 bg-brand-purple rounded-2xl flex items-center justify-center text-white shadow-xl shadow-brand-purple/40 ring-4 ring-white active:scale-95 transition-transform border-b-4 border-black/10"
           >
-            <Plus className="w-8 h-8 stroke-[3px]" />
+            <Sparkles className="w-8 h-8 text-white" />
           </button>
         </div>
 
