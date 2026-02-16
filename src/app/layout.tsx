@@ -44,8 +44,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://qidzo.com"),
-  title: "Qidzo | Kid's Social Learning & Fun Community",
-  description: "Join Qidzo, the safest and most fun social learning platform for kids! Share drawings, science experiments, and stories while earning magic badges.",
+  title: "Qidzo | The Global Fun & Safe Social Learning Community for Kids",
+  description: "Join Qidzo, the safest and most fun global social learning platform for kids! Share drawings, science experiments, and stories while earning magic badges.",
   keywords: [
     "kids social media",
     "safe learning for kids",
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
   robots: "index, follow",
   
   openGraph: {
-    title: "Qidzo | The Fun & Safe Social Learning Community for Kids",
+    title: "Qidzo | The Global Fun & Safe Social Learning Community for Kids",
     description: "The playful place where kids share, learn, and grow together! Join challenges, earn badges, and explore a world of creativity.",
     url: "https://qidzo.com",
     siteName: "Qidzo",

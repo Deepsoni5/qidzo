@@ -19,6 +19,7 @@ import * as z from "zod";
 import { toast } from "sonner";
 import { AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
+import { supabase } from "@/lib/supabaseClient";
 
 const contactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -45,9 +46,18 @@ export default function ContactPage() {
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Form data:", data);
+      const { error } = await supabase.from("contact_messages").insert({
+        name: data.name,
+        email: data.email,
+        subject: data.subject,
+        message: data.message,
+        source: "web_contact_page",
+      });
+
+      if (error) {
+        throw error;
+      }
+
       setIsSuccess(true);
       toast.success("Message sent successfully! 🚀");
       reset();
