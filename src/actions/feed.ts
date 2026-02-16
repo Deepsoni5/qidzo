@@ -23,6 +23,7 @@ export interface FeedPost {
     avatar: string | null;
     age: number;
     level: number;
+    country?: string | null;
   };
   category: {
     name: string;
@@ -55,7 +56,8 @@ export async function getFeedPosts(page: number = 1, limit: number = 10, categor
           username,
           avatar,
           age,
-          level
+          level,
+          country
         ),
         category:categories (
           name,
