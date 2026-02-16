@@ -99,8 +99,8 @@ export default function ParentDashboard() {
         {/* Dynamic Upgrade Banner */}
         {!parentProfile ? (
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-            <Skeleton className="h-28 w-full sm:w-72 rounded-3xl" />
-            <Skeleton className="h-28 flex-1 rounded-3xl" />
+            <Skeleton className="h-28 w-full sm:w-72 rounded-3xl bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse border-2 border-gray-200" />
+            <Skeleton className="h-28 flex-1 rounded-3xl bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse border-2 border-gray-200" />
           </div>
         ) : (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
