@@ -48,6 +48,7 @@ export default function AdminCouponsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [coupons, setCoupons] = useState<CouponRow[]>([]);
   const [loadingCoupons, setLoadingCoupons] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCoupons();
@@ -68,6 +69,27 @@ export default function AdminCouponsPage() {
       toast.error("Failed to load coupons: " + error.message);
     } finally {
       setLoadingCoupons(false);
+    }
+  };
+
+  const handleDeleteCoupon = async (couponId: string) => {
+    if (!window.confirm("Delete this coupon permanently?")) return;
+
+    setDeletingId(couponId);
+    try {
+      const { error } = await supabase
+        .from("coupon_codes")
+        .delete()
+        .eq("id", couponId);
+
+      if (error) throw error;
+
+      setCoupons((prev) => prev.filter((c) => c.id !== couponId));
+      toast.success("Coupon deleted successfully.");
+    } catch (error: any) {
+      toast.error("Failed to delete coupon: " + error.message);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -373,21 +395,31 @@ export default function AdminCouponsPage() {
                             {TARGET_LABELS[coupon.target_plan]}
                           </span>
                         </div>
-                        <span
-                          className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                            !coupon.is_active
-                              ? "bg-gray-200 text-gray-600"
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                              !coupon.is_active
+                                ? "bg-gray-200 text-gray-600"
+                                : isExpired
+                                ? "bg-red-50 text-red-600"
+                                : "bg-emerald-50 text-emerald-700"
+                            }`}
+                          >
+                            {!coupon.is_active
+                              ? "INACTIVE"
                               : isExpired
-                              ? "bg-red-50 text-red-600"
-                              : "bg-emerald-50 text-emerald-700"
-                          }`}
-                        >
-                          {!coupon.is_active
-                            ? "INACTIVE"
-                            : isExpired
-                            ? "EXPIRED"
-                            : "ACTIVE"}
-                        </span>
+                              ? "EXPIRED"
+                              : "ACTIVE"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCoupon(coupon.id)}
+                            disabled={deletingId === coupon.id}
+                            className="text-[10px] font-black px-2 py-0.5 rounded-full border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-60 cursor-pointer"
+                          >
+                            {deletingId === coupon.id ? "Deleting..." : "Delete"}
+                          </button>
+                        </div>
                       </div>
 
                       {coupon.description && (
@@ -423,4 +455,3 @@ export default function AdminCouponsPage() {
     </div>
   );
 }
-
