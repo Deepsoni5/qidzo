@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Trophy, MoreHorizontal, Sparkles, Pencil, Trash2, X, AlertCircle, Link2, Share2 } from "lucide-react";
+import { Heart, MessageCircle, Trophy, MoreHorizontal, Sparkles, Pencil, Trash2, X, AlertCircle, Link2, Share2, Globe2 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,6 +33,7 @@ interface FeedPost {
     avatar: string | null;
     age: number;
     level: number;
+    country?: string | null;
   };
   category: {
     name: string;
@@ -266,6 +267,12 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
                  )}
              </div>
             <div className="flex items-center gap-2">
+              {post.child?.country && (
+                <span className="px-2 py-0.5 rounded-lg bg-gray-100 text-gray-700 text-[9px] sm:text-[10px] font-black border border-gray-200 inline-flex items-center gap-1">
+                  <Globe2 className="w-3 h-3" />
+                  {post.child.country}
+                </span>
+              )}
               <span className="px-1.5 py-0.5 rounded-lg bg-sunshine-yellow text-amber-900 text-[9px] sm:text-[10px] font-black uppercase">
                 Lvl {post.child?.level || 1}
               </span>

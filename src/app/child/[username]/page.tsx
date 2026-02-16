@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Trophy, ArrowLeft, Users, UserCheck } from "lucide-react";
+import { Trophy, ArrowLeft, Users, UserCheck, Globe2 } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
 import LeftSidebar from "@/components/LeftSidebar";
@@ -128,6 +128,12 @@ export default async function ChildProfilePage({ params, searchParams }: PagePro
                         <div>
                             <h1 className="text-3xl font-black text-gray-900 font-nunito mb-1 tracking-tight">{profile.name}</h1>
                             <p className="text-gray-400 font-bold text-lg">@{profile.username}</p>
+                            {profile.country && (
+                              <p className="mt-1 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-black border border-gray-200">
+                                <Globe2 className="w-3.5 h-3.5" />
+                                <span>{profile.country}</span>
+                              </p>
+                            )}
                         </div>
                         
                         {/* Action Buttons */}

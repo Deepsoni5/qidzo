@@ -10,7 +10,8 @@ import confetti from "canvas-confetti";
 import * as LucideIcons from "lucide-react";
 import { 
   User, Calendar, Upload, Lock, Heart, Check, ChevronRight, 
-  ChevronLeft, Loader2, RefreshCw, Eye, EyeOff, X, AlertCircle
+  ChevronLeft, Loader2, RefreshCw, Eye, EyeOff, X, AlertCircle,
+  Globe2, MapPin, ChevronDown
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,6 +30,152 @@ interface Category {
   color: string;
 }
 
+type CountryOption = {
+  code: string;
+  name: string;
+  flag: string;
+};
+
+const COUNTRIES: CountryOption[] = [
+  { code: "IN", name: "India", flag: "🇮🇳" },
+  { code: "US", name: "United States", flag: "🇺🇸" },
+  { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
+  { code: "CA", name: "Canada", flag: "🇨🇦" },
+  { code: "AU", name: "Australia", flag: "🇦🇺" },
+  { code: "NZ", name: "New Zealand", flag: "🇳🇿" },
+  { code: "SG", name: "Singapore", flag: "🇸🇬" },
+  { code: "AE", name: "United Arab Emirates", flag: "🇦🇪" },
+  { code: "SA", name: "Saudi Arabia", flag: "🇸🇦" },
+  { code: "QA", name: "Qatar", flag: "🇶🇦" },
+  { code: "KW", name: "Kuwait", flag: "🇰🇼" },
+  { code: "OM", name: "Oman", flag: "🇴🇲" },
+  { code: "BH", name: "Bahrain", flag: "🇧🇭" },
+  { code: "PK", name: "Pakistan", flag: "🇵🇰" },
+  { code: "BD", name: "Bangladesh", flag: "🇧🇩" },
+  { code: "LK", name: "Sri Lanka", flag: "🇱🇰" },
+  { code: "NP", name: "Nepal", flag: "🇳🇵" },
+  { code: "BT", name: "Bhutan", flag: "🇧🇹" },
+  { code: "AF", name: "Afghanistan", flag: "🇦🇫" },
+  { code: "CN", name: "China", flag: "🇨🇳" },
+  { code: "JP", name: "Japan", flag: "🇯🇵" },
+  { code: "KR", name: "South Korea", flag: "🇰🇷" },
+  { code: "TH", name: "Thailand", flag: "🇹🇭" },
+  { code: "VN", name: "Vietnam", flag: "🇻🇳" },
+  { code: "MY", name: "Malaysia", flag: "🇲🇾" },
+  { code: "ID", name: "Indonesia", flag: "🇮🇩" },
+  { code: "PH", name: "Philippines", flag: "🇵🇭" },
+  { code: "KH", name: "Cambodia", flag: "🇰🇭" },
+  { code: "LA", name: "Laos", flag: "🇱🇦" },
+  { code: "MM", name: "Myanmar", flag: "🇲🇲" },
+  { code: "HK", name: "Hong Kong", flag: "🇭🇰" },
+  { code: "TW", name: "Taiwan", flag: "🇹🇼" },
+  { code: "TR", name: "Turkey", flag: "🇹🇷" },
+  { code: "IL", name: "Israel", flag: "🇮🇱" },
+  { code: "EG", name: "Egypt", flag: "🇪🇬" },
+  { code: "ZA", name: "South Africa", flag: "🇿🇦" },
+  { code: "NG", name: "Nigeria", flag: "🇳🇬" },
+  { code: "KE", name: "Kenya", flag: "🇰🇪" },
+  { code: "GH", name: "Ghana", flag: "🇬🇭" },
+  { code: "ET", name: "Ethiopia", flag: "🇪🇹" },
+  { code: "FR", name: "France", flag: "🇫🇷" },
+  { code: "DE", name: "Germany", flag: "🇩🇪" },
+  { code: "ES", name: "Spain", flag: "🇪🇸" },
+  { code: "IT", name: "Italy", flag: "🇮🇹" },
+  { code: "NL", name: "Netherlands", flag: "🇳🇱" },
+  { code: "BE", name: "Belgium", flag: "🇧🇪" },
+  { code: "CH", name: "Switzerland", flag: "🇨🇭" },
+  { code: "SE", name: "Sweden", flag: "🇸🇪" },
+  { code: "NO", name: "Norway", flag: "🇳🇴" },
+  { code: "DK", name: "Denmark", flag: "🇩🇰" },
+  { code: "FI", name: "Finland", flag: "🇫🇮" },
+  { code: "IE", name: "Ireland", flag: "🇮🇪" },
+  { code: "PT", name: "Portugal", flag: "🇵🇹" },
+  { code: "GR", name: "Greece", flag: "🇬🇷" },
+  { code: "RU", name: "Russia", flag: "🇷🇺" },
+  { code: "BR", name: "Brazil", flag: "🇧🇷" },
+  { code: "AR", name: "Argentina", flag: "🇦🇷" },
+  { code: "CL", name: "Chile", flag: "🇨🇱" },
+  { code: "CO", name: "Colombia", flag: "🇨🇴" },
+  { code: "PE", name: "Peru", flag: "🇵🇪" },
+  { code: "MX", name: "Mexico", flag: "🇲🇽" },
+  { code: "UY", name: "Uruguay", flag: "🇺🇾" },
+  { code: "VE", name: "Venezuela", flag: "🇻🇪" },
+  { code: "PL", name: "Poland", flag: "🇵🇱" },
+  { code: "CZ", name: "Czech Republic", flag: "🇨🇿" },
+  { code: "AT", name: "Austria", flag: "🇦🇹" },
+  { code: "HU", name: "Hungary", flag: "🇭🇺" },
+  { code: "RO", name: "Romania", flag: "🇷🇴" },
+  { code: "BG", name: "Bulgaria", flag: "🇧🇬" },
+  { code: "SK", name: "Slovakia", flag: "🇸🇰" },
+  { code: "SI", name: "Slovenia", flag: "🇸🇮" },
+  { code: "HR", name: "Croatia", flag: "🇭🇷" },
+  { code: "RS", name: "Serbia", flag: "🇷🇸" },
+  { code: "UA", name: "Ukraine", flag: "🇺🇦" },
+  { code: "BY", name: "Belarus", flag: "🇧🇾" },
+  { code: "KZ", name: "Kazakhstan", flag: "🇰🇿" },
+  { code: "UZ", name: "Uzbekistan", flag: "🇺🇿" },
+  { code: "GE", name: "Georgia", flag: "🇬🇪" },
+  { code: "AM", name: "Armenia", flag: "🇦🇲" },
+  { code: "AZ", name: "Azerbaijan", flag: "🇦🇿" },
+  { code: "TN", name: "Tunisia", flag: "🇹🇳" },
+  { code: "MA", name: "Morocco", flag: "🇲🇦" },
+  { code: "DZ", name: "Algeria", flag: "🇩🇿" },
+  { code: "SN", name: "Senegal", flag: "🇸🇳" },
+  { code: "CI", name: "Côte d'Ivoire", flag: "🇨🇮" },
+  { code: "CM", name: "Cameroon", flag: "🇨🇲" },
+  { code: "UG", name: "Uganda", flag: "🇺🇬" },
+  { code: "TZ", name: "Tanzania", flag: "🇹🇿" },
+  { code: "ZW", name: "Zimbabwe", flag: "🇿🇼" },
+  { code: "ZM", name: "Zambia", flag: "🇿🇲" },
+  { code: "BO", name: "Bolivia", flag: "🇧🇴" },
+  { code: "EC", name: "Ecuador", flag: "🇪🇨" },
+  { code: "CR", name: "Costa Rica", flag: "🇨🇷" },
+  { code: "PA", name: "Panama", flag: "🇵🇦" },
+  { code: "DO", name: "Dominican Republic", flag: "🇩🇴" },
+  { code: "CU", name: "Cuba", flag: "🇨🇺" },
+  { code: "JM", name: "Jamaica", flag: "🇯🇲" },
+  { code: "IS", name: "Iceland", flag: "🇮🇸" },
+  { code: "LU", name: "Luxembourg", flag: "🇱🇺" },
+  { code: "LI", name: "Liechtenstein", flag: "🇱🇮" },
+  { code: "MT", name: "Malta", flag: "🇲🇹" },
+  { code: "CY", name: "Cyprus", flag: "🇨🇾" },
+  { code: "JO", name: "Jordan", flag: "🇯🇴" },
+  { code: "LB", name: "Lebanon", flag: "🇱🇧" },
+  { code: "PS", name: "Palestine", flag: "🇵🇸" },
+  { code: "IR", name: "Iran", flag: "🇮🇷" },
+  { code: "IQ", name: "Iraq", flag: "🇮🇶" },
+  { code: "YE", name: "Yemen", flag: "🇾🇪" },
+  { code: "SD", name: "Sudan", flag: "🇸🇩" },
+  { code: "MW", name: "Malawi", flag: "🇲🇼" },
+  { code: "MZ", name: "Mozambique", flag: "🇲🇿" },
+  { code: "MG", name: "Madagascar", flag: "🇲🇬" },
+  { code: "RW", name: "Rwanda", flag: "🇷🇼" },
+  { code: "BW", name: "Botswana", flag: "🇧🇼" },
+  { code: "NA", name: "Namibia", flag: "🇳🇦" },
+  { code: "LS", name: "Lesotho", flag: "🇱🇸" },
+  { code: "SZ", name: "Eswatini", flag: "🇸🇿" },
+  { code: "AL", name: "Albania", flag: "🇦🇱" },
+  { code: "BA", name: "Bosnia and Herzegovina", flag: "🇧🇦" },
+  { code: "MK", name: "North Macedonia", flag: "🇲🇰" },
+  { code: "LV", name: "Latvia", flag: "🇱🇻" },
+  { code: "LT", name: "Lithuania", flag: "🇱🇹" },
+  { code: "EE", name: "Estonia", flag: "🇪🇪" },
+  { code: "MC", name: "Monaco", flag: "🇲🇨" },
+  { code: "SM", name: "San Marino", flag: "🇸🇲" },
+  { code: "AD", name: "Andorra", flag: "🇦🇩" },
+  { code: "VA", name: "Vatican City", flag: "🇻🇦" },
+  { code: "MU", name: "Mauritius", flag: "🇲🇺" },
+  { code: "SC", name: "Seychelles", flag: "🇸🇨" },
+  { code: "FJ", name: "Fiji", flag: "🇫🇯" },
+  { code: "PG", name: "Papua New Guinea", flag: "🇵🇬" },
+  { code: "SB", name: "Solomon Islands", flag: "🇸🇧" },
+  { code: "WS", name: "Samoa", flag: "🇼🇸" },
+  { code: "TO", name: "Tonga", flag: "🇹🇴" },
+  { code: "BB", name: "Barbados", flag: "🇧🇧" },
+  { code: "TT", name: "Trinidad and Tobago", flag: "🇹🇹" },
+  { code: "GY", name: "Guyana", flag: "🇬🇾" },
+  { code: "SR", name: "Suriname", flag: "🇸🇷" }
+];
 interface FormData {
   name: string;
   birth_date: Date | undefined;
@@ -37,8 +184,11 @@ interface FormData {
   bio: string;
   avatar: string;
   password: string;
-passwordConfirm: string;
-  preferred_categories: string[]; // array of category_ids
+  passwordConfirm: string;
+  preferred_categories: string[];
+  school_name: string;
+  country: string;
+  city: string;
 }
 
 const INITIAL_DATA: FormData = {
@@ -51,6 +201,9 @@ const INITIAL_DATA: FormData = {
   password: "",
   passwordConfirm: "",
   preferred_categories: [],
+  school_name: "",
+  country: "India",
+  city: "",
 };
 
 export default function AddChildPage() {
@@ -65,6 +218,8 @@ export default function AddChildPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [createdChild, setCreatedChild] = useState<any>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [countrySearch, setCountrySearch] = useState("");
+  const [countryOpen, setCountryOpen] = useState(false);
 
   // Check slots on mount
   useEffect(() => {
@@ -149,6 +304,18 @@ export default function AddChildPage() {
           toast.error("Child must be between 4 and 17 years old");
           return false;
         }
+        if (!formData.school_name || formData.school_name.trim().length < 2) {
+          toast.error("Please enter a valid school name");
+          return false;
+        }
+        if (!formData.country) {
+          toast.error("Please select a country");
+          return false;
+        }
+        if (!formData.city || formData.city.trim().length < 2) {
+          toast.error("Please enter a valid city");
+          return false;
+        }
         return true;
       case 2:
         if (!formData.username || formData.username.length < 3) {
@@ -184,6 +351,10 @@ export default function AddChildPage() {
         return true;
     }
   };
+
+  const filteredCountries = COUNTRIES.filter((c) =>
+    c.name.toLowerCase().includes(countrySearch.toLowerCase())
+  );
 
   const handleCheckUsername = async (username: string) => {
     if (username.length < 3) {
@@ -261,6 +432,9 @@ export default function AddChildPage() {
         gender: formData.gender,
         avatar: formData.avatar,
         preferred_categories: formData.preferred_categories,
+        school_name: formData.school_name,
+        country: formData.country,
+        city: formData.city,
       };
 
       const res = await fetch("/api/children", {
@@ -356,6 +530,95 @@ export default function AddChildPage() {
                       {g}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">
+                    School Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.school_name}
+                    onChange={(e) => updateFields({ school_name: e.target.value })}
+                    className="w-full px-4 py-3 rounded-2xl border-2 border-gray-100 focus:border-brand-purple focus:ring-0 transition-all font-nunito font-bold outline-none"
+                    placeholder="e.g. Sunshine Public School"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                      City
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <MapPin className="w-4 h-4" />
+                      </span>
+                      <input
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => updateFields({ city: e.target.value })}
+                        className="w-full pl-9 pr-3 py-3 rounded-2xl border-2 border-gray-100 focus:border-brand-purple focus:ring-0 transition-all font-nunito font-bold outline-none"
+                        placeholder="e.g. Mumbai"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                      Country
+                    </label>
+                    <div className="rounded-2xl border-2 border-gray-100 bg-white px-3 py-2 flex flex-col gap-1.5">
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+                          <Globe2 className="w-4 h-4" />
+                        </span>
+                        <input
+                          type="text"
+                          value={countrySearch}
+                          onChange={(e) => {
+                            setCountrySearch(e.target.value);
+                            setCountryOpen(true);
+                          }}
+                          onFocus={() => setCountryOpen(true)}
+                          className="w-full pl-8 pr-8 py-1.5 rounded-xl border border-gray-100 focus:border-brand-purple/40 focus:ring-0 transition-all font-nunito font-bold outline-none text-xs sm:text-sm"
+                          placeholder="Search country..."
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setCountryOpen((prev) => !prev)}
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                        >
+                          <ChevronDown className={`w-4 h-4 transition-transform ${countryOpen ? "rotate-180" : ""}`} />
+                        </button>
+                      </div>
+                      {countryOpen && (
+                        <div className="mt-1 max-h-52 rounded-xl border border-gray-100 bg-white shadow-lg overflow-y-auto text-xs sm:text-sm z-10">
+                          {filteredCountries.map((c) => (
+                            <button
+                              key={c.code}
+                              type="button"
+                              onClick={() => {
+                                updateFields({ country: c.name });
+                                setCountrySearch(c.name);
+                                setCountryOpen(false);
+                              }}
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-left font-nunito ${
+                                formData.country === c.name
+                                  ? "bg-brand-purple/10 text-brand-purple"
+                                  : "hover:bg-gray-50"
+                              }`}
+                            >
+                              <span className="text-base">{c.flag}</span>
+                              <span className="font-bold">{c.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

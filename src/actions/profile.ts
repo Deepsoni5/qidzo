@@ -20,6 +20,7 @@ export interface ChildProfile {
   created_at: string;
   followers_count: number;
   following_count: number;
+  country?: string | null;
 }
 
 export async function getChildProfile(username: string) {
@@ -83,7 +84,8 @@ export async function getChildPosts(childId: string) {
             username,
             avatar,
             age,
-            level
+            level,
+            country
           ),
           category:categories (
             name,

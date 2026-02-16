@@ -22,11 +22,24 @@ export async function POST(req: Request) {
       gender,
       avatar,
       preferred_categories,
-      age
+      age,
+      school_name,
+      country,
+      city
     } = body;
 
     // Basic validation
-    if (!clerk_id || !name || !username || !password || !birth_date || !age) {
+    if (
+      !clerk_id ||
+      !name ||
+      !username ||
+      !password ||
+      !birth_date ||
+      !age ||
+      !school_name ||
+      !country ||
+      !city
+    ) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -94,6 +107,9 @@ export async function POST(req: Request) {
           gender,
           avatar: avatar || "https://cdn-icons-png.flaticon.com/512/847/847969.png",
           preferred_categories,
+          school_name,
+          country,
+          city,
           // Default values are handled by DB or can be explicit here
           xp_points: 0,
           level: 1,
