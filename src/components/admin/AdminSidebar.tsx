@@ -17,6 +17,7 @@ import {
   BarChart3,
   Heart,
   MessageSquare,
+  TicketPercent,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { logoutAdmin } from "@/actions/auth";
@@ -38,6 +39,7 @@ export default function AdminSidebar({ adminEmail, isCollapsed, setIsCollapsed }
     { label: "Likes", icon: Heart, href: "/admin/likes" },
     { label: "Comments", icon: MessageSquare, href: "/admin/comments" },
     { label: "Analytics", icon: BarChart3, href: "/admin/analytics" },
+    { label: "Coupons", icon: TicketPercent, href: "/admin/coupons" },
   ];
 
   const handleLogout = async () => {

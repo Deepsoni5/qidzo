@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { Check, Zap, Crown, Rocket, Sparkles, Star, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { createSubscription, getParentSubscriptionStatus, createOneTimeOrder } from "@/actions/razorpay";
+import { createSubscription, getParentSubscriptionStatus, createOneTimeOrder, redeemCoupon } from "@/actions/razorpay";
 import { toast } from "sonner";
 import Script from "next/script";
+import { supabase } from "@/lib/supabaseClient";
 
 const plans = [
   {
@@ -73,6 +74,10 @@ export default function PricingSection({ showTitle = true }: { showTitle?: boole
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [parentStatus, setParentStatus] = useState<any>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponStatus, setCouponStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
+  const [couponMessage, setCouponMessage] = useState("");
+  const [isRedeemingCoupon, setIsRedeemingCoupon] = useState(false);
 
   useEffect(() => {
     async function fetchStatus() {
@@ -81,6 +86,95 @@ export default function PricingSection({ showTitle = true }: { showTitle?: boole
     }
     fetchStatus();
   }, []);
+
+  useEffect(() => {
+    if (!couponCode.trim()) {
+      setCouponStatus("idle");
+      setCouponMessage("");
+      return;
+    }
+
+    let active = true;
+    setCouponStatus("checking");
+    setCouponMessage("");
+
+    const handle = setTimeout(async () => {
+      const code = couponCode.trim().toUpperCase();
+      try {
+        const { data, error } = await supabase
+          .from("coupon_codes")
+          .select("*")
+          .eq("code", code)
+          .limit(1)
+          .maybeSingle();
+
+        if (!active) return;
+
+        if (error) {
+          setCouponStatus("invalid");
+          setCouponMessage("Could not verify this code right now.");
+          return;
+        }
+
+        if (!data) {
+          setCouponStatus("invalid");
+          setCouponMessage("No such magic code found.");
+          return;
+        }
+
+        if (!data.is_active) {
+          setCouponStatus("invalid");
+          setCouponMessage("This code is not active.");
+          return;
+        }
+
+        const now = new Date();
+
+        if (data.valid_from && new Date(data.valid_from) > now) {
+          setCouponStatus("invalid");
+          setCouponMessage("This code is not live yet.");
+          return;
+        }
+
+        if (data.valid_until && new Date(data.valid_until) < now) {
+          setCouponStatus("invalid");
+          setCouponMessage("This code has expired.");
+          return;
+        }
+
+        if (data.max_global_uses !== null && data.used_count >= data.max_global_uses) {
+          setCouponStatus("invalid");
+          setCouponMessage("All uses for this code have been claimed.");
+          return;
+        }
+
+        setCouponStatus("valid");
+        const target = data.target_plan;
+        if (target === "ALL") {
+          setCouponMessage("Valid magic code for any upgrade or Add Kid.");
+        } else if (target === "BASIC") {
+          setCouponMessage("Valid magic code for Basic plan.");
+        } else if (target === "PRO") {
+          setCouponMessage("Valid magic code for Pro plan.");
+        } else if (target === "ELITE") {
+          setCouponMessage("Valid magic code for Elite plan.");
+        } else if (target === "ADD_KID") {
+          setCouponMessage("Valid magic code for Add Kid slot.");
+        } else {
+          setCouponMessage("Valid magic code.");
+        }
+      } catch {
+        if (!active) return;
+        setCouponStatus("invalid");
+        setCouponMessage("Something went wrong while checking this code.");
+      }
+    }, 500);
+
+    return () => {
+      active = false;
+      clearTimeout(handle);
+    };
+  }, [couponCode]);
 
   const handleUpgrade = async (planId: string) => {
     if (planId !== "basic") return;
@@ -130,6 +224,54 @@ export default function PricingSection({ showTitle = true }: { showTitle?: boole
     }
   };
 
+  const handleApplyCoupon = async () => {
+    if (couponStatus !== "valid" || !couponCode.trim() || isRedeemingCoupon) {
+      return;
+    }
+    setIsRedeemingCoupon(true);
+    try {
+      const result = await redeemCoupon(couponCode.trim().toUpperCase());
+      if (!result?.success) {
+        toast.error(result?.error || "Could not apply this code.");
+        return;
+      }
+
+      if (result.type === "PLAN") {
+        const planLabel =
+          result.plan === "BASIC"
+            ? "Basic"
+            : result.plan === "PRO"
+            ? "Pro"
+            : result.plan === "ELITE"
+            ? "Elite"
+            : "your";
+
+        toast.success(
+          `Congratulations! You now have ${planLabel} plan for free for 1 month.`
+        );
+
+        setParentStatus((prev: any) => ({
+          ...(prev || {}),
+          subscription_plan: result.plan,
+          subscription_status: "ACTIVE",
+          max_children_slots: result.maxChildrenSlots ?? (prev?.max_children_slots || 0),
+        }));
+      } else if (result.type === "ADD_KID") {
+        toast.success("Yay! You got 1 extra kid slot for free.");
+        setParentStatus((prev: any) => ({
+          ...(prev || {}),
+          max_children_slots: (prev?.max_children_slots || 0) + 1,
+        }));
+      }
+
+      setCouponCode("");
+    } catch {
+      toast.error("Something went wrong while applying this code.");
+    } finally {
+      setIsRedeemingCoupon(false);
+    }
+  };
+
   return (
     <div className="w-full">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
@@ -154,8 +296,8 @@ export default function PricingSection({ showTitle = true }: { showTitle?: boole
         </div>
       )}
 
-      {/* Billing Toggle */}
-      <div className="flex justify-center mb-12">
+      {/* Billing Toggle + Coupon */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-12">
         <div className="bg-gray-100 p-1.5 rounded-[24px] flex items-center relative shadow-inner border-2 border-gray-200">
           <button
             onClick={() => setBillingCycle("monthly")}
@@ -184,6 +326,69 @@ export default function PricingSection({ showTitle = true }: { showTitle?: boole
             animate={{ x: billingCycle === "monthly" ? 0 : "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           />
+        </div>
+        <div className="w-full md:w-auto">
+          <div className="bg-white border-2 border-dashed border-brand-purple/20 rounded-2xl px-3 py-2 flex flex-col sm:flex-row sm:items-center gap-2 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-brand-purple" />
+              <span className="text-[11px] font-black text-gray-700 uppercase tracking-[0.18em]">
+                Have a magic code?
+              </span>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="Enter coupon code"
+                className="flex-1 sm:w-40 md:w-48 px-3 py-2 rounded-xl border border-gray-200 focus:border-brand-purple focus:ring-0 text-xs font-bold text-gray-800 bg-gray-50/60"
+              />
+              <button
+                type="button"
+                onClick={handleApplyCoupon}
+                disabled={couponStatus !== "valid" || isRedeemingCoupon}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-[0.18em] flex items-center justify-center gap-1 shadow-sm",
+                  couponStatus === "valid" && !isRedeemingCoupon
+                    ? "bg-brand-purple text-white"
+                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                )}
+              >
+                {isRedeemingCoupon ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  "Apply"
+                )}
+              </button>
+              <div className="min-w-[70px] flex items-center justify-end text-[11px] font-black">
+                {couponStatus === "checking" && (
+                  <div className="flex items-center gap-1 text-gray-400">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Checking…</span>
+                  </div>
+                )}
+                {couponStatus === "valid" && !isRedeemingCoupon && (
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                    Valid
+                  </span>
+                )}
+                {couponStatus === "invalid" && (
+                  <span className="px-2 py-0.5 rounded-full bg-red-50 text-red-600">
+                    Invalid
+                  </span>
+                )}
+              </div>
+            </div>
+            {couponMessage && (
+              <p
+                className={cn(
+                  "text-[10px] font-bold mt-1 sm:mt-0",
+                  couponStatus === "valid" ? "text-emerald-600" : "text-red-500"
+                )}
+              >
+                {couponMessage}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
