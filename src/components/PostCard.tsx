@@ -345,24 +345,33 @@ export default function PostCard({ post, currentUserId }: { post: FeedPost; curr
 
       {/* Post Media */}
       {post.media_type !== "NONE" && post.media_url && (
-        <div className="relative w-full aspect-[4/3] bg-black/5 overflow-hidden group shadow-inner">
+        <div
+          className="relative w-full aspect-[4/3] bg-black/5 overflow-hidden group shadow-inner select-none"
+          onContextMenu={(e) => e.preventDefault()}
+        >
           {post.media_type === "IMAGE" ? (
-             <div className="relative w-full h-full">
-                <Image
-                  src={post.media_url}
-                  alt="Post content"
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  loading="lazy"
-                  className="object-contain transition-transform duration-700 group-hover:scale-105"
-                />
-             </div>
+            <div className="relative w-full h-full">
+              <Image
+                src={post.media_url}
+                alt="Post content"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                loading="lazy"
+                className="object-contain transition-transform duration-700 group-hover:scale-105"
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+              />
+            </div>
           ) : (
-            <video 
-              src={post.media_url} 
-              controls 
-              className="w-full h-full object-cover bg-black" 
+            <video
+              src={post.media_url}
+              controls
+              className="w-full h-full object-cover bg-black"
               poster={post.media_thumbnail || undefined}
+              onContextMenu={(e) => e.preventDefault()}
+              playsInline
+              controlsList="nodownload noplaybackrate noremoteplayback"
+              disablePictureInPicture
             />
           )}
         </div>

@@ -36,7 +36,7 @@ export default function MobileNav() {
 
     if (currentRole.isParent) {
         toast("Parents Mode! 🛡️", {
-            description: "Parents can only view, react, and comment. Let the kids be the creators! 🎨",
+            description: "Parents can only view and react. Let the kids be the creators! 🎨",
             duration: 4000,
             style: {
                 background: '#FDF2F8', // pink-50
