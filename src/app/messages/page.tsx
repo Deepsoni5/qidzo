@@ -389,7 +389,12 @@ export default function MessagesPage() {
     return (
       <button
         type="button"
-        onClick={() => setActiveChannel(channel)}
+        onClick={() => {
+          setActiveChannel(channel);
+          if (typeof window !== "undefined" && window.innerWidth < 640) {
+            setShowMobileList(false);
+          }
+        }}
         className="w-full px-3 py-2.5 mb-1.5 rounded-2xl transition-all flex items-center gap-3 text-left hover:bg-slate-50 bg-transparent"
       >
         <div className="relative">
@@ -467,7 +472,7 @@ export default function MessagesPage() {
           <InitialChannelSetter channelId={initialChannelId} />
           {showMobileList && (
             <div className="fixed inset-0 z-40 sm:hidden bg-black/40">
-              <div className="absolute inset-x-0 bottom-0 top-16 bg-white rounded-t-[32px] shadow-2xl flex flex-col">
+              <div className="absolute inset-x-0 bottom-0 top-16 bg-white shadow-2xl flex flex-col">
                 <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                   <div>
                     <p className="text-[11px] font-black text-hot-pink uppercase tracking-[0.18em] mb-0.5">
@@ -491,6 +496,9 @@ export default function MessagesPage() {
                     options={{}}
                     showChannelSearch
                     Preview={ChannelPreview}
+                    Paginator={(props) => (
+                      <InfiniteScroll {...props} threshold={150} />
+                    )}
                   />
                 </div>
               </div>
