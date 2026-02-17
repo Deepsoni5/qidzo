@@ -415,10 +415,10 @@ export default function MessagesPage() {
       <button
         type="button"
         onClick={handleClick}
-        className="w-full px-3 py-2.5 mb-1.5 rounded-2xl transition-all flex items-center gap-3 text-left hover:bg-slate-50 bg-transparent"
+        className="w-full px-3 py-2.5 mb-1.5 rounded-2xl transition-all flex items-center gap-3 text-left hover:bg-slate-50 bg-transparent cursor-pointer"
       >
         <div className="relative">
-          <div className="w-11 h-11 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center text-xs font-extrabold text-gray-700">
+          <div className="w-11 h-11 rounded-full bg-gray-200 overflow-hidden cursor-pointer flex items-center justify-center text-xs font-extrabold text-gray-700">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img

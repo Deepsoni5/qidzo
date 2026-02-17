@@ -193,6 +193,7 @@
     border: none !important;
     box-shadow: none !important;
     background: transparent !important;
+    cursor: pointer;
   }
 
   .qidzo-chat-theme .str-chat__channel-preview-messenger--active {
