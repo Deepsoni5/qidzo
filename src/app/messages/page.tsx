@@ -532,7 +532,7 @@ export default function MessagesPage() {
               <Channel>
                 <Window>
                   <ConversationHeader />
-                  <div className="flex-1">
+                  <div className="flex-1 min-h-0">
                     <MessageList />
                   </div>
                   <div className="border-t border-gray-100 bg-white/90">
