@@ -466,8 +466,8 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-sky-50/60 to-gray-50 pt-20 pb-24 lg:pb-0">
-      <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 h-[calc(100vh-6rem)]">
+    <div className="h-[100dvh] bg-gradient-to-b from-gray-50 via-sky-50/60 to-gray-50 pt-20 pb-24 lg:pb-0 overflow-hidden">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 h-full">
         <Chat client={client} theme="str-chat__theme-light qidzo-chat-theme">
           <InitialChannelSetter channelId={initialChannelId} />
           {showMobileList && (
