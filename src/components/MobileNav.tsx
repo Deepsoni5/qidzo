@@ -1,6 +1,6 @@
 "use client";
  
-import { Home, Plus, Trophy, User, Users, LayoutDashboard, MonitorPlay, Gamepad2, Sparkles } from "lucide-react";
+import { Home, Plus, Trophy, User, Users, LayoutDashboard, MonitorPlay, Gamepad2, Sparkles, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
@@ -84,15 +84,35 @@ export default function MobileNav() {
     toast.info(`${feature} is Coming Soon! 🚧`, {
         description: "We're building something awesome for you! Stay tuned.",
         style: {
-            background: '#F0F9FF', // sky-50
-            border: '2px solid #0EA5E9', // sky-blue
-            color: '#075985', // sky-900
+            background: '#F0F9FF',
+            border: '2px solid #0EA5E9',
+            color: '#075985',
             fontSize: '16px',
             fontFamily: 'Nunito, sans-serif',
             fontWeight: 'bold'
         },
         className: "rounded-2xl shadow-xl"
     });
+  };
+
+  const handleMessages = async () => {
+    const currentRole = await getCurrentUserRole();
+
+    if (currentRole.role === "guest") {
+      toast.error("Please log in to chat!", {
+        description: "Messages are available only for kid profiles.",
+      });
+      return;
+    }
+
+    if (currentRole.isParent) {
+      toast.error("Parents cannot chat with children.", {
+        description: "Switch to a kid account to use messages.",
+      });
+      return;
+    }
+
+    router.push("/messages");
   };
 
   return (
@@ -133,13 +153,13 @@ export default function MobileNav() {
           <span className="text-[10px] font-bold uppercase tracking-wide">Play</span>
         </button>
 
-        {/* 5. Friends */}
+        {/* 5. Messages */}
         <button 
-          onClick={() => handleComingSoon("Friends")}
+          onClick={handleMessages}
           className="flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-grass-green transition-colors w-full"
         >
-          <Users className="w-6 h-6" />
-          <span className="text-[10px] font-bold uppercase tracking-wide">Friends</span>
+          <MessageCircle className="w-6 h-6" />
+          <span className="text-[10px] font-bold uppercase tracking-wide">Messages</span>
         </button>
       </div>
     </div>

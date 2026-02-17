@@ -11,6 +11,7 @@ import ProfileFeed from "@/components/ProfileFeed";
 import { getChildProfile, getChildPosts } from "@/actions/profile";
 import { getCurrentUserRole } from "@/actions/auth";
 import { FollowButton } from "@/components/FollowButton";
+import { MessageButton } from "@/components/MessageButton";
 
 interface PageProps {
   params: Promise<{ username: string }>;
@@ -59,6 +60,7 @@ export default async function ChildProfilePage({ params, searchParams }: PagePro
   // Hide ONLY if the current logged-in child is viewing their own profile
   const isOwnProfile = userRole.isChild && (userRole.child as any)?.id === profile.child_id;
   const showFollowButton = !isOwnProfile;
+  const canMessage = userRole.isChild && !isOwnProfile;
 
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -137,7 +139,7 @@ export default async function ChildProfilePage({ params, searchParams }: PagePro
                         </div>
                         
                         {/* Action Buttons */}
-                        <div className="flex gap-3">
+                        <div className="flex flex-wrap gap-3">
                              {showFollowButton && (
                                 <FollowButton 
                                   targetId={profile.child_id} 
@@ -145,9 +147,21 @@ export default async function ChildProfilePage({ params, searchParams }: PagePro
                                   className="px-6 py-2.5 text-sm shadow-lg shadow-brand-purple/20"
                                 />
                              )}
-                             <button className="bg-gray-100 text-gray-600 px-4 py-2.5 rounded-full font-black hover:bg-gray-200 transition-all cursor-pointer hover:scale-105 active:scale-95">
-                                👋 Say Hi
-                             </button>
+                             {canMessage && (
+                              <>
+                                <MessageButton
+                                  childId={profile.child_id}
+                                  username={profile.username}
+                                />
+                                <MessageButton
+                                  childId={profile.child_id}
+                                  username={profile.username}
+                                  initialMessage={`Hi ${profile.name}`}
+                                  label="👋 Say Hi"
+                                  variant="ghost"
+                                />
+                              </>
+                             )}
                         </div>
                     </div>
 

@@ -129,7 +129,22 @@ export default function LeftSidebar() {
                 { label: "Home", icon: "🏠", color: "text-brand-purple", bg: "bg-brand-purple/10", active: true, href: "/" },
                 { label: "Tutorials", icon: "📺", color: "text-sky-blue", bg: "bg-sky-blue/10", active: false, action: () => handleComingSoon("Tutorials") },
                 { label: "Play Zone", icon: "🎮", color: "text-hot-pink", bg: "bg-hot-pink/10", active: false, action: handlePlayZone },
-                { label: "Friends", icon: "👥", color: "text-grass-green", bg: "bg-grass-green/10", active: false, action: () => handleComingSoon("Friends") },
+                { label: "Messages", icon: "💬", color: "text-grass-green", bg: "bg-grass-green/10", active: false, action: async () => {
+                    const currentRole = await getCurrentUserRole();
+                    if (currentRole.role === "guest") {
+                      toast.error("Please log in to chat!", {
+                        description: "Messages are available only for kid profiles.",
+                      });
+                      return;
+                    }
+                    if (currentRole.isParent) {
+                      toast.error("Parents cannot chat with children.", {
+                        description: "Switch to a kid account to use messages.",
+                      });
+                      return;
+                    }
+                    router.push("/messages");
+                  } },
                 ...(userRole?.isParent 
                   ? [{ label: "Parent Dashboard", icon: "👨‍👩‍👧‍👦", color: "text-orange-500", bg: "bg-orange-500/10", active: false, href: "/parent/dashboard" }]
                   : [])

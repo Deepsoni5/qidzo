@@ -122,6 +122,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -131,26 +132,140 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .beautiful-scrollbar::-webkit-scrollbar {
     width: 5px;
     height: 5px;
   }
-  
+
   .beautiful-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .beautiful-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #E5E7EB; /* gray-200 */
+    background-color: #E5E7EB;
+    /* gray-200 */
     border-radius: 20px;
   }
-  
+
   .beautiful-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #D1D5DB; /* gray-300 */
+    background-color: #D1D5DB;
+    /* gray-300 */
+  }
+
+  .qidzo-chat-theme.str-chat {
+    --str-chat__primary-color: #8B5CF6;
+    --str-chat__primary-color-low-emphasis: #F3E8FF;
+    --str-chat__primary-color-moderate-emphasis: #C4B5FD;
+    --str-chat__background-color: #F4F5FB;
+    --str-chat__secondary-background-color: #FFFFFF;
+    --str-chat__border-radius-round: 9999px;
+    --str-chat__border-radius-lg: 24px;
+    --str-chat__border-radius-md: 18px;
+    --str-chat__border-radius-sm: 14px;
+    --str-chat__avatar-border-radius-circle: 9999px;
+    --str-chat__font-family: var(--font-inter);
+  }
+
+  .qidzo-chat-theme .str-chat__channel-list-messenger {
+    background: transparent;
+  }
+
+  .qidzo-chat-theme .str-chat__channel-list-messenger__main {
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
+
+  .qidzo-chat-theme .str-chat__channel-list-messenger__main-list {
+    border-radius: 0;
+  }
+
+  .qidzo-chat-theme .str-chat__channel-preview-messenger {
+    border-radius: 18px;
+    margin-inline: 10px;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .qidzo-chat-theme .str-chat__channel-preview-messenger--active {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .qidzo-chat-theme .str-chat__message-simple__content {
+    border-radius: 18px;
+  }
+
+  .qidzo-chat-theme .str-chat__message-simple__actions__action--reactions {
+    display: none;
+  }
+
+  .qidzo-chat-theme .str-chat__message-simple--me .str-chat__message-bubble {
+    background: #8B5CF6 !important;
+    color: #ffffff;
+    border-radius: 22px 22px 6px 22px;
+    box-shadow: 0 10px 30px rgba(88, 28, 135, 0.28);
+  }
+
+  .qidzo-chat-theme .str-chat__message-simple--me .str-chat__message-text-inner {
+    color: #ffffff;
+  }
+
+  .qidzo-chat-theme .str-chat__message-simple--other .str-chat__message-bubble {
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 22px 22px 22px 6px;
+    border: none;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  }
+
+  .qidzo-chat-theme .str-chat__message-list {
+    background: #F5F5FB;
+  }
+
+  .qidzo-chat-theme .str-chat__message-list-scroll {
+    padding: 24px 18px 16px;
+  }
+
+  .qidzo-chat-theme .str-chat__ul {
+    gap: 8px;
+  }
+
+  .qidzo-chat-theme .str-chat__message-simple .str-chat__avatar {
+    display: none;
+  }
+
+  .qidzo-chat-theme .str-chat__message-simple__timestamp {
+    font-size: 11px;
+    color: #9CA3AF;
+  }
+
+  .qidzo-chat-theme .str-chat__input-flat {
+    border-radius: 9999px;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    padding-inline: 0.75rem;
+    background: #ffffff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+    margin: 8px 16px 16px;
+  }
+
+  .qidzo-chat-theme .str-chat__input-flat textarea {
+    border-radius: 9999px;
+    background: transparent;
+  }
+
+  .qidzo-chat-theme .str-chat__send-button {
+    background: #8B5CF6;
+    color: #ffffff;
+    border-radius: 9999px;
   }
 }
