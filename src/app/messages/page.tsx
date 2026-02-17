@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { StreamChat } from "stream-chat";
@@ -40,6 +40,7 @@ export default function MessagesPage() {
   const [initializing, setInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMobileList, setShowMobileList] = useState(false);
+  const userSelectedChannelRef = useRef(false);
 
   const targetUsername = searchParams.get("user");
   const initialChannelFromQuery = searchParams.get("channel");
@@ -177,9 +178,17 @@ export default function MessagesPage() {
       let mounted = true;
       async function setChan() {
         if (!channelId || !client) return;
+
+        if (userSelectedChannelRef.current) {
+          return;
+        }
+
         const chan = client.channel("messaging", channelId);
         await chan.watch();
-        if (mounted) setActiveChannel(chan);
+
+        if (!mounted) return;
+
+        setActiveChannel(chan);
       }
       setChan();
       return () => {
@@ -391,11 +400,13 @@ export default function MessagesPage() {
       if (!channel) return;
 
       if (typeof window !== "undefined" && window.innerWidth < 640 && client) {
+        userSelectedChannelRef.current = true;
         const chan = client.channel(channel.type || "messaging", channel.id);
         await chan.watch();
         setActiveChannel(chan);
         setShowMobileList(false);
       } else {
+        userSelectedChannelRef.current = true;
         setActiveChannel(channel);
       }
     };
