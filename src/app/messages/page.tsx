@@ -349,7 +349,8 @@ export default function MessagesPage() {
   }
 
   function ChannelPreview(props: any) {
-    const { channel, activeChannel, setActiveChannel } = props;
+    const { channel, activeChannel } = props;
+    const { client, setActiveChannel } = useChatContext();
     const isActive = channel?.id === activeChannel?.id;
     const members = Object.values(channel?.state?.members || {}) as any[];
     const otherMember =
@@ -386,15 +387,23 @@ export default function MessagesPage() {
             .toUpperCase()
         : "Q";
 
+    const handleClick = async () => {
+      if (!channel) return;
+
+      if (typeof window !== "undefined" && window.innerWidth < 640 && client) {
+        const chan = client.channel(channel.type || "messaging", channel.id);
+        await chan.watch();
+        setActiveChannel(chan);
+        setShowMobileList(false);
+      } else {
+        setActiveChannel(channel);
+      }
+    };
+
     return (
       <button
         type="button"
-        onClick={() => {
-          setActiveChannel(channel);
-          if (typeof window !== "undefined" && window.innerWidth < 640) {
-            setShowMobileList(false);
-          }
-        }}
+        onClick={handleClick}
         className="w-full px-3 py-2.5 mb-1.5 rounded-2xl transition-all flex items-center gap-3 text-left hover:bg-slate-50 bg-transparent"
       >
         <div className="relative">
