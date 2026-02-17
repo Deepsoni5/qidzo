@@ -504,7 +504,7 @@ export default function MessagesPage() {
               </div>
             </div>
           )}
-          <div className="h-full rounded-[32px] bg-gradient-to-br from-white via-indigo-50/70 to-white shadow-[0_22px_70px_rgba(15,23,42,0.20)] border border-white/80 overflow-hidden flex backdrop-blur-xl">
+          <div className="h-full mt-2 mb-3 sm:mt-0 sm:mb-0 rounded-[32px] bg-gradient-to-br from-white via-indigo-50/70 to-white shadow-[0_22px_70px_rgba(15,23,42,0.20)] border border-white/80 overflow-hidden flex backdrop-blur-xl">
             <div className="w-0 sm:w-64 md:w-72 border-r border-gray-100 hidden sm:flex flex-col bg-gradient-to-b from-white via-sky-50/40 to-white">
               <div className="px-4 py-4 border-b border-gray-100">
                 <p className="text-[11px] font-black text-hot-pink uppercase tracking-[0.18em] mb-0.5">
