@@ -140,11 +140,15 @@ export default async function ChildProfilePage({ params, searchParams }: PagePro
                               {isElite && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-hot-pink/10 text-hot-pink border border-hot-pink/20 shadow-sm cursor-help">
+                                    <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-gradient-to-r from-hot-pink to-brand-purple text-white border-2 border-white shadow-md shadow-hot-pink/30 cursor-help ring-4 ring-hot-pink/10 transition-transform hover:scale-105">
                                       <Crown className="w-4 h-4" />
                                     </span>
                                   </TooltipTrigger>
-                                  <TooltipContent side="top" className="bg-hot-pink text-white">
+                                  <TooltipContent
+                                    side="top"
+                                    className="bg-gradient-to-r from-hot-pink to-brand-purple text-white font-black rounded-full px-3 py-1 shadow-lg"
+                                    arrowClassName="bg-hot-pink fill-hot-pink"
+                                  >
                                     Premium User
                                   </TooltipContent>
                                 </Tooltip>
