@@ -29,6 +29,7 @@ interface AdvancedSetupModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate?: () => void;
+  parentPlan?: string;
   child: {
     id: string;
     name: string;
@@ -38,10 +39,11 @@ interface AdvancedSetupModalProps {
   };
 }
 
-export function AdvancedSetupModal({ isOpen, onClose, onUpdate, child }: AdvancedSetupModalProps) {
+export function AdvancedSetupModal({ isOpen, onClose, onUpdate, parentPlan, child }: AdvancedSetupModalProps) {
   const [isExamMode, setIsExamMode] = useState(child.focus_mode || false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [view, setView] = useState<'main' | 'screen-time'>('main');
+  const isBasicPlan = (parentPlan || '').toUpperCase() === 'BASIC';
   
   // Screen Time States
   const [screenLimit, setScreenLimit] = useState<number | null>(child.screen_time_limit || null);
@@ -298,7 +300,27 @@ export function AdvancedSetupModal({ isOpen, onClose, onUpdate, child }: Advance
 
             {/* Option 2: Screen Time Limit */}
             <button 
-              onClick={() => setView('screen-time')}
+              onClick={() => {
+                if (isBasicPlan) {
+                  toast.info("Please upgrade to Pro or Elite plan to set Screen Time limits", {
+                    description: "Unlock advanced controls for better digital habits.",
+                    style: {
+                      background: '#FDF2F8',
+                      border: '2px solid #EC4899',
+                      color: '#831843',
+                      fontSize: '16px',
+                      fontFamily: 'Nunito, sans-serif',
+                      fontWeight: 'bold'
+                    },
+                    action: {
+                      label: "Upgrade",
+                      onClick: () => window.location.assign('/parent/upgrade')
+                    }
+                  });
+                  return;
+                }
+                setView('screen-time');
+              }}
               className="w-full text-left p-4 rounded-[22px] border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 hover:shadow-md transition-all duration-300 group cursor-pointer"
             >
               <div className="flex items-center justify-between gap-3">
@@ -486,4 +508,3 @@ export function AdvancedSetupModal({ isOpen, onClose, onUpdate, child }: Advance
     </Dialog>
   );
 }
-

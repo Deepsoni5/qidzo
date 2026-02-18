@@ -162,6 +162,7 @@ export default function ChildrenList() {
             setSelectedChild(null);
           }}
           onUpdate={fetchChildren}
+          parentPlan={parentProfile?.subscription_plan}
           child={selectedChild}
         />
       )}
