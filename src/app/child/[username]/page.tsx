@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Trophy, ArrowLeft, Users, UserCheck, Globe2, Crown } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 import Navbar from "@/components/Navbar";
 import LeftSidebar from "@/components/LeftSidebar";
@@ -137,9 +138,16 @@ export default async function ChildProfilePage({ params, searchParams }: PagePro
                             <h1 className="text-3xl font-black text-gray-900 font-nunito mb-1 tracking-tight flex items-center gap-2">
                               <span>{profile.name}</span>
                               {isElite && (
-                                <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-hot-pink/10 text-hot-pink border border-hot-pink/20 shadow-sm">
-                                  <Crown className="w-4 h-4" />
-                                </span>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-hot-pink/10 text-hot-pink border border-hot-pink/20 shadow-sm cursor-help">
+                                      <Crown className="w-4 h-4" />
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="bg-hot-pink text-white">
+                                    Premium User
+                                  </TooltipContent>
+                                </Tooltip>
                               )}
                             </h1>
                             <p className="text-gray-400 font-bold text-lg">@{profile.username}</p>
