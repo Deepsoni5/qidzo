@@ -42,9 +42,28 @@ export function MessageButton({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        toast.error("Could not start chat", {
-          description: data.error || "Please try again in a moment.",
-        });
+        if (res.status === 403 && data?.code === "CHAT_LIMIT_REACHED") {
+          toast.info("Chat Limit Reached", {
+            description:
+              "You can only chat with 5 kids on your current plan. Upgrade to Pro or Elite for unlimited chats.",
+            style: {
+              background: "#FDF2F8",
+              border: "2px solid #EC4899",
+              color: "#831843",
+              fontSize: "16px",
+              fontFamily: "Nunito, sans-serif",
+              fontWeight: "bold",
+            },
+            action: {
+              label: "Upgrade",
+              onClick: () => window.location.assign("/parent/upgrade"),
+            },
+          });
+        } else {
+          toast.error("Could not start chat", {
+            description: data.error || "Please try again in a moment.",
+          });
+        }
         setLoading(false);
         return;
       }

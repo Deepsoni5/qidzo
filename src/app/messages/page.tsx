@@ -18,6 +18,7 @@ import {
   InfiniteScroll,
 } from "stream-chat-react";
 import "stream-chat-react/dist/css/v2/index.css";
+import { toast } from "sonner";
 
 let chatClient: StreamChat | null = null;
 
@@ -114,8 +115,28 @@ export default function MessagesPage() {
               setInitialChannelId(dmData.channelId);
             }
           } else {
-            // eslint-disable-next-line no-console
-            console.error("Failed to start DM", await dmRes.json().catch(() => ({})));
+            const data = await dmRes.json().catch(() => ({} as any));
+            if (dmRes.status === 403 && (data as any)?.code === "CHAT_LIMIT_REACHED") {
+              toast.info("Chat Limit Reached", {
+                description:
+                  "You can only chat with 5 kids on your current plan. Upgrade to Pro or Elite for unlimited chats.",
+                style: {
+                  background: "#FDF2F8",
+                  border: "2px solid #EC4899",
+                  color: "#831843",
+                  fontSize: "16px",
+                  fontFamily: "Nunito, sans-serif",
+                  fontWeight: "bold",
+                },
+                action: {
+                  label: "Upgrade",
+                  onClick: () => window.location.assign("/parent/upgrade"),
+                },
+              });
+            } else {
+              // eslint-disable-next-line no-console
+              console.error("Failed to start DM", data);
+            }
           }
         }
       } catch (e: any) {

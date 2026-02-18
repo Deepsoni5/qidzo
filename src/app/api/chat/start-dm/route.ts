@@ -74,6 +74,69 @@ export async function POST(req: Request) {
 
   const serverClient = StreamChat.getInstance(apiKey, apiSecret);
 
+  // Plan gating: allow only up to 5 distinct DM partners for FREE/BASIC
+  try {
+    // 1) Fetch parent's plan for the current child
+    const { data: childRow } = await supabase
+      .from("children")
+      .select("parent_id")
+      .eq("child_id", currentChildId)
+      .single();
+
+    if (childRow?.parent_id) {
+      const { data: parentRow } = await supabase
+        .from("parents")
+        .select("subscription_plan")
+        .eq("parent_id", childRow.parent_id)
+        .single();
+
+      const planUpper = (parentRow?.subscription_plan || "FREE").toUpperCase();
+      const isLimited = planUpper === "FREE" || planUpper === "BASIC";
+
+      if (isLimited) {
+        // 2) Query existing messaging channels for this child
+        const channels = await serverClient.queryChannels(
+          { type: "messaging", members: { $in: [currentChildId] } },
+          { last_message_at: -1 },
+          { limit: 100 }
+        );
+
+        const partners = new Set<string>();
+        for (const ch of channels) {
+          const id = (ch as any).id as string | undefined;
+          if (!id || !id.startsWith("dm_")) continue;
+          const parts = id.split("_");
+          if (parts.length !== 3) continue;
+          const a = parts[1];
+          const b = parts[2];
+          const other =
+            a === currentChildId ? b : b === currentChildId ? a : undefined;
+          if (other) partners.add(other);
+        }
+
+        // If target already has a DM with current child, allow
+        const alreadyHasDM = partners.has(targetChildId);
+
+        // Otherwise enforce max 5 distinct partners
+        if (!alreadyHasDM && partners.size >= 5) {
+          return NextResponse.json(
+            {
+              error:
+                "You can only chat with 5 kids on your current plan. Please upgrade to Pro or Elite for unlimited chats.",
+              code: "CHAT_LIMIT_REACHED",
+              maxPartners: 5,
+            },
+            { status: 403 }
+          );
+        }
+      }
+    }
+  } catch (gatingError) {
+    // If gating fails unexpectedly, do not block chat creation
+    // eslint-disable-next-line no-console
+    console.error("Chat gating check failed:", gatingError);
+  }
+
   // Ensure both users exist in Stream before creating the channel
   const { data: children, error: childrenError } = await supabase
     .from("children")

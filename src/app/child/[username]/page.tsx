@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Trophy, ArrowLeft, Users, UserCheck, Globe2 } from "lucide-react";
+import { Trophy, ArrowLeft, Users, UserCheck, Globe2, Crown } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
 import LeftSidebar from "@/components/LeftSidebar";
@@ -39,6 +39,12 @@ export default async function ChildProfilePage({ params, searchParams }: PagePro
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const profile = await getChildProfile(username);
   const userRole = await getCurrentUserRole();
+  const { data: parentRow } = await (await import("@/lib/supabaseClient")).supabase
+    .from("parents")
+    .select("subscription_plan")
+    .eq("parent_id", (profile as any)?.parent_id)
+    .single();
+  const isElite = (parentRow?.subscription_plan || "").toUpperCase() === "ELITE";
 
   if (!profile) {
     notFound();
@@ -128,7 +134,14 @@ export default async function ChildProfilePage({ params, searchParams }: PagePro
                     {/* Name & Bio */}
                     <div className="pt-12 flex flex-col sm:flex-row justify-between items-start gap-4">
                         <div>
-                            <h1 className="text-3xl font-black text-gray-900 font-nunito mb-1 tracking-tight">{profile.name}</h1>
+                            <h1 className="text-3xl font-black text-gray-900 font-nunito mb-1 tracking-tight flex items-center gap-2">
+                              <span>{profile.name}</span>
+                              {isElite && (
+                                <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-hot-pink/10 text-hot-pink border border-hot-pink/20 shadow-sm">
+                                  <Crown className="w-4 h-4" />
+                                </span>
+                              )}
+                            </h1>
                             <p className="text-gray-400 font-bold text-lg">@{profile.username}</p>
                             {profile.country && (
                               <p className="mt-1 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-black border border-gray-200">
