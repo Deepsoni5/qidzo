@@ -120,6 +120,12 @@ export function CreatePostModal({ isOpen, onClose, childId }: CreatePostModalPro
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const containsLink = (text: string) => {
+    const pattern =
+      /(https?:\/\/\S+|www\.\S+|\S+\.(com|net|org|io|in|edu|co|me|ai)(\/\S*)?)/i;
+    return pattern.test(text);
+  };
+
   const uploadFileWithProgress = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const formData = new FormData();
@@ -154,6 +160,13 @@ export function CreatePostModal({ isOpen, onClose, childId }: CreatePostModalPro
   };
 
   const handleSubmit = async () => {
+    if (containsLink(title) || containsLink(content)) {
+      toast.error("Links are not allowed in Magic text", {
+        description: "Keep Qidzo safe and real by sharing stories, not links.",
+      });
+      return;
+    }
+
     if (!content.trim()) {
       toast.error("Please add some content to your post!");
       return;
@@ -297,7 +310,16 @@ export function CreatePostModal({ isOpen, onClose, childId }: CreatePostModalPro
               )}
 
               <Button 
-                onClick={() => setStep(2)}
+                onClick={() => {
+                  if (containsLink(title) || containsLink(content)) {
+                    toast.error("Links are not allowed in Magic text", {
+                      description:
+                        "Keep Qidzo safe and real by sharing stories, not links.",
+                    });
+                    return;
+                  }
+                  setStep(2);
+                }}
                 disabled={!content.trim()}
                 className="w-full h-16 text-xl font-black bg-brand-purple hover:bg-brand-purple/90 rounded-2xl shadow-xl shadow-brand-purple/20 mt-4 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
               >
