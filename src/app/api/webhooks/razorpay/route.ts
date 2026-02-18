@@ -37,6 +37,29 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Missing parent_id in notes" }, { status: 400 });
       }
 
+      const isActivationEvent = event === "subscription.activated";
+
+      const { data: parent, error: fetchParentError } = await supabase
+        .from("parents")
+        .select("max_children_slots")
+        .eq("parent_id", parentId)
+        .single();
+
+      if (fetchParentError) {
+        console.error("Error fetching parent for subscription update:", fetchParentError);
+      }
+
+      const currentSlots = parent?.max_children_slots ?? 0;
+      const newSlots = isActivationEvent ? currentSlots + 1 : currentSlots || 1;
+
+      const now = new Date();
+      const endDate = new Date(now);
+      if (planType === "yearly") {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      } else {
+        endDate.setMonth(endDate.getMonth() + 1);
+      }
+
       const envIds = {
         BASIC_MONTHLY: process.env.RAZORPAY_BASIC_MONTHLY_PLAN_ID,
         BASIC_YEARLY: process.env.RAZORPAY_BASIC_YEARLY_PLAN_ID,
@@ -56,16 +79,16 @@ export async function POST(req: Request) {
         planUpper = "BASIC";
       }
 
-      // Update parent subscription in DB
       const { error } = await supabase
         .from("parents")
         .update({
           subscription_plan: planUpper,
           subscription_status: "ACTIVE",
-          max_children_slots: 1,
+          max_children_slots: newSlots,
           razorpay_subscription_id: subscription.id,
           razorpay_customer_id: subscription.customer_id,
           subscription_interval: planType,
+          subscription_ends_at: endDate.toISOString(),
           razorpay_plan_id: subscription.plan_id
         })
         .eq("parent_id", parentId);
