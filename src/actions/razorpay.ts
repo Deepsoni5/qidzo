@@ -4,7 +4,10 @@ import { razorpay } from "@/lib/razorpay";
 import { currentUser } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabaseClient";
 
-export async function createSubscription(planType: "monthly" | "yearly") {
+export async function createSubscription(
+  plan: "basic" | "pro" | "elite",
+  planType: "monthly" | "yearly"
+) {
   try {
     const user = await currentUser();
     if (!user) throw new Error("Unauthorized");
@@ -17,10 +20,17 @@ export async function createSubscription(planType: "monthly" | "yearly") {
 
     if (parentError || !parent) throw new Error("Parent profile not found");
 
-    const planId =
-      planType === "monthly"
-        ? process.env.RAZORPAY_BASIC_MONTHLY_PLAN_ID
-        : process.env.RAZORPAY_BASIC_YEARLY_PLAN_ID;
+    const planEnvMap: Record<string, string | undefined> = {
+      basic_monthly: process.env.RAZORPAY_BASIC_MONTHLY_PLAN_ID,
+      basic_yearly: process.env.RAZORPAY_BASIC_YEARLY_PLAN_ID,
+      pro_monthly: process.env.RAZORPAY_PRO_MONTHLY_PLAN_ID,
+      pro_yearly: process.env.RAZORPAY_PRO_YEARLY_PLAN_ID,
+      elite_monthly: process.env.RAZORPAY_ELITE_MONTHLY_PLAN_ID,
+      elite_yearly: process.env.RAZORPAY_ELITE_YEARLY_PLAN_ID,
+    };
+
+    const planKey = `${plan}_${planType}`;
+    const planId = planEnvMap[planKey];
 
     if (!planId) throw new Error("Razorpay Plan ID not configured in environment variables");
 
@@ -33,6 +43,7 @@ export async function createSubscription(planType: "monthly" | "yearly") {
         parent_id: parent.parent_id,
         clerk_id: user.id,
         plan_type: planType,
+        plan_name: plan.toUpperCase(),
       },
     });
 

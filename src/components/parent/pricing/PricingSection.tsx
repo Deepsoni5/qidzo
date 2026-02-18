@@ -33,8 +33,8 @@ const plans = [
   {
     name: "Pro",
     id: "pro",
-    price: { monthly: 199, yearly: 1999 },
-    originalPrice: { monthly: 299, yearly: 2990 },
+    price: { monthly: 299, yearly: 2999 },
+    originalPrice: { monthly: 399, yearly: 3990 },
     description: "Advanced tools for growing explorers!",
     features: [
       "Everything in Basic",
@@ -46,7 +46,7 @@ const plans = [
     ],
     color: "sky-blue",
     icon: Zap,
-    comingSoon: true,
+    comingSoon: false,
     recommended: false
   },
   {
@@ -65,7 +65,7 @@ const plans = [
     ],
     color: "hot-pink",
     icon: Crown,
-    comingSoon: true,
+    comingSoon: false,
     recommended: false
   }
 ];
@@ -177,10 +177,12 @@ export default function PricingSection({ showTitle = true }: { showTitle?: boole
   }, [couponCode]);
 
   const handleUpgrade = async (planId: string) => {
-    if (planId !== "basic") return;
     setIsLoading(planId);
     try {
-      if (parentStatus?.subscription_plan === "BASIC") {
+      const currentPlan = (parentStatus?.subscription_plan as string | undefined) || undefined;
+      const targetUpper = planId.toUpperCase();
+
+      if (currentPlan === targetUpper) {
         const result = await createOneTimeOrder();
         if (!result.success) { toast.error(result.error); return; }
         const options = {
@@ -201,13 +203,13 @@ export default function PricingSection({ showTitle = true }: { showTitle?: boole
         rzp.open();
         return;
       }
-      const result = await createSubscription(billingCycle);
+      const result = await createSubscription(planId as "basic" | "pro" | "elite", billingCycle);
       if (!result.success) { toast.error(result.error); return; }
       const options = {
         key: result.keyId,
         subscription_id: result.subscriptionId,
         name: "Qidzo",
-        description: `Qidzo Basic (${billingCycle})`,
+        description: `Qidzo ${targetUpper.charAt(0)}${targetUpper.slice(1).toLowerCase()} (${billingCycle})`,
         handler: () => {
           toast.success("Payment Successful! 🎉");
           setTimeout(() => { window.location.reload(); }, 2000);
@@ -468,10 +470,9 @@ export default function PricingSection({ showTitle = true }: { showTitle?: boole
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    {plan.id === "basic" && parentStatus?.subscription_plan === "BASIC" 
-                      ? "Add More Kid" 
-                      : "Upgrade"
-                    }
+                    {parentStatus?.subscription_plan === plan.id.toUpperCase()
+                      ? "Add More Kid"
+                      : "Upgrade"}
                     <Star className="w-5 h-5 fill-white" />
                   </>
                 )}

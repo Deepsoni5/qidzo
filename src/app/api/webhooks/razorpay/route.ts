@@ -37,13 +37,32 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Missing parent_id in notes" }, { status: 400 });
       }
 
+      const envIds = {
+        BASIC_MONTHLY: process.env.RAZORPAY_BASIC_MONTHLY_PLAN_ID,
+        BASIC_YEARLY: process.env.RAZORPAY_BASIC_YEARLY_PLAN_ID,
+        PRO_MONTHLY: process.env.RAZORPAY_PRO_MONTHLY_PLAN_ID,
+        PRO_YEARLY: process.env.RAZORPAY_PRO_YEARLY_PLAN_ID,
+        ELITE_MONTHLY: process.env.RAZORPAY_ELITE_MONTHLY_PLAN_ID,
+        ELITE_YEARLY: process.env.RAZORPAY_ELITE_YEARLY_PLAN_ID,
+      };
+
+      const planId = subscription.plan_id as string;
+      let planUpper: "BASIC" | "PRO" | "ELITE" = "BASIC";
+      if (planId === envIds.PRO_MONTHLY || planId === envIds.PRO_YEARLY) {
+        planUpper = "PRO";
+      } else if (planId === envIds.ELITE_MONTHLY || planId === envIds.ELITE_YEARLY) {
+        planUpper = "ELITE";
+      } else {
+        planUpper = "BASIC";
+      }
+
       // Update parent subscription in DB
       const { error } = await supabase
         .from("parents")
         .update({
-          subscription_plan: "BASIC",
+          subscription_plan: planUpper,
           subscription_status: "ACTIVE",
-          max_children_slots: 1, // Basic plan grants 1 slot
+          max_children_slots: 1,
           razorpay_subscription_id: subscription.id,
           razorpay_customer_id: subscription.customer_id,
           subscription_interval: planType,
@@ -56,7 +75,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "DB Update Failed" }, { status: 500 });
       }
 
-      console.log(`Successfully upgraded parent ${parentId} to BASIC`);
+      console.log(`Successfully upgraded parent ${parentId} to ${planUpper}`);
     }
 
     // Handle One-time Payment (Add More Kid)
