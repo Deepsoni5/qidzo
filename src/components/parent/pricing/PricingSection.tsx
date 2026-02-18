@@ -17,18 +17,18 @@ const plans = [
     originalPrice: { monthly: 149, yearly: 1490 },
     description: "Perfect for starting your kid's learning journey!",
     features: [
-      "Full Playzone access 🎮",
-      "Exclusive Tutorial access 📚",
-      "Set Screen Time limits ⏰",
-      "Specific hour restrictions 🕒",
+      "Limited website access",
+      "Limited tutorial access",
+      "Limited chatting",
       "Add 1 child profile",
       "Standard parent dashboard",
-      "Daily activity reports"
+      "Weekly activity reports",
+      "Downloaded reports"
     ],
     color: "brand-purple",
     icon: Rocket,
     comingSoon: false,
-    recommended: true
+    recommended: false
   },
   {
     name: "Pro",
@@ -38,16 +38,20 @@ const plans = [
     description: "Advanced tools for growing explorers!",
     features: [
       "Everything in Basic",
-      "Manage up to 5 child accounts",
+      "Full website access",
+      "Full Playzone access",
+      "Exclusive Tutorial access",
+      "Unlimited chatting",
+      "Advanced parent dashboard",
       "Advanced AI learning insights",
-      "Priority parent support",
+      "Priority customer support",
       "Custom challenges for kids",
       "Ad-free experience"
     ],
     color: "sky-blue",
     icon: Zap,
     comingSoon: false,
-    recommended: false
+    recommended: true
   },
   {
     name: "Elite",
@@ -57,11 +61,11 @@ const plans = [
     description: "The ultimate experience for super learners!",
     features: [
       "Everything in Pro",
-      "Unlimited child accounts",
-      "1-on-1 expert consultation",
-      "Early access to new features",
-      "Exclusive Elite badges & themes",
-      "Family learning workshops"
+      "Quarterly 1-on-1 expert session",
+      "Exclusive Elite Badges",
+      "Early Access to New Features",
+      "Realtime 24*7 Customer Support",
+      "Advanced AI-based Child Insights"
     ],
     color: "hot-pink",
     icon: Crown,
@@ -434,7 +438,6 @@ export default function PricingSection({ showTitle = true }: { showTitle?: boole
                 <span className="text-4xl font-black text-gray-900 font-nunito">₹{plan.price[billingCycle]}</span>
                 <span className="text-gray-500 font-bold">/{billingCycle === "monthly" ? "mo" : "yr"}</span>
               </div>
-              <p className="text-xs font-black text-hot-pink uppercase tracking-wider mt-1">Recurring Billing</p>
             </div>
 
             {/* Features List */}
