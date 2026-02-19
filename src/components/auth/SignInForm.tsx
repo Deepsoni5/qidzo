@@ -33,6 +33,12 @@ export default function SignInForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [mode, setMode] = useState<"login" | "reset_request" | "reset_verify">("login");
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetCode, setResetCode] = useState("");
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetShowPassword, setResetShowPassword] = useState(false);
 
   // Bouncer: Redirect if already logged in
   useEffect(() => {
@@ -118,6 +124,135 @@ export default function SignInForm() {
     });
   };
 
+  const handleForgotClick = () => {
+    const email = form.getValues("email");
+    if (email) {
+      setResetEmail(email);
+    }
+    setMode("reset_request");
+  };
+
+  const handleResetRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoaded || !signIn) return;
+
+    const email = resetEmail.trim();
+    if (!email) {
+      toast.error("Please enter your email to reset password");
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const res = await signIn.create({
+        strategy: "reset_password_email_code",
+        identifier: email,
+      });
+
+      if (res.status === "needs_first_factor") {
+        toast.success("Magic reset code sent ✨", {
+          description: "Check your email for the 6-digit code.",
+        });
+        setMode("reset_verify");
+      } else {
+        toast.error("Reset not available", {
+          description: "Please try again or contact support.",
+        });
+      }
+    } catch (err: any) {
+      const errors = err.errors || [];
+      const errorMsg = errors[0]?.message as string | undefined;
+      const errorCode = errors[0]?.code as string | undefined;
+
+      let userMsg = "Unable to start password reset.";
+
+      if (errorCode === "form_identifier_not_found") {
+        userMsg = "No account found with this email.";
+      } else if (errorCode === "strategy_for_user_invalid") {
+        userMsg =
+          "This account uses Google or Facebook. Please use social login instead of resetting a password.";
+      } else if (errorCode === "too_many_attempts") {
+        userMsg = "Too many reset attempts. Please try again later.";
+      } else if (errorMsg) {
+        userMsg = errorMsg;
+      }
+
+      toast.error("Reset Failed 🛑", {
+        description: userMsg,
+      });
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleResetVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoaded || !signIn) return;
+
+    if (!resetCode.trim() || !resetPassword) {
+      toast.error("Enter the code and a new password");
+      return;
+    }
+
+    if (resetPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    setResetLoading(true);
+    let completed = false;
+    try {
+      const result = await signIn.attemptFirstFactor({
+        strategy: "reset_password_email_code",
+        code: resetCode.trim(),
+        password: resetPassword,
+      });
+
+      if (result.status === "needs_second_factor") {
+        toast.error("Two-step verification required", {
+          description:
+            "This account has extra security. Please continue using the link in your email.",
+        });
+      } else if (result.status === "complete") {
+        completed = true;
+        await setActive({ session: result.createdSessionId });
+        toast.success("Password updated! 🎉", {
+          description: "You are now signed in to your parent account.",
+        });
+        router.replace("/parent/dashboard");
+        if (typeof window !== "undefined") {
+          window.location.assign("/parent/dashboard");
+        }
+      } else {
+        toast.error("Reset incomplete", {
+          description: "Please try again from the beginning.",
+        });
+      }
+    } catch (err: any) {
+      const errors = err.errors || [];
+      const errorMsg = errors[0]?.message as string | undefined;
+      const errorCode = errors[0]?.code as string | undefined;
+
+      let userMsg = "Unable to reset password.";
+
+      if (errorCode === "form_code_incorrect" || errorCode === "form_code_expired") {
+        userMsg = "The code is incorrect or expired. Please request a new one.";
+      } else if (errorCode === "too_many_attempts") {
+        userMsg = "Too many attempts. Please request a new code later.";
+      } else if (errorMsg) {
+        userMsg = errorMsg;
+      }
+
+      toast.error("Reset Failed 🛑", {
+        description: userMsg,
+      });
+    } finally {
+      if (!completed) {
+        setResetLoading(false);
+      }
+    }
+  };
+
   return (
     <div className="w-full max-w-md mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border-4 border-gray-100">
       <div className="p-8">
@@ -175,71 +310,190 @@ export default function SignInForm() {
             </div>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold text-gray-700">Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="parent@example.com"
-                      {...field}
-                      className="rounded-xl border-2 focus:border-brand-purple"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {mode === "login" && (
+          <>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-bold text-gray-700">Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="parent@example.com"
+                          {...field}
+                          className="rounded-xl border-2 focus:border-brand-purple"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold text-gray-700">Password</FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Your password"
-                        {...field}
-                        className="rounded-xl border-2 focus:border-brand-purple pr-10"
-                      />
-                    </FormControl>
-                    <button
-                      type="button"
-                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-bold text-gray-700 flex items-center justify-between">
+                        <span>Password</span>
+                        <button
+                          type="button"
+                          onClick={handleForgotClick}
+                          className="text-xs font-bold cursor-pointer text-brand-purple hover:underline"
+                        >
+                          Forgot password?
+                        </button>
+                      </FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Your password"
+                            {...field}
+                            className="rounded-xl border-2 focus:border-brand-purple pr-10"
+                          />
+                        </FormControl>
+                        <button
+                          type="button"
+                          className="absolute cursor-pointer right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <Button
-              type="submit"
-              className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white font-bold py-6 rounded-xl text-lg shadow-lg shadow-brand-purple/20 transition-all hover:scale-[1.02]"
-              disabled={isLoading}
+                <Button
+                  type="submit"
+                  className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white font-bold py-6 rounded-xl text-lg shadow-lg shadow-brand-purple/20 transition-all hover:scale-[1.02]"
+                  disabled={isLoading}
+                >
+                  {isLoading ? <Loader2 className="animate-spin" /> : "Login"}
+                </Button>
+              </form>
+            </Form>
+            <div className="text-center mt-4">
+              <span className="text-gray-500">No account? </span>
+              <a href="/sign-up" className="text-brand-purple font-bold hover:underline">
+                Sign Up
+              </a>
+            </div>
+          </>
+        )}
+
+        {mode === "reset_request" && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-black font-nunito text-gray-900">
+              Forgot your password?
+            </h3>
+            <p className="text-sm text-gray-500 font-bold">
+              Enter your parent email and we&apos;ll send a 6-digit reset code.
+            </p>
+            <form onSubmit={handleResetRequest} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Parent Email
+                </label>
+                <Input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="parent@example.com"
+                  className="rounded-xl border-2 focus:border-brand-purple"
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full bg-brand-purple cursor-pointer hover:bg-brand-purple/90 text-white font-black py-3 rounded-xl text-sm shadow-lg shadow-brand-purple/20 transition-all hover:scale-[1.02]"
+                disabled={resetLoading}
+              >
+                {resetLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Send Reset Code"
+                )}
+              </Button>
+            </form>
+            <button
+              type="button"
+              onClick={() => setMode("login")}
+              className="w-full text-center cursor-pointer text-sm font-bold text-gray-500 hover:text-brand-purple mt-2 cursor-pointer"
             >
-              {isLoading ? <Loader2 className="animate-spin" /> : "Login"}
-            </Button>
-          </form>
-        </Form>
-        <div className="text-center mt-4">
-          <span className="text-gray-500">No account? </span>
-          <a href="/sign-up" className="text-brand-purple font-bold hover:underline">
-            Sign Up
-          </a>
-        </div>
+              ← Back to login
+            </button>
+          </div>
+        )}
+
+        {mode === "reset_verify" && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-black font-nunito text-gray-900">
+              Enter code & new password
+            </h3>
+            <p className="text-sm text-gray-500 font-bold">
+              We sent a 6-digit code to <span className="font-black">{resetEmail}</span>
+            </p>
+            <form onSubmit={handleResetVerify} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Reset Code
+                </label>
+                <Input
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value)}
+                  placeholder="123456"
+                  maxLength={6}
+                  className="rounded-xl border-2 focus:border-brand-purple text-center tracking-[0.4em]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  New Password
+                </label>
+                <div className="relative">
+                  <Input
+                    type={resetShowPassword ? "text" : "password"}
+                    value={resetPassword}
+                    onChange={(e) => setResetPassword(e.target.value)}
+                    placeholder="At least 8 characters"
+                    className="rounded-xl border-2 focus:border-brand-purple pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                    onClick={() => setResetShowPassword(!resetShowPassword)}
+                  >
+                    {resetShowPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+              <Button
+                type="submit"
+                className="w-full cursor-pointer bg-brand-purple hover:bg-brand-purple/90 text-white font-black py-3 rounded-xl text-sm shadow-lg shadow-brand-purple/20 transition-all hover:scale-[1.02]"
+                disabled={resetLoading}
+              >
+                {resetLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Update Password & Login"
+                )}
+              </Button>
+            </form>
+            <button
+              type="button"
+              onClick={() => setMode("reset_request")}
+              className="w-full cursor-pointer text-center text-sm font-bold text-gray-500 hover:text-brand-purple mt-2 cursor-pointer"
+            >
+              ← Back to reset email
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
