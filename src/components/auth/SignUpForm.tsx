@@ -329,6 +329,9 @@ export default function SignUpForm() {
     try {
         const parentId = generateParentId();
         const avatarUrl = data.avatar || "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+        const trialStart = new Date();
+        const trialEnd = new Date(trialStart);
+        trialEnd.setDate(trialEnd.getDate() + 7);
 
         // 1. Update Clerk User Metadata (Critical for UI Sync)
         const [firstName, ...lastNameParts] = data.fullName.trim().split(' ');
@@ -355,8 +358,10 @@ export default function SignUpForm() {
             phone: data.phone,
             date_of_birth: data.dob ? new Date(data.dob) : null,
             avatar: avatarUrl,
-            subscription_plan: 'FREE',
+            subscription_plan: 'ELITE',
             subscription_status: 'ACTIVE',
+            subscription_ends_at: trialEnd.toISOString(),
+            max_children_slots: 1,
             role: 'parent'
         });
 
