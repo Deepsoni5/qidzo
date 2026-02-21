@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Gamepad2, Trophy, Star, Rocket, Loader2, ArrowLeft, Brain, Swords, Clock3 } from "lucide-react";
+import { Gamepad2, Trophy, Star, Rocket, Loader2, ArrowLeft, Brain, Swords, Clock3, Zap } from "lucide-react";
 import { getCurrentUserRole } from "@/actions/auth";
 import { getPlayzoneOverview, startQuestionSession, completeGameSession } from "@/actions/games";
 import { toast } from "sonner";
@@ -29,6 +29,20 @@ interface QuestionSessionProps {
 }
 
 interface MemoryMatchSessionProps {
+  levelName: string;
+  config: any;
+  onExit: () => void;
+  onFinished: (stats: QuestionSessionStats) => void;
+}
+
+interface PatternMasterSessionProps {
+  levelName: string;
+  config: any;
+  onExit: () => void;
+  onFinished: (stats: QuestionSessionStats) => void;
+}
+
+interface ReflexTapSessionProps {
   levelName: string;
   config: any;
   onExit: () => void;
@@ -194,6 +208,12 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
   const pairs = typeof config?.pairs === "number" && config.pairs > 0 ? config.pairs : 6;
   const emojis = ["🧠", "🚀", "🌟", "🧩", "🎈", "🎨", "📚", "🎵", "🦄", "🦊", "🍕", "⚡️"];
   const usedEmojis = emojis.slice(0, pairs);
+  const timeLimit =
+    typeof config?.timeLimit === "number"
+      ? config.timeLimit
+      : typeof config?.maxTimeSec === "number"
+      ? config.maxTimeSec
+      : null;
 
   const [cards, setCards] = useState<MemoryCard[]>([]);
   const [firstIndex, setFirstIndex] = useState<number | null>(null);
@@ -202,6 +222,10 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
   const [matches, setMatches] = useState(0);
   const [isBusy, setIsBusy] = useState(false);
   const startedAtRef = useRef<number | null>(null);
+  const finishedRef = useRef(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(timeLimit);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
 
   useEffect(() => {
     const baseCards: MemoryCard[] = [];
@@ -225,13 +249,58 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
   }, []);
 
   useEffect(() => {
+    if (!timeLimit || finishedRef.current) return;
+    if (timeLeft === null || timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev === null) return prev;
+        if (prev <= 1) {
+          clearInterval(timer);
+          if (!finishedRef.current && matches < pairs) {
+            const durationSec = startedAtRef.current
+              ? Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000))
+              : timeLimit;
+            const efficiency = moves > 0 ? matches / moves : 0;
+            const baseScore = pairs * 120;
+            const bonus = bestStreak * 40;
+            const score = Math.max(0, Math.round(baseScore * efficiency + bonus));
+
+            const result = {
+              pairs,
+              moves,
+              durationSec,
+              timeout: true,
+            };
+
+            finishedRef.current = true;
+            onFinished({
+              score,
+              correctCount: matches,
+              totalQuestions: pairs,
+              durationSec,
+              result,
+            });
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLimit, timeLeft, matches, pairs, moves, bestStreak, onFinished]);
+
+  useEffect(() => {
+    if (finishedRef.current) return;
     if (matches === pairs && pairs > 0) {
       const durationSec = startedAtRef.current
         ? Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000))
         : 0;
       const efficiency = moves > 0 ? pairs / moves : 1;
       const baseScore = pairs * 120;
-      const score = Math.max(0, Math.round(baseScore * efficiency));
+      const bonus = bestStreak * 40;
+      const score = Math.max(0, Math.round(baseScore * efficiency + bonus));
 
       const result = {
         pairs,
@@ -239,6 +308,7 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
         durationSec,
       };
 
+      finishedRef.current = true;
       onFinished({
         score,
         correctCount: pairs,
@@ -247,7 +317,7 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
         result,
       });
     }
-  }, [matches, pairs, moves, onFinished]);
+  }, [matches, pairs, moves, bestStreak, onFinished]);
 
   const handleCardClick = (index: number) => {
     if (isBusy) return;
@@ -277,10 +347,16 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
           updated[index] = { ...secondCard, state: "matched" };
           setCards(updated);
           setMatches(prev => prev + 1);
+          setStreak(prev => {
+            const next = prev + 1;
+            setBestStreak(current => (next > current ? next : current));
+            return next;
+          });
         } else {
           updated[firstIndex] = { ...firstCard, state: "hidden" };
           updated[index] = { ...secondCard, state: "hidden" };
           setCards(updated);
+          setStreak(0);
         }
 
         setFirstIndex(null);
@@ -300,15 +376,37 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
           <h2 className="text-2xl md:text-3xl font-black text-gray-900">{levelName}</h2>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <div className="flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100">
-            <Brain className="w-5 h-5 text-emerald-500" />
-            <span className="text-sm font-bold text-emerald-700">
+          {timeLimit && (
+            <div
+              className={[
+                "flex items-center gap-2 px-4 py-2 rounded-2xl border text-sm font-bold",
+                timeLeft !== null && timeLeft <= 10
+                  ? "bg-rose-50 border-rose-100 text-rose-600"
+                  : "bg-sky-50 border-sky-100 text-sky-700",
+              ].join(" ")}
+            >
+              <Clock3
+                className={[
+                  "w-5 h-5",
+                  timeLeft !== null && timeLeft <= 10 ? "text-rose-500" : "text-sky-500",
+                ].join(" ")}
+              />
+              <span>
+                Time left: {timeLeft ?? timeLimit}s
+              </span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-2xl border border-emerald-100">
+            <Brain className="w-4 h-4 text-emerald-500" />
+            <span className="text-xs font-bold text-emerald-700">
               Matches: {matches}/{pairs}
             </span>
           </div>
           <div className="flex items-center gap-2 bg-sky-50 px-3 py-1 rounded-2xl border border-sky-100">
-            <Clock3 className="w-4 h-4 text-sky-500" />
-            <span className="text-xs font-bold text-sky-700">Moves: {moves}</span>
+            <Star className="w-4 h-4 text-sunshine-yellow fill-sunshine-yellow" />
+            <span className="text-xs font-bold text-sky-700">
+              Moves: {moves} • Streak: {bestStreak}
+            </span>
           </div>
         </div>
       </div>
@@ -349,6 +447,355 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
         <div className="flex items-center gap-2 text-sm font-bold text-gray-500">
           <Swords className="w-4 h-4 text-hot-pink" />
           <span>Find all the matching pairs</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type PatternPhase = "preview" | "input" | "finished";
+
+function PatternMasterSession({ levelName, config, onExit, onFinished }: PatternMasterSessionProps) {
+  const sequenceLength =
+    typeof config?.sequenceLength === "number" && config.sequenceLength > 0 ? config.sequenceLength : 4;
+  const symbolKeys: string[] =
+    Array.isArray(config?.symbols) && config.symbols.length > 0
+      ? (config.symbols as string[])
+      : ["circle", "square", "triangle"];
+
+  const symbolDisplay: Record<string, { label: string; className: string }> = {
+    circle: { label: "●", className: "bg-sky-100 text-sky-700" },
+    square: { label: "■", className: "bg-emerald-100 text-emerald-700" },
+    triangle: { label: "▲", className: "bg-amber-100 text-amber-700" },
+    star: { label: "★", className: "bg-purple-100 text-brand-purple" },
+    heart: { label: "♥", className: "bg-rose-100 text-rose-600" },
+  };
+
+  const [sequence, setSequence] = useState<string[]>([]);
+  const [phase, setPhase] = useState<PatternPhase>("preview");
+  const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
+  const [inputIndex, setInputIndex] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const startedAtRef = useRef<number | null>(null);
+  const finishedRef = useRef(false);
+
+  useEffect(() => {
+    const generated: string[] = [];
+    for (let i = 0; i < sequenceLength; i += 1) {
+      const key = symbolKeys[Math.floor(Math.random() * symbolKeys.length)];
+      generated.push(key);
+    }
+    setSequence(generated);
+
+    const showTime = typeof config?.showTime === "number" ? config.showTime : 2;
+    const stepMs = Math.max(400, Math.round(showTime * 1000));
+    let index = 0;
+    setHighlightIndex(0);
+    setPhase("preview");
+
+    const interval = setInterval(() => {
+      index += 1;
+      if (index >= generated.length) {
+        clearInterval(interval);
+        setHighlightIndex(null);
+        setPhase("input");
+        startedAtRef.current = Date.now();
+      } else {
+        setHighlightIndex(index);
+      }
+    }, stepMs);
+
+    return () => clearInterval(interval);
+  }, [sequenceLength, symbolKeys, config?.showTime]);
+
+  const finish = (finalCorrect: number) => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    setPhase("finished");
+    const durationSec = startedAtRef.current
+      ? Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000))
+      : 0;
+    const score = Math.max(0, finalCorrect * 100);
+    const result = {
+      sequence,
+      correctSteps: finalCorrect,
+    };
+
+    onFinished({
+      score,
+      correctCount: finalCorrect,
+      totalQuestions: sequence.length || sequenceLength,
+      durationSec,
+      result,
+    });
+  };
+
+  const handleSymbolClick = (key: string) => {
+    if (phase !== "input" || finishedRef.current) return;
+    const expected = sequence[inputIndex];
+    const isCorrect = key === expected;
+    const nextIndex = inputIndex + 1;
+
+    if (isCorrect) {
+      const nextCorrect = inputIndex + 1;
+      setInputIndex(nextIndex);
+      setCorrectCount(nextCorrect);
+      if (nextIndex >= sequence.length) {
+        finish(nextCorrect);
+      }
+    } else {
+      finish(inputIndex);
+    }
+  };
+
+  const currentStep = phase === "input" ? inputIndex + 1 : 0;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-bold text-brand-purple/80 uppercase tracking-[0.15em]">
+            Pattern Master
+          </p>
+          <h2 className="text-2xl md:text-3xl font-black text-gray-900">{levelName}</h2>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-2 bg-sky-50 px-4 py-2 rounded-2xl border border-sky-100">
+            <Brain className="w-5 h-5 text-sky-500" />
+            <span className="text-sm font-bold text-sky-700">
+              {phase === "preview" ? "Watch the pattern" : `Step ${currentStep} of ${sequenceLength}`}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-2xl border border-emerald-100">
+            <Star className="w-4 h-4 text-emerald-500 fill-emerald-500" />
+            <span className="text-xs font-bold text-emerald-700">
+              Correct: {correctCount}/{sequenceLength}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-brand-purple/5 via-sky-50 to-hot-pink/5 rounded-[32px] p-5 md:p-6 border border-white shadow-lg shadow-brand-purple/10">
+        <p className="text-sm font-bold text-gray-500 mb-4">
+          {phase === "preview"
+            ? "Watch the glowing shapes. Remember the order."
+            : "Tap the shapes in the same order you saw."}
+        </p>
+        <div className="flex items-center justify-center gap-3 md:gap-4">
+          {sequence.map((key, index) => {
+            const info = symbolDisplay[key] || symbolDisplay.circle;
+            const isActive = phase === "preview" && highlightIndex === index;
+            return (
+              <div
+                key={`${key}-${index}`}
+                className={[
+                  "w-10 h-10 md:w-12 md:h-12 rounded-3xl flex items-center justify-center text-xl md:text-2xl font-black transition-all",
+                  info.className,
+                  isActive ? "scale-110 ring-4 ring-brand-purple/40 shadow-lg shadow-brand-purple/20" : "",
+                ].join(" ")}
+              >
+                {info.label}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-[32px] p-4 md:p-5 border border-gray-100 shadow-md shadow-brand-purple/5">
+        <p className="text-xs font-bold text-gray-500 mb-3">Tap to repeat the pattern</p>
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+          {symbolKeys.map(key => {
+            const info = symbolDisplay[key] || symbolDisplay.circle;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleSymbolClick(key)}
+                disabled={phase !== "input"}
+                className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-2xl border-2 border-gray-100 bg-gray-50 hover:bg-white hover:border-brand-purple/40 active:scale-95 transition-all cursor-pointer"
+              >
+                <span
+                  className={[
+                    "w-9 h-9 rounded-3xl flex items-center justify-center text-xl font-black",
+                    symbolDisplay[key]?.className || symbolDisplay.circle.className,
+                  ].join(" ")}
+                >
+                  {info.label}
+                </span>
+                <span className="text-[11px] font-bold text-gray-500 capitalize">{key}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 mt-2">
+        <button
+          type="button"
+          onClick={onExit}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border-2 border-gray-200 text-gray-600 font-bold text-sm bg-white hover:bg-gray-50 active:scale-95 transition-all cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Exit game
+        </button>
+        <div className="flex items-center gap-2 text-sm font-bold text-gray-500">
+          <Brain className="w-4 h-4 text-brand-purple" />
+          <span>Remember the sequence and tap in order</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReflexTapSession({ levelName, config, onExit, onFinished }: ReflexTapSessionProps) {
+  const duration = typeof config?.durationSec === "number" && config.durationSec > 0 ? config.durationSec : 30;
+  const colors = Array.isArray(config?.colors) && config.colors.length > 0 ? config.colors : ["red", "blue"];
+  const spawnRate = config?.spawnRate as string | undefined;
+  const spawnMs = spawnRate === "fast" ? 450 : spawnRate === "medium" ? 650 : 900;
+  const sizeKey = config?.targetSize as string | undefined;
+  const sizeClass =
+    sizeKey === "small" ? "w-10 h-10" : sizeKey === "medium" ? "w-14 h-14" : "w-16 h-16";
+
+  const [timeLeft, setTimeLeft] = useState(duration);
+  const [hits, setHits] = useState(0);
+  const [taps, setTaps] = useState(0);
+  const [target, setTarget] = useState<{ id: number; color: string; top: number; left: number } | null>(null);
+  const startedAtRef = useRef<number | null>(null);
+  const finishedRef = useRef(false);
+
+  const createTarget = () => {
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const top = 10 + Math.random() * 70;
+    const left = 10 + Math.random() * 70;
+    return {
+      id: Date.now(),
+      color,
+      top,
+      left,
+    };
+  };
+
+  useEffect(() => {
+    startedAtRef.current = Date.now();
+    setTarget(createTarget());
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev: number) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    const spawner = setInterval(() => {
+      setTarget(createTarget());
+    }, spawnMs);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(spawner);
+    };
+  }, [spawnMs]);
+
+  useEffect(() => {
+    if (timeLeft > 0 || finishedRef.current) return;
+    finishedRef.current = true;
+    const durationSec = startedAtRef.current
+      ? Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000))
+      : duration;
+    const score = hits;
+    const result = {
+      hits,
+      taps,
+      durationSec,
+    };
+
+    onFinished({
+      score,
+      correctCount: hits,
+      totalQuestions: Math.max(hits, 1),
+      durationSec,
+      result,
+    });
+  }, [timeLeft, hits, taps, duration, onFinished]);
+
+  const handleHit = () => {
+    if (!target || finishedRef.current) return;
+    setHits(prev => prev + 1);
+    setTaps(prev => prev + 1);
+    setTarget(createTarget());
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-bold text-brand-purple/80 uppercase tracking-[0.15em]">
+            Reflex Tap
+          </p>
+          <h2 className="text-2xl md:text-3xl font-black text-gray-900">{levelName}</h2>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-2 bg-rose-50 px-4 py-2 rounded-2xl border border-rose-100">
+            <Zap className="w-5 h-5 text-rose-500" />
+            <span className="text-sm font-bold text-rose-700">
+              Time left: {timeLeft}s
+            </span>
+          </div>
+          <div className="flex items-center gap-2 bg-sky-50 px-3 py-1 rounded-2xl border border-sky-100">
+            <Star className="w-4 h-4 text-sunshine-yellow fill-sunshine-yellow" />
+            <span className="text-xs font-bold text-sky-700">Hits: {hits}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-brand-purple/5 via-sky-50 to-hot-pink/5 rounded-[32px] p-4 md:p-6 border border-white shadow-lg shadow-brand-purple/10">
+        <p className="text-sm font-bold text-gray-500 mb-3">
+          Tap the glowing targets as fast as you can.
+        </p>
+        <div className="relative w-full h-64 md:h-72 bg-white rounded-[28px] border-2 border-gray-100 overflow-hidden">
+          {target && (
+            <button
+              type="button"
+              onClick={handleHit}
+              className={[
+                "absolute rounded-full border-4 shadow-lg active:scale-95 transition-transform cursor-pointer",
+                sizeClass,
+              ].join(" ")}
+              style={{
+                top: `${target.top}%`,
+                left: `${target.left}%`,
+                transform: "translate(-50%, -50%)",
+                backgroundColor:
+                  target.color === "red"
+                    ? "#fee2e2"
+                    : target.color === "blue"
+                    ? "#dbeafe"
+                    : target.color === "green"
+                    ? "#dcfce7"
+                    : "#fef9c3",
+                borderColor:
+                  target.color === "red"
+                    ? "#f97373"
+                    : target.color === "blue"
+                    ? "#3b82f6"
+                    : target.color === "green"
+                    ? "#22c55e"
+                    : "#eab308",
+              }}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 mt-2">
+        <button
+          type="button"
+          onClick={onExit}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border-2 border-gray-200 text-gray-600 font-bold text-sm bg-white hover:bg-gray-50 active:scale-95 transition-all cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Exit game
+        </button>
+        <div className="flex items-center gap-2 text-sm font-bold text-gray-500">
+          <Zap className="w-4 h-4 text-rose-500" />
+          <span>Faster taps mean higher scores</span>
         </div>
       </div>
     </div>
@@ -440,19 +887,48 @@ export default function PlayzonePage() {
       return;
     }
 
-    if (activeGame.slug !== "memory-match") {
+    if (activeGame.type === "ARCADE") {
+      const baseConfig = {
+        ...(level.config || {}),
+        targetScore: level.targetScore,
+        maxTimeSec: level.maxTimeSec,
+      };
+
+      if (activeGame.slug === "memory-match") {
+        setActiveLevel(level);
+        setSessionData({
+          mode: "memory-match",
+          config: baseConfig,
+        });
+        setOverlayView("playing");
+        return;
+      }
+
+      if (activeGame.slug === "pattern-master") {
+        setActiveLevel(level);
+        setSessionData({
+          mode: "pattern-master",
+          config: baseConfig,
+        });
+        setOverlayView("playing");
+        return;
+      }
+
+      if (activeGame.slug === "reflex-tap") {
+        setActiveLevel(level);
+        setSessionData({
+          mode: "reflex-tap",
+          config: baseConfig,
+        });
+        setOverlayView("playing");
+        return;
+      }
+
       toast("This arcade game is coming soon!", {
         description: "New mini-games are on the way.",
       });
       return;
     }
-
-    setActiveLevel(level);
-    setSessionData({
-      mode: "memory-match",
-      config: level.config || {},
-    });
-    setOverlayView("playing");
   };
 
   const handleExitOverlay = () => {
@@ -503,14 +979,12 @@ export default function PlayzonePage() {
       }
     }
 
-    if (result.passed) {
-      setTimeout(() => {
-        setOverlayView("select-level");
-        setSessionData(null);
-        setActiveLevel(null);
-        setSessionSummary(null);
-      }, 2200);
-    }
+    setTimeout(() => {
+      setOverlayView("select-level");
+      setSessionData(null);
+      setActiveLevel(null);
+      setSessionSummary(null);
+    }, 2200);
   };
 
   if (isLoading) {
@@ -866,6 +1340,22 @@ export default function PlayzonePage() {
                 )}
                 {activeGame.type === "ARCADE" && sessionData.mode === "memory-match" && (
                   <MemoryMatchSession
+                    levelName={activeLevel?.name || ""}
+                    config={sessionData.config}
+                    onExit={handleExitOverlay}
+                    onFinished={handleSessionFinished}
+                  />
+                )}
+                {activeGame.type === "ARCADE" && sessionData.mode === "pattern-master" && (
+                  <PatternMasterSession
+                    levelName={activeLevel?.name || ""}
+                    config={sessionData.config}
+                    onExit={handleExitOverlay}
+                    onFinished={handleSessionFinished}
+                  />
+                )}
+                {activeGame.type === "ARCADE" && sessionData.mode === "reflex-tap" && (
+                  <ReflexTapSession
                     levelName={activeLevel?.name || ""}
                     config={sessionData.config}
                     onExit={handleExitOverlay}
