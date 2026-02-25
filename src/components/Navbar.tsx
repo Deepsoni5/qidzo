@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut, Trophy, Flame, Wand2, Star, Badge, Users, UserCheck, Heart, MessageCircle, UserPlus, Shield, FileText, RefreshCw, Mail, ChevronDown } from "lucide-react";
+import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut, Trophy, Flame, Wand2, Star, Badge, Users, UserCheck, Heart, MessageCircle, UserPlus, Shield, FileText, RefreshCw, Mail, ChevronDown, School } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "./ui/button";
@@ -16,7 +16,7 @@ import type { GlobalSearchResult } from "@/actions/search";
 export default function Navbar() {
   const { user } = useUser();
   const pathname = usePathname();
-  const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isChild: boolean, child?: any } | null>(null);
+  const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isSchool?: boolean, isChild: boolean, child?: any } | null>(null);
   const [kid, setKid] = useState<any>(null);
   const [kidProfile, setKidProfile] = useState<ChildProfile | null>(null);
   const router = useRouter();
@@ -239,20 +239,29 @@ export default function Navbar() {
                         }
                     }}
                 >
-                 {userRole?.isParent && (
-    <UserButton.MenuItems>
-      <UserButton.Action
-        label="Parent Dashboard"
-        labelIcon={<LayoutDashboard className="h-4 w-4" />}
-        onClick={() => router.push("/parent/dashboard")}
-      />
-      <UserButton.Action
-        label="Add Child"
-        labelIcon={<UserPlus className="h-4 w-4" />}
-        onClick={() => router.push("/parent/add-child")}
-      />
-    </UserButton.MenuItems>
-  )}
+                  {userRole?.isParent && (
+                    <UserButton.MenuItems>
+                      <UserButton.Action
+                        label="Parent Dashboard"
+                        labelIcon={<LayoutDashboard className="h-4 w-4" />}
+                        onClick={() => router.push("/parent/dashboard")}
+                      />
+                      <UserButton.Action
+                        label="Add Child"
+                        labelIcon={<UserPlus className="h-4 w-4" />}
+                        onClick={() => router.push("/parent/add-child")}
+                      />
+                    </UserButton.MenuItems>
+                  )}
+                  {userRole?.isSchool && (
+                    <UserButton.MenuItems>
+                      <UserButton.Action
+                        label="School Dashboard"
+                        labelIcon={<School className="h-4 w-4" />}
+                        onClick={() => router.push("/school/dashboard")}
+                      />
+                    </UserButton.MenuItems>
+                  )}
                 </UserButton>
             </SignedIn>
             <SignedOut>

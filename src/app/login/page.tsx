@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { User, Lock, ArrowRight, Star, Gamepad2, Rocket, Eye, EyeOff, Loader2 } from "lucide-react";
+import { User, Lock, ArrowRight, Star, Gamepad2, Rocket, Eye, EyeOff, Loader2, School } from "lucide-react";
 import { loginChild } from "@/actions/auth";
 import { toast } from "sonner";
 
@@ -66,7 +66,7 @@ export default function KidsLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDF4FF] relative overflow-hidden font-nunito flex items-center justify-center p-4 pt-24 sm:pt-28">
+    <div className="min-h-screen bg-[#FDF4FF] relative overflow-hidden font-nunito flex items-center justify-center p-4 pt-24 sm:pt-28 lg:pt-16">
       {/* Playful Background Elements - Simplified */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 text-sky-400 opacity-60">
@@ -166,20 +166,27 @@ export default function KidsLoginPage() {
                 </button>
             </form>
 
-            {/* Parent Section */}
-            <div className="mt-8 pt-6 border-t border-gray-100">
-                <div className="flex flex-col items-center gap-3 text-center">
-                    <p className="text-gray-400 font-medium text-sm">
-                        Are you a grown-up?
-                    </p>
-                    <Link href="/sign-in" className="w-full">
-                        <button className="w-full py-3 px-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 hover:text-brand-purple hover:border-brand-purple hover:bg-purple-50 font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
-                            <User className="w-4 h-4" />
-                            Parents Login Here
-                        </button>
-                    </Link>
-                </div>
+          <div className="mt-8 pt-6 border-t border-gray-100">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <p className="text-gray-400 font-medium text-sm">
+                Are you a grown-up?
+              </p>
+              <div className="w-full flex flex-col sm:flex-row gap-3">
+                <Link href="/sign-in" className="w-full">
+                  <button className="w-full py-3 px-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 hover:text-brand-purple hover:border-brand-purple hover:bg-purple-50 font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <User className="w-4 h-4" />
+                    Parents Login Here
+                  </button>
+                </Link>
+                <Link href="/school/sign-in" className="w-full">
+                  <button className="w-full py-3 px-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 hover:text-brand-purple hover:border-brand-purple hover:bg-purple-50 font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <School className="w-4 h-4" />
+                    School Login
+                  </button>
+                </Link>
+              </div>
             </div>
+          </div>
         </div>
       </motion.div>
     </div>

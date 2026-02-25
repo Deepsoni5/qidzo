@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 interface FollowButtonProps {
   targetId: string;
-  targetType: 'PARENT' | 'CHILD';
+  targetType: 'PARENT' | 'CHILD' | 'SCHOOL';
   className?: string;
 }
 

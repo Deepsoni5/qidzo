@@ -104,22 +104,19 @@ export async function getChildSession() {
  * Uses Redis caching for Parent check to ensure speed.
  */
 export async function getCurrentUserRole() {
-    // 1. Check Parent Session (Clerk)
-    // We can't access Clerk `auth()` directly in a simple utility without importing it
-    // But we can rely on `checkIsParent` which we already have in `parent.ts`
-    // However, to avoid circular deps or complexity, let's just do a quick check here if needed
-    // OR, better, let the UI components handle the specific checks. 
-    // BUT the user asked for a unified way.
+    // 1. Check Parent/School Session (Clerk)
+    const { checkIsParent, checkIsSchool } = await import("./parent");
     
-    // Let's import the checkIsParent from parent actions dynamically or just reuse the logic if possible.
-    // Actually, `checkIsParent` is already cached with Redis.
-    // So we just need to combine them.
-    
-    const { checkIsParent } = await import("./parent");
-    const isParent = await checkIsParent();
+    const [isParent, isSchool] = await Promise.all([
+        checkIsParent(),
+        checkIsSchool()
+    ]);
     
     if (isParent) {
-        return { role: "parent", isParent: true, isChild: false };
+        return { role: "parent", isParent: true, isSchool: false, isChild: false };
+    }
+    if (isSchool) {
+        return { role: "school", isParent: false, isSchool: true, isChild: false };
     }
 
     // 2. Check Child Session (JWT)
@@ -146,14 +143,19 @@ export async function getCurrentUserRole() {
     return { role: "guest", isParent: false, isChild: false };
 }
 
-export async function updateClerkUserMetadata(userId: string, firstName: string, lastName: string) {
+export async function updateClerkUserMetadata(
+  userId: string,
+  firstName: string,
+  lastName: string,
+  role: "parent" | "school" = "parent"
+) {
     try {
         const client = await clerkClient();
         await client.users.updateUser(userId, {
             firstName,
             lastName,
             unsafeMetadata: {
-                role: "parent",
+                role,
                 onboarding_complete: true
             }
         });

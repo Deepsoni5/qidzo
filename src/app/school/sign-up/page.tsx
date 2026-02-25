@@ -1,0 +1,31 @@
+import SchoolSignUpForm from "@/components/auth/SchoolSignUpForm";
+
+export default function Page() {
+  return (
+    <div className="min-h-screen bg-sky-50 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-10 left-10 w-32 h-32 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute top-10 right-10 w-32 h-32 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-8 left-20 w-32 h-32 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+      </div>
+
+      <div className="z-10 w-full max-w-md mb-8 text-center pt-16 lg:pt-24">
+        <h1 className="text-2xl font-bold text-gray-800 font-nunito">
+          School Portal
+        </h1>
+        <p className="text-gray-500">
+          Create your official School page on Qidzo
+        </p>
+      </div>
+
+      <div className="z-10 w-full">
+        <SchoolSignUpForm />
+      </div>
+
+      <div className="mt-8 text-center text-sm text-gray-400 z-10">
+        <p>© 2026 Qidzo Inc. All rights reserved.</p>
+      </div>
+    </div>
+  );
+}
+

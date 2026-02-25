@@ -1,0 +1,88 @@
+"use client";
+
+import { Search, Bell, ArrowLeft, LayoutDashboard, Settings, Mail, School, Image as ImageIcon, FileText, Users } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+
+export default function SchoolNavbar() {
+  const router = useRouter();
+
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex-shrink-0 flex items-center gap-3 relative group">
+              <Image 
+                src="/f_q_logo.png" 
+                alt="Qidzo Logo" 
+                width={200} 
+                height={80} 
+                className="h-[80px] w-auto object-contain group-hover:scale-105 transition-transform absolute top-1/2 -translate-y-1/2"
+                priority
+              />
+              <div className="h-16 w-[160px]" />
+              <div className="flex flex-col border-l-2 border-gray-100 pl-3">
+                <span className="text-xs font-black text-sky-blue uppercase tracking-widest leading-none">School</span>
+                <span className="text-[10px] font-bold text-gray-400 leading-none mt-0.5">Partner Portal</span>
+              </div>
+            </Link>
+
+            <Link href="/" className="hidden md:flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-sky-blue transition-colors bg-gray-100 hover:bg-sky-blue/10 px-3 py-1.5 rounded-xl transition-all active:scale-95">
+              <ArrowLeft className="w-4 h-4" /> Back to Website
+            </Link>
+          </div>
+
+          {/* Search */}
+          <div className="flex-1 max-w-md mx-4 sm:mx-8 hidden sm:block">
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="w-5 h-5 text-gray-400 group-focus-within:text-sky-blue transition-colors" />
+              </div>
+              <input
+                type="text"
+                className="block w-full pl-11 pr-4 py-2.5 border-2 border-gray-200 bg-gray-50 rounded-full text-sm placeholder-gray-400 focus:outline-none focus:bg-white focus:border-sky-blue focus:ring-4 focus:ring-sky-blue/10 transition-all duration-300 font-bold text-gray-700 shadow-sm group-hover:shadow-md"
+                placeholder="Search analytics, students..."
+              />
+            </div>
+          </div>
+
+          {/* Icons */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Link href="/contact" className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors hover:scale-110 active:scale-95 duration-200" title="Contact Us">
+              <Mail className="w-6 h-6" />
+            </Link>
+            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors relative hover:scale-110 active:scale-95 duration-200">
+              <Bell className="w-6 h-6" />
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-hot-pink border-2 border-white rounded-full animate-pulse"></span>
+            </button>
+            <UserButton 
+              appearance={{
+                elements: {
+                  avatarBox: "w-10 h-10 border-2 border-white shadow-md hover:scale-105 transition-transform duration-200",
+                  userButtonPopoverFooter: "!hidden"
+                }
+              }}
+            >
+              <UserButton.MenuItems>
+                <UserButton.Action
+                  label="School Dashboard"
+                  labelIcon={<LayoutDashboard className="h-4 w-4" />}
+                  onClick={() => router.push("/school/dashboard")}
+                />
+                <UserButton.Action
+                    label="School Settings"
+                    labelIcon={<Settings className="h-4 w-4" />}
+                    onClick={() => router.push("/school/settings")}
+                />
+              </UserButton.MenuItems>
+            </UserButton>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}

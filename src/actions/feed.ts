@@ -32,10 +32,15 @@ export interface FeedPost {
   };
 }
 
-export async function getFeedPosts(page: number = 1, limit: number = 10, categoryIds: string[] = []) {
+export async function getFeedPosts(
+  page: number = 1,
+  limit: number = 10,
+  categoryIds: string[] = [],
+) {
   const offset = (page - 1) * limit;
   // Create a unique cache key that includes sorted category IDs
-  const categoriesKey = categoryIds.length > 0 ? `:cats:${categoryIds.sort().join(',')}` : '';
+  const categoriesKey =
+    categoryIds.length > 0 ? `:cats:${categoryIds.sort().join(",")}` : "";
   const cacheKey = `feed:posts:${page}:${limit}${categoriesKey}`;
 
   try {
@@ -49,7 +54,8 @@ export async function getFeedPosts(page: number = 1, limit: number = 10, categor
     // 2. Fetch from Supabase if cache miss
     let query = supabase
       .from("posts")
-      .select(`
+      .select(
+        `
         *,
         child:children (
           name,
@@ -59,19 +65,28 @@ export async function getFeedPosts(page: number = 1, limit: number = 10, categor
           level,
           country
         ),
+        schools!posts_school_id_fkey (
+          id,
+          school_id,
+          name,
+          slug,
+          logo_url,
+          brand_primary_color
+        ),
         category:categories (
           name,
           color,
           icon
         )
-      `)
+      `,
+      )
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
     // Apply category filter if provided
     if (categoryIds.length > 0) {
-      query = query.in('category_id', categoryIds);
+      query = query.in("category_id", categoryIds);
     }
 
     const { data, error } = await query;
@@ -81,7 +96,11 @@ export async function getFeedPosts(page: number = 1, limit: number = 10, categor
       throw new Error("Failed to fetch posts");
     }
 
-    const posts = data as unknown as FeedPost[];
+    // Map schools field to school for consistency
+    const posts = (data || []).map((post: any) => ({
+      ...post,
+      school: post.schools, // Rename schools to school
+    })) as unknown as FeedPost[];
 
     // 3. Cache the result in Redis (expire in 60 seconds)
     await redis.set(cacheKey, posts, { ex: 60 });

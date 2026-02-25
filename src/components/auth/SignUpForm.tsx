@@ -339,7 +339,7 @@ export default function SignUpForm() {
 
         // Use Server Action to update Clerk User Metadata (Robust & Secure)
         // This works even if client-side session is not yet active or signUp state is lost
-        const updateRes = await updateClerkUserMetadata(userId, firstName, lastName);
+        const updateRes = await updateClerkUserMetadata(userId, firstName, lastName, "parent");
         
         if (updateRes.success) {
             console.log("[SignUp] Clerk Metadata updated successfully");

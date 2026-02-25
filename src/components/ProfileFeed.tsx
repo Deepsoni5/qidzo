@@ -11,11 +11,12 @@ interface ProfileFeedProps {
   posts: FeedPost[];
   profileName: string;
   highlightPostId?: string;
+  userRole?: any;
 }
 
 type TabType = "all" | "photos" | "videos";
 
-export default function ProfileFeed({ posts, profileName, highlightPostId }: ProfileFeedProps) {
+export default function ProfileFeed({ posts, profileName, highlightPostId, userRole }: ProfileFeedProps) {
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 

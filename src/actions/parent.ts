@@ -19,7 +19,10 @@ export async function checkIsParent() {
     const user = await currentUser();
     if (!user) return false;
 
-    // Direct DB check - No caching for critical auth checks to prevent race conditions
+    // Check metadata first
+    if (user.unsafeMetadata?.role === "parent") return true;
+
+    // Fallback to Direct DB check
     const { data } = await supabase
         .from("parents")
         .select("parent_id")
@@ -29,6 +32,29 @@ export async function checkIsParent() {
     return !!data;
   } catch (error) {
     console.error("Error in checkIsParent:", error);
+    return false;
+  }
+}
+
+// 1b. Check if User is School
+export async function checkIsSchool() {
+  try {
+    const user = await currentUser();
+    if (!user) return false;
+
+    // Check metadata first
+    if (user.unsafeMetadata?.role === "school") return true;
+
+    // Fallback to Direct DB check
+    const { data } = await supabase
+        .from("schools")
+        .select("id")
+        .eq("clerk_id", user.id)
+        .single();
+    
+    return !!data;
+  } catch (error) {
+    console.error("Error in checkIsSchool:", error);
     return false;
   }
 }
