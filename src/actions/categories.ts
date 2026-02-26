@@ -11,17 +11,22 @@ export interface Category {
   color: string;
 }
 
-export async function getCategories() {
+export async function getCategories(type: "CHILD" | "SCHOOL" = "CHILD") {
+  const cacheKey = `categories:${type.toLowerCase()}:all`;
+  
   return getOrSetCache<Category[]>(
-    "categories:all",
+    cacheKey,
     async () => {
       const { data, error } = await supabase
         .from("categories")
         .select("*")
-        .order("name");
+        .eq("category_type", type)
+        .eq("is_active", true)
+        .order("display_order", { ascending: true })
+        .order("name", { ascending: true });
 
       if (error) {
-        console.error("Error fetching categories:", error);
+        console.error(`Error fetching ${type} categories:`, error);
         return [];
       }
 

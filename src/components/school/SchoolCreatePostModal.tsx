@@ -161,10 +161,6 @@ export default function SchoolCreatePostModal({
   ): Promise<{ url: string; thumbnail?: string }> => {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append(
-      "upload_preset",
-      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "qidzo_posts",
-    );
     formData.append("folder", `qidzo/schools/posts/${Date.now()}`);
 
     const resourceType =
@@ -173,34 +169,32 @@ export default function SchoolCreatePostModal({
         : mediaType === "DOCUMENT"
           ? "raw"
           : "image";
-    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
+    formData.append("resource_type", resourceType);
 
-    const xhr = new XMLHttpRequest();
-
-    return new Promise((resolve, reject) => {
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const progress = Math.round((e.loaded / e.total) * 100);
-          setUploadProgress(progress);
-        }
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
       });
 
-      xhr.addEventListener("load", () => {
-        if (xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
-          resolve({
-            url: response.secure_url,
-            thumbnail: response.eager?.[0]?.secure_url || response.secure_url,
-          });
-        } else {
-          reject(new Error("Upload failed"));
-        }
-      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Upload failed");
+      }
 
-      xhr.addEventListener("error", () => reject(new Error("Upload failed")));
-      xhr.open("POST", cloudinaryUrl);
-      xhr.send(formData);
-    });
+      const data = await res.json();
+      
+      // For images/videos, we can use the URL as thumbnail too
+      // Cloudinary usually provides eager transformations for thumbnails if configured, 
+      // but for now we'll just use the main URL.
+      return {
+        url: data.url,
+        thumbnail: data.url,
+      };
+    } catch (error: any) {
+      console.error("Upload Error:", error);
+      throw new Error(error.message || "Upload failed");
+    }
   };
 
   const handleNext = () => {

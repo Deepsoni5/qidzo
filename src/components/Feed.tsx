@@ -18,7 +18,7 @@ export default function Feed() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isChild: boolean, child?: any } | null>(null);
+  const [userRole, setUserRole] = useState<any>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   const { ref, inView } = useInView({
@@ -26,8 +26,12 @@ export default function Feed() {
     rootMargin: "200px",
   });
 
-  // Get current user ID (only needed for children to hide follow button on own posts)
-  const currentUserId = userRole?.isChild ? (userRole.child.id as string) : null;
+  // Get current user ID (for ownership check and follow button visibility)
+  const currentUserId = userRole?.isChild 
+    ? (userRole.child.id as string) 
+    : userRole?.isSchool 
+      ? (userRole.school.id as string) 
+      : null;
 
   // Reset feed when categories change
   useEffect(() => {
@@ -123,7 +127,7 @@ export default function Feed() {
   }, [inView, hasMore, isLoading, posts.length, loadMorePosts]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-hidden">
       {posts.map((post) => (
         <PostCard key={post.id} post={post} currentUserId={currentUserId} />
       ))}

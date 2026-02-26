@@ -23,10 +23,12 @@ export default function ProfileFeed({ posts, profileName, highlightPostId, userR
   useEffect(() => {
     const fetchUser = async () => {
       const role = await getCurrentUserRole();
-      const child = role.child as any;
-      if (role.isChild && child && child.id) {
-        setCurrentUserId(String(child.id));
-      } 
+      if (role.isChild && role.child && 'id' in role.child) {
+        setCurrentUserId(String(role.child.id));
+      } else if (role.isSchool && role.school?.id) {
+        // Use the internal UUID for ownership check
+        setCurrentUserId(String(role.school.id));
+      }
     };
     fetchUser();
   }, []);
@@ -58,7 +60,7 @@ export default function ProfileFeed({ posts, profileName, highlightPostId, userR
   }, [highlightPostId, orderedPosts.length]);
 
   return (
-    <div>
+    <div className="w-full max-w-full overflow-hidden">
       {/* Content Tabs */}
       <div className="flex items-center gap-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
         <button

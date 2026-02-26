@@ -2,7 +2,9 @@
 
 import { supabase } from "@/lib/supabaseClient";
 import { revalidatePath } from "next/cache";
-import { redis } from "@/lib/redis";
+import { redis, invalidateCache } from "@/lib/redis";
+import { currentUser } from "@clerk/nextjs/server";
+import { getChildSession } from "./auth";
 
 interface CreatePostParams {
     childId: string;
@@ -88,46 +90,92 @@ export async function createPost(params: CreatePostParams) {
 
 /**
  * Soft deletes a post by setting is_active to false.
- * Also decrements the child's total_posts count and xp_points (-10).
+ * Handles both Child and School ownership with session verification.
  */
-export async function deletePost(postId: string, childId: string) {
+export async function deletePost(postId: string, ownerId: string) {
     try {
-        // 1. Soft delete the post
-        const { error: deleteError } = await supabase
-            .from('posts')
-            .update({ is_active: false })
-            .eq('post_id', postId)
-            .eq('child_id', childId);
-
-        if (deleteError) throw deleteError;
-
-        // 2. Decrement Child Stats (Total Posts, XP)
-        const { data: child, error: fetchError } = await supabase
-            .from('children')
-            .select('total_posts, xp_points')
-            .eq('child_id', childId)
-            .single();
+        // 1. Verify session ownership for security
+        let isAuthorized = false;
         
-        if (fetchError) throw fetchError;
-
-        if (child) {
-            const { error: updateError } = await supabase
-                .from('children')
-                .update({
-                    total_posts: Math.max(0, (child.total_posts || 0) - 1),
-                    xp_points: Math.max(0, (child.xp_points || 0) - 10)
-                })
-                .eq('child_id', childId);
+        const childSession = await getChildSession();
+        if (childSession && childSession.id === ownerId) {
+            isAuthorized = true;
+        } else {
+            const user = await currentUser();
+            if (user) {
+                const { data: school } = await supabase
+                    .from('schools')
+                    .select('id')
+                    .eq('clerk_id', user.id)
+                    .single();
                 
-            if (updateError) {
-                console.error("Failed to decrement child stats:", updateError);
+                if (school && school.id === ownerId) {
+                    isAuthorized = true;
+                }
             }
         }
 
-        // 3. Clear relevant caches
+        if (!isAuthorized) {
+            return { success: false, error: "Unauthorized to delete this post" };
+        }
+
+        // 2. Identify if it's a child or school post to handle stats
+        const { data: post, error: postError } = await supabase
+            .from('posts')
+            .select('child_id, school_id, publisher_type')
+            .eq('post_id', postId)
+            .single();
+
+        if (postError || !post) throw new Error("Post not found");
+
+        // 3. Soft delete the post
+        const { error: deleteError } = await supabase
+            .from('posts')
+            .update({ is_active: false })
+            .eq('post_id', postId);
+
+        if (deleteError) throw deleteError;
+
+        // 4. Update Stats and Invalidate Caches
+        if (post.publisher_type === 'CHILD' && post.child_id === ownerId) {
+            const { data: child } = await supabase
+                .from('children')
+                .select('total_posts, xp_points')
+                .eq('child_id', ownerId)
+                .single();
+            
+            if (child) {
+                await supabase
+                    .from('children')
+                    .update({
+                        total_posts: Math.max(0, (child.total_posts || 0) - 1),
+                        xp_points: Math.max(0, (child.xp_points || 0) - 10)
+                    })
+                    .eq('child_id', ownerId);
+            }
+            await redis.del(`child:stats:${ownerId}`);
+        } else if (post.publisher_type === 'SCHOOL' && post.school_id === ownerId) {
+            const { data: school } = await supabase
+                .from('schools')
+                .select('posts_count')
+                .eq('id', ownerId)
+                .single();
+            
+            if (school) {
+                await supabase
+                    .from('schools')
+                    .update({
+                        posts_count: Math.max(0, (school.posts_count || 0) - 1)
+                    })
+                    .eq('id', ownerId);
+            }
+            await redis.del(`school:dashboard:${ownerId}`);
+            await redis.del(`school:posts:${ownerId}`);
+        }
+
+        // 5. Clear general feed cache
         await redis.del(`feed:all`);
-        // We don't have the categoryId here easily without fetching the post first, 
-        // but clearing the main feed is usually enough for most cases or we can fetch it.
+        await invalidateCache(`feed:posts:*`);
         
         revalidatePath("/");
         revalidatePath("/playzone");
@@ -142,13 +190,40 @@ export async function deletePost(postId: string, childId: string) {
 
 /**
  * Updates an existing post.
+ * Handles both Child and School ownership with session verification.
  */
-export async function updatePost(postId: string, childId: string, updates: {
+export async function updatePost(postId: string, ownerId: string, updates: {
     title?: string;
     content?: string;
     categoryId?: string;
 }) {
     try {
+        // 1. Verify session ownership for security
+        let isAuthorized = false;
+        
+        const childSession = await getChildSession();
+        if (childSession && childSession.id === ownerId) {
+            isAuthorized = true;
+        } else {
+            const user = await currentUser();
+            if (user) {
+                const { data: school } = await supabase
+                    .from('schools')
+                    .select('id')
+                    .eq('clerk_id', user.id)
+                    .single();
+                
+                if (school && school.id === ownerId) {
+                    isAuthorized = true;
+                }
+            }
+        }
+
+        if (!isAuthorized) {
+            return { success: false, error: "Unauthorized to update this post" };
+        }
+
+        // 2. Perform Update
         const { error } = await supabase
             .from('posts')
             .update({
@@ -158,16 +233,22 @@ export async function updatePost(postId: string, childId: string, updates: {
                 updated_at: new Date().toISOString()
             })
             .eq('post_id', postId)
-            .eq('child_id', childId);
+            .or(`child_id.eq.${ownerId},school_id.eq.${ownerId}`);
 
         if (error) throw error;
 
-        // Clear relevant caches
+        // 3. Clear relevant caches
         await redis.del(`feed:all`);
+        await invalidateCache(`feed:posts:*`);
+        
+        // Specific user caches
+        await redis.del(`child:stats:${ownerId}`);
+        await redis.del(`school:dashboard:${ownerId}`);
+        await redis.del(`school:posts:${ownerId}`);
         
         revalidatePath("/");
         revalidatePath("/playzone");
-        revalidatePath(`/child/${childId}`);
+        revalidatePath(`/school/${ownerId}`);
 
         return { success: true };
     } catch (error: any) {

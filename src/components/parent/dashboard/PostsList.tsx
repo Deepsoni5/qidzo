@@ -55,7 +55,7 @@ export default function PostsList() {
                   <div className="flex items-center gap-4 mt-2">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500">
                           {post.child?.avatar ? (
-                            <img src={post.child.avatar} className="w-4 h-4 rounded-full" alt="avatar" />
+                            <img src={post.child?.avatar || ""} className="w-4 h-4 rounded-full" alt="avatar" />
                           ) : (
                             <div className="w-4 h-4 rounded-full bg-brand-purple/20" />
                           )}

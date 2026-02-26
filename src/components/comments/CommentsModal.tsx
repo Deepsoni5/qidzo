@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { Send, Trash2, Loader2, Sparkles } from "lucide-react";
+import { Send, Trash2, Loader2, Sparkles, Building2 } from "lucide-react";
 import { getComments, addComment, deleteComment } from "@/actions/comments";
 import { useUser } from "@clerk/nextjs";
 import { getCurrentUserRole } from "@/actions/auth";
@@ -21,7 +21,8 @@ interface Comment {
   created_at: string;
   child_id: string | null;
   parent_id: string | null;
-  user_type: "CHILD" | "PARENT";
+  school_id: string | null;
+  user_type: "CHILD" | "PARENT" | "SCHOOL";
   child?: {
     name: string;
     username: string;
@@ -30,6 +31,11 @@ interface Comment {
   parent?: {
     parent_id: string;
     // Parent details might need to be fetched differently if not in the join
+  };
+  school?: {
+    name: string;
+    slug: string;
+    logo_url: string | null;
   };
 }
 
@@ -238,24 +244,40 @@ export default function CommentsModal({
                     <AvatarImage 
                         src={comment.user_type === 'CHILD' 
                             ? (comment.child?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.child?.username}`) 
-                            : `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.parent_id || "parent"}`
+                            : comment.user_type === 'SCHOOL'
+                                ? (comment.school?.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${comment.school?.name}`)
+                                : `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.parent_id || "parent"}`
                         } 
                     />
                     <AvatarFallback className="bg-brand-purple text-white font-bold text-[10px]">
-                        {comment.user_type === 'CHILD' ? comment.child?.name?.[0] : 'P'}
+                        {comment.user_type === 'CHILD' 
+                            ? comment.child?.name?.[0] 
+                            : comment.user_type === 'SCHOOL' 
+                                ? comment.school?.name?.[0] 
+                                : 'P'}
                     </AvatarFallback>
                   </Avatar>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0 text-sm group/item">
                     <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                         <span className="font-bold text-gray-900 font-nunito text-sm cursor-pointer hover:text-gray-600 transition-colors">
-                            {comment.user_type === 'CHILD' ? comment.child?.name : 'Parent'}
+                            {comment.user_type === 'CHILD' 
+                                ? comment.child?.name 
+                                : comment.user_type === 'SCHOOL' 
+                                    ? comment.school?.name 
+                                    : 'Parent'}
                         </span>
                         {comment.user_type === 'PARENT' && (
                             <span className="px-1 py-0.5 rounded bg-brand-purple/10 text-brand-purple text-[8px] font-black uppercase tracking-wider">
                                 Parent
+                            </span>
+                        )}
+                        {comment.user_type === 'SCHOOL' && (
+                            <span className="px-1.5 py-0.5 rounded bg-sky-blue/10 text-sky-blue text-[8px] font-black uppercase tracking-wider flex items-center gap-1">
+                                <Building2 className="w-2.5 h-2.5" />
+                                School
                             </span>
                         )}
                         <span className="text-[10px] text-gray-400 font-medium">

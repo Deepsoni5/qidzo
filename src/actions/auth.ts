@@ -6,7 +6,7 @@ import { redis } from "@/lib/redis";
 import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
-import { clerkClient } from "@clerk/nextjs/server";
+import { clerkClient, currentUser } from "@clerk/nextjs/server";
 
 const SESSION_COOKIE_NAME = "qidzo_child_token"; // Changed name to reflect it's a token
 const ADMIN_SESSION_COOKIE_NAME = "qidzo_admin_token";
@@ -113,10 +113,36 @@ export async function getCurrentUserRole() {
     ]);
     
     if (isParent) {
-        return { role: "parent", isParent: true, isSchool: false, isChild: false };
+        const user = await currentUser();
+        return { 
+            role: "parent", 
+            isParent: true, 
+            isSchool: false, 
+            isChild: false,
+            parent: {
+                id: user?.id
+            }
+        };
     }
     if (isSchool) {
-        return { role: "school", isParent: false, isSchool: true, isChild: false };
+        const user = await currentUser();
+        // Fetch school profile to get the school_id
+        const { data: schoolData } = await supabase
+            .from("schools")
+            .select("id, school_id")
+            .eq("clerk_id", user?.id)
+            .single();
+
+        return { 
+            role: "school", 
+            isParent: false, 
+            isSchool: true, 
+            isChild: false,
+            school: {
+                id: schoolData?.id,
+                school_id: schoolData?.school_id
+            }
+        };
     }
 
     // 2. Check Child Session (JWT)

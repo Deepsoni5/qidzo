@@ -7,12 +7,16 @@ export interface FeedPost {
   id: string;
   post_id: string;
   child_id: string;
+  school_id?: string;
+  publisher_type?: "CHILD" | "SCHOOL";
   category_id: string;
   title: string | null;
   content: string;
-  media_type: "IMAGE" | "VIDEO" | "NONE";
+  media_type: "IMAGE" | "VIDEO" | "DOCUMENT" | "NONE";
   media_url: string | null;
   media_thumbnail: string | null;
+  file_name?: string | null;
+  file_size?: number | null;
   likes_count: number;
   comments_count: number;
   views_count: number;
@@ -24,6 +28,14 @@ export interface FeedPost {
     age: number;
     level: number;
     country?: string | null;
+  };
+  school?: {
+    id: string;
+    school_id: string;
+    name: string;
+    slug: string;
+    logo_url: string | null;
+    brand_primary_color?: string;
   };
   category: {
     name: string;

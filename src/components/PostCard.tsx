@@ -27,14 +27,13 @@ import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs"; // Parent check
 import CommentsModal from "@/components/comments/CommentsModal";
 import { FollowButton } from "@/components/FollowButton";
-import loading from "@/app/loading";
-import { title } from "process";
+
 
 interface FeedPost {
   id: string;
   post_id: string;
-  child_id: string;
-  school_id?: string;
+  child_id?: string | null;
+  school_id?: string | null;
   publisher_type?: "CHILD" | "SCHOOL";
   category_id: string;
   title: string | null;
@@ -48,7 +47,7 @@ interface FeedPost {
   comments_count: number;
   views_count: number;
   created_at: string;
-  child: {
+  child?: {
     name: string;
     username: string;
     avatar: string | null;
@@ -143,12 +142,17 @@ export default function PostCard({
   }, [isMenuOpen]);
 
   // Determine if the current user is the author of this post
-  const isOwner = currentUserId === post.child_id;
+  // We check all possible ID matches to be absolutely sure
+  const isOwner = !!currentUserId && (
+    currentUserId === post.child_id || 
+    currentUserId === post.school_id || 
+    currentUserId === post.school?.id
+  );
 
   // Determine if we should show the follow button
   // Show if:
   // 1. User is not identified as the post author (guest, parent, or other child)
-  // 2. Explicitly hide ONLY if currentUserId matches post.child_id
+  // 2. Explicitly hide ONLY if currentUserId matches post.child_id or school_id
   const showFollowButton = !currentUserId || !isOwner;
 
   // Sync state with props when server data changes
@@ -174,9 +178,10 @@ export default function PostCard({
   // Fetch categories for edit modal
   useEffect(() => {
     if (isEditModalOpen && categories.length === 0) {
-      getCategories().then(setCategories);
+      const type = isSchoolPost ? "SCHOOL" : "CHILD";
+      getCategories(type).then(setCategories);
     }
-  }, [isEditModalOpen, categories.length]);
+  }, [isEditModalOpen, categories.length, isSchoolPost]);
 
   const handleLike = async () => {
     if (isLikeLoading) return;
@@ -286,28 +291,28 @@ export default function PostCard({
 
   return (
     <div
-      className="bg-white rounded-3xl sm:rounded-[32px] shadow-xl shadow-gray-200/30 border-4 overflow-hidden mb-4 sm:mb-8 hover:shadow-2xl transition-all duration-300"
+      className="bg-white rounded-2xl sm:rounded-[32px] shadow-xl shadow-gray-200/30 border-2 sm:border-4 overflow-hidden mb-4 sm:mb-8 hover:shadow-2xl transition-all duration-300 w-full max-w-full box-border"
       style={{ borderColor: categoryColor }}
     >
       {/* Post Header */}
       <div
         className={cn(
-          "p-4 sm:p-5 flex items-center justify-between",
+          "p-3 sm:p-5 flex items-center justify-between gap-2 min-w-0 w-full",
           isSchoolPost && "bg-gradient-to-r from-gray-50 to-white",
         )}
       >
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
           <Link
             href={
               isSchoolPost
                 ? `/school/${post.school?.slug}`
                 : `/child/${post.child?.username}`
             }
-            className="block relative group"
+            className="block relative group shrink-0"
           >
             <div
               className={cn(
-                "w-12 h-12 sm:w-14 sm:h-14 rounded-full p-1 group-hover:scale-105 transition-transform duration-200",
+                "w-10 h-10 sm:w-14 sm:h-14 rounded-full p-0.5 sm:p-1 group-hover:scale-105 transition-transform duration-200",
                 isSchoolPost
                   ? "bg-gradient-to-br from-sky-blue to-grass-green"
                   : "bg-gradient-to-br from-brand-purple to-hot-pink",
@@ -322,61 +327,63 @@ export default function PostCard({
                       : post.child?.name || "User"
                   }
                   fill
-                  sizes="(max-width: 640px) 48px, 56px"
+                  sizes="(max-width: 640px) 40px, 56px"
                   className="object-cover"
                 />
               </div>
             </div>
           </Link>
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-0.5">
               <Link
                 href={
                   isSchoolPost
                     ? `/school/${post.school?.slug}`
                     : `/child/${post.child?.username}`
                 }
-                className="hover:underline decoration-brand-purple decoration-2 underline-offset-2"
+                className="hover:underline decoration-brand-purple decoration-2 underline-offset-2 truncate max-w-[120px] sm:max-w-none"
               >
-                <h3 className="font-nunito font-extrabold text-gray-900 text-base sm:text-lg leading-tight flex items-center gap-2">
-                  {isSchoolPost ? post.school?.name : post.child?.name}
+                <h3 className="font-nunito font-extrabold text-gray-900 text-sm sm:text-lg leading-tight flex items-center gap-1.5 sm:gap-2">
+                  <span className="truncate">
+                    {isSchoolPost ? post.school?.name : post.child?.name}
+                  </span>
                   {isSchoolPost && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-sky-blue/10 text-sky-blue text-[9px] sm:text-[10px] font-black border border-sky-blue/20">
-                      <Building2 className="w-3 h-3" />
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-sky-blue/10 text-sky-blue text-[8px] sm:text-[10px] font-black border border-sky-blue/20 shrink-0">
+                      <Building2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                       SCHOOL
                     </span>
                   )}
                 </h3>
               </Link>
-              {!isSchoolPost && showFollowButton && (
+              {!isSchoolPost && showFollowButton && post.child_id && (
                 <FollowButton targetId={post.child_id} targetType="CHILD" />
               )}
-              {isSchoolPost && post.school?.school_id && (
+              {isSchoolPost && post.school?.school_id && showFollowButton && (
                 <FollowButton
                   targetId={post.school.school_id}
                   targetType="SCHOOL"
                 />
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
               {!isSchoolPost && post.child?.country && (
-                <span className="px-2 py-0.5 rounded-lg bg-gray-100 text-gray-700 text-[9px] sm:text-[10px] font-black border border-gray-200 inline-flex items-center gap-1">
-                  <Globe2 className="w-3 h-3" />
-                  {post.child.country}
+                <span className="px-1.5 py-0.5 rounded-lg bg-gray-100 text-gray-700 text-[8px] sm:text-[10px] font-black border border-gray-200 inline-flex items-center gap-1 shrink-0">
+                  <Globe2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                  {post.child?.country}
                 </span>
               )}
               {!isSchoolPost && (
-                <span className="px-1.5 py-0.5 rounded-lg bg-sunshine-yellow text-amber-900 text-[9px] sm:text-[10px] font-black uppercase">
+                <span className="px-1 py-0.5 rounded-lg bg-sunshine-yellow text-amber-900 text-[8px] sm:text-[10px] font-black uppercase shrink-0">
                   Lvl {post.child?.level || 1}
                 </span>
               )}
-              <p className="text-[10px] sm:text-xs font-bold text-gray-400">
+              <p className="text-[9px] sm:text-xs font-bold text-gray-400 shrink-0">
                 {timeAgo}
               </p>
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1.5 sm:gap-2 relative">
+        <div className="flex flex-col items-end gap-1.5 sm:gap-2 relative shrink-0">
           {isOwner && (
             <div className="relative">
               <button
@@ -392,24 +399,24 @@ export default function PostCard({
                 )}
               >
                 {isMenuOpen ? (
-                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <X className="w-4 h-4 sm:w-6 sm:h-6" />
                 ) : (
-                  <MoreHorizontal className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <MoreHorizontal className="w-4 h-4 sm:w-6 sm:h-6" />
                 )}
               </button>
 
               {/* Bubbly Dropdown Menu */}
               {isMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-2xl shadow-xl shadow-brand-purple/10 border-2 border-gray-50 p-2 z-20 animate-in fade-in zoom-in duration-200">
+                <div className="absolute right-0 top-full mt-2 w-36 sm:w-40 bg-white rounded-2xl shadow-xl shadow-brand-purple/10 border-2 border-gray-50 p-1.5 sm:p-2 z-20 animate-in fade-in zoom-in duration-200">
                   <button
                     onClick={() => {
                       setIsMenuOpen(false);
                       setIsEditModalOpen(true);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-brand-purple/5 text-gray-700 hover:text-brand-purple rounded-xl transition-colors font-bold text-sm"
+                    className="w-full flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-2.5 hover:bg-brand-purple/5 text-gray-700 hover:text-brand-purple rounded-xl transition-colors font-bold text-xs sm:text-sm"
                   >
-                    <div className="bg-brand-purple/10 p-1.5 rounded-lg">
-                      <Pencil className="w-4 h-4" />
+                    <div className="bg-brand-purple/10 p-1 sm:p-1.5 rounded-lg shrink-0">
+                      <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                     Edit Post
                   </button>
@@ -418,10 +425,10 @@ export default function PostCard({
                       setIsMenuOpen(false);
                       setIsDeleteModalOpen(true);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-gray-700 hover:text-red-500 rounded-xl transition-colors font-bold text-sm mt-1"
+                    className="w-full flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-2.5 hover:bg-red-50 text-gray-700 hover:text-red-500 rounded-xl transition-colors font-bold text-xs sm:text-sm mt-1"
                   >
-                    <div className="bg-red-100 p-1.5 rounded-lg">
-                      <Trash2 className="w-4 h-4 text-red-500" />
+                    <div className="bg-red-100 p-1 sm:p-1.5 rounded-lg shrink-0">
+                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500" />
                     </div>
                     Delete
                   </button>
@@ -431,7 +438,7 @@ export default function PostCard({
           )}
 
           <div
-            className="px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1"
+            className="px-2 py-1 sm:px-4 sm:py-1.5 rounded-full text-white text-[8px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest shadow-sm flex items-center gap-1 whitespace-nowrap"
             style={{ backgroundColor: categoryColor }}
           >
             <DynamicIcon
@@ -444,13 +451,13 @@ export default function PostCard({
       </div>
 
       {/* Post Content */}
-      <div className="px-4 sm:px-6 pb-3 sm:pb-4">
+      <div className="px-4 sm:px-6 pb-3 sm:pb-4 overflow-hidden">
         {post.title && (
-          <h4 className="font-black text-lg sm:text-xl mb-1.5 sm:mb-2 text-gray-900">
+          <h4 className="font-black text-base sm:text-xl mb-1 sm:mb-2 text-gray-900 break-words">
             {post.title}
           </h4>
         )}
-        <p className="text-gray-800 font-bold text-base sm:text-lg leading-relaxed font-nunito whitespace-pre-wrap">
+        <p className="text-gray-800 font-bold text-sm sm:text-lg leading-relaxed font-nunito whitespace-pre-wrap break-words">
           {post.content}
         </p>
       </div>
@@ -459,16 +466,16 @@ export default function PostCard({
       {post.media_type !== "NONE" && post.media_url && (
         <>
           {post.media_type === "DOCUMENT" ? (
-            <div className="mx-4 sm:mx-6 mb-4 p-5 rounded-2xl bg-gradient-to-br from-grass-green/5 to-sky-blue/5 border-2 border-grass-green/20 hover:border-grass-green/40 transition-all group">
-              <div className="flex items-center gap-4">
-                <div className="shrink-0 w-14 h-14 rounded-xl bg-grass-green/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <FileText className="w-7 h-7 text-grass-green" />
+            <div className="mx-3 sm:mx-6 mb-4 p-3 sm:p-5 rounded-2xl bg-gradient-to-br from-grass-green/5 to-sky-blue/5 border-2 border-grass-green/20 hover:border-grass-green/40 transition-all group">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="shrink-0 w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-grass-green/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <FileText className="w-5 h-5 sm:w-7 sm:h-7 text-grass-green" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-black text-gray-900 mb-1 truncate">
+                  <h4 className="text-[11px] sm:text-sm font-black text-gray-900 mb-0.5 sm:mb-1 truncate">
                     {post.file_name || "Document"}
                   </h4>
-                  <p className="text-xs font-bold text-gray-500">
+                  <p className="text-[9px] sm:text-xs font-bold text-gray-500">
                     {post.file_size
                       ? `${(post.file_size / (1024 * 1024)).toFixed(2)} MB`
                       : "Document file"}
@@ -478,10 +485,10 @@ export default function PostCard({
                   href={post.media_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="shrink-0 px-4 py-2.5 rounded-xl bg-grass-green text-white font-black text-sm shadow-lg shadow-grass-green/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                  className="shrink-0 px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-xl bg-grass-green text-white font-black text-[10px] sm:text-sm shadow-lg shadow-grass-green/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 sm:gap-2"
                 >
-                  <Download className="w-4 h-4" />
-                  View
+                  <Download className="w-3.5 h-3.5 sm:w-4 h-4" />
+                  <span className="hidden xs:inline">View</span>
                 </a>
               </div>
             </div>
@@ -521,19 +528,19 @@ export default function PostCard({
       )}
 
       {/* Bottom Bar */}
-      <div className="p-4 sm:p-5 flex items-center justify-between bg-gray-50/50 mt-1 sm:mt-2">
+      <div className="p-3 sm:p-5 flex flex-wrap items-center justify-between gap-3 bg-gray-50/50 mt-1 sm:mt-2">
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={handleLike}
             disabled={isLikeLoading}
             className={cn(
-              "flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border-2 border-gray-100 hover:border-hot-pink transition-all group shadow-sm cursor-pointer active:scale-95",
+              "flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-4 sm:py-2 bg-white rounded-full border-2 border-gray-100 hover:border-hot-pink transition-all group shadow-sm cursor-pointer active:scale-95",
               isLiked ? "border-hot-pink text-hot-pink" : "text-gray-600",
             )}
           >
             <Heart
               className={cn(
-                "w-4 h-4 sm:w-5 sm:h-5 transition-colors",
+                "w-3.5 h-3.5 sm:w-5 sm:h-5 transition-colors",
                 isLiked
                   ? "fill-hot-pink text-hot-pink"
                   : "text-gray-400 group-hover:text-hot-pink",
@@ -541,7 +548,7 @@ export default function PostCard({
             />
             <span
               className={cn(
-                "text-xs sm:text-sm font-black group-hover:text-hot-pink",
+                "text-[10px] sm:text-sm font-black group-hover:text-hot-pink",
                 isLiked ? "text-hot-pink" : "text-gray-600",
               )}
             >
@@ -550,10 +557,10 @@ export default function PostCard({
           </button>
           <button
             onClick={() => setIsCommentsOpen(true)}
-            className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border-2 border-gray-100 hover:border-sky-blue hover:text-sky-blue transition-all group shadow-sm cursor-pointer active:scale-95"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-4 sm:py-2 bg-white rounded-full border-2 border-gray-100 hover:border-sky-blue hover:text-sky-blue transition-all group shadow-sm cursor-pointer active:scale-95"
           >
-            <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-sky-blue transition-colors" />
-            <span className="text-xs sm:text-sm font-black text-gray-600 group-hover:text-sky-blue">
+            <MessageCircle className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-gray-400 group-hover:text-sky-blue transition-colors" />
+            <span className="text-[10px] sm:text-sm font-black text-gray-600 group-hover:text-sky-blue">
               {commentsCount || 0}
             </span>
           </button>
@@ -561,9 +568,9 @@ export default function PostCard({
 
         <button
           onClick={() => setIsShareOpen(true)}
-          className="bg-brand-purple text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-nunito font-black text-xs sm:text-sm shadow-lg shadow-brand-purple/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2"
+          className="bg-brand-purple text-white px-3 py-1.5 sm:px-6 sm:py-2.5 rounded-full font-nunito font-black text-[10px] sm:text-sm shadow-lg shadow-brand-purple/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 ml-auto sm:ml-0"
         >
-          Share Magic <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          Share <span className="hidden xs:inline">Magic</span> <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
         </button>
       </div>
 
@@ -599,8 +606,10 @@ export default function PostCard({
                       typeof window !== "undefined"
                         ? window.location.origin
                         : "";
-                    const shareUrl = `${origin}/child/${post.child.username}?postId=${post.post_id}`;
-                    const text = `${post.child.name}'s magic on Qidzo ✨`;
+                    const childUsername = post.child?.username || "kid";
+                    const childName = post.child?.name || "Someone";
+                    const shareUrl = `${origin}/child/${childUsername}?postId=${post.post_id}`;
+                    const text = `${childName}'s magic on Qidzo ✨`;
                     const url = `https://wa.me/?text=${encodeURIComponent(
                       `${text} ${shareUrl}`,
                     )}`;
@@ -620,7 +629,8 @@ export default function PostCard({
                       typeof window !== "undefined"
                         ? window.location.origin
                         : "";
-                    const shareUrl = `${origin}/child/${post.child.username}?postId=${post.post_id}`;
+                    const childUsername = post.child?.username || "kid";
+                    const shareUrl = `${origin}/child/${childUsername}?postId=${post.post_id}`;
                     await navigator.clipboard.writeText(shareUrl);
                     toast.success("Link copied for Instagram 🎨", {
                       description:
@@ -641,7 +651,8 @@ export default function PostCard({
                       typeof window !== "undefined"
                         ? window.location.origin
                         : "";
-                    const shareUrl = `${origin}/child/${post.child.username}?postId=${post.post_id}`;
+                    const childUsername = post.child?.username || "kid";
+                    const shareUrl = `${origin}/child/${childUsername}?postId=${post.post_id}`;
                     await navigator.clipboard.writeText(shareUrl);
                     toast.success("Magic link copied! ✨");
                   }}
@@ -658,8 +669,10 @@ export default function PostCard({
                 onClick={async () => {
                   const origin =
                     typeof window !== "undefined" ? window.location.origin : "";
-                  const shareUrl = `${origin}/child/${post.child.username}?postId=${post.post_id}`;
-                  const text = `${post.child.name}'s magic on Qidzo ✨`;
+                  const childUsername = post.child?.username || "kid";
+                  const childName = post.child?.name || "Someone";
+                  const shareUrl = `${origin}/child/${childUsername}?postId=${post.post_id}`;
+                  const text = `${childName}'s magic on Qidzo ✨`;
 
                   if (navigator.share) {
                     try {

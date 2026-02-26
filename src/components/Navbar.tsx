@@ -198,7 +198,7 @@ export default function Navbar() {
                                 setShowSearchResults(false);
                                 setSearchTerm("");
                                 if (post.child?.username) {
-                                  router.push(`/child/${post.child.username}?postId=${post.post_id}`);
+                                  router.push(`/child/${post.child?.username}?postId=${post.post_id}`);
                                 } else {
                                   router.push("/");
                                 }
@@ -214,7 +214,7 @@ export default function Navbar() {
                                 </p>
                                 <p className="text-[11px] font-bold text-gray-400 line-clamp-1 mt-0.5">
                                   {post.child?.name && post.child?.username
-                                    ? `${post.child.name} · @${post.child.username}`
+                                    ? `${post.child?.name} · @${post.child?.username}`
                                     : "Qidzo Post"}
                                 </p>
                               </div>

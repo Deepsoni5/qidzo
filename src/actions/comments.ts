@@ -21,7 +21,7 @@ export async function addComment(postId: string, content: string) {
     // 1. Determine User (Child or School - Parents cannot comment)
     let childId: string | null = null;
     let schoolId: string | null = null;
-    let userType: "CHILD" | "SCHOOL" | null = null;
+    let userType: "CHILD" | "SCHOOL" | "PARENT" | null = null;
 
     const childSession = await getChildSession();
     if (childSession) {
@@ -38,29 +38,33 @@ export async function addComment(postId: string, content: string) {
           .single();
 
         if (parentData) {
-          return {
-            success: false,
-            error:
-              "Only kids and schools can comment. Parents can view but not comment.",
-          };
-        }
+          userType = "PARENT";
+        } else {
+          // Check for school
+          const { data: schoolData } = await supabase
+            .from("schools")
+            .select("school_id")
+            .eq("clerk_id", user.id)
+            .single();
 
-        // Check for school
-        const { data: schoolData } = await supabase
-          .from("schools")
-          .select("school_id")
-          .eq("clerk_id", user.id)
-          .single();
-
-        if (schoolData) {
-          schoolId = schoolData.school_id;
-          userType = "SCHOOL";
+          if (schoolData) {
+            schoolId = schoolData.school_id;
+            userType = "SCHOOL";
+          }
         }
       }
     }
 
     if (!userType) {
       return { success: false, error: "Must be logged in to comment." };
+    }
+
+    if (userType === "PARENT") {
+      return {
+        success: false,
+        error:
+          "Only kids and schools can comment. Parents can view but not comment.",
+      };
     }
 
     // 2. Validate Content
