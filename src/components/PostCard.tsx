@@ -338,7 +338,7 @@ export default function PostCard({
               <Link
                 href={
                   isSchoolPost
-                    ? `/school/${post.school?.slug}`
+                    ? `/schools/${post.school?.slug}`
                     : `/child/${post.child?.username}`
                 }
                 className="hover:underline decoration-brand-purple decoration-2 underline-offset-2 truncate max-w-[120px] sm:max-w-none"
