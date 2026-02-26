@@ -305,7 +305,7 @@ export default function PostCard({
           <Link
             href={
               isSchoolPost
-                ? `/school/${post.school?.slug}`
+                ? `/schools/${post.school?.slug}`
                 : `/child/${post.child?.username}`
             }
             className="block relative group shrink-0"
