@@ -1,6 +1,9 @@
 import SchoolAnalyticsContent from "@/components/school/SchoolAnalyticsContent";
+import { getSchoolAnalytics } from "@/actions/school-analytics";
 
-export default function SchoolAnalyticsPage() {
+export default async function SchoolAnalyticsPage() {
+  const data = await getSchoolAnalytics();
+
   return (
     <div>
       <div className="mb-8">
@@ -12,7 +15,15 @@ export default function SchoolAnalyticsPage() {
         </p>
       </div>
 
-      <SchoolAnalyticsContent />
+      {data ? (
+        <SchoolAnalyticsContent data={data} />
+      ) : (
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <p className="font-nunito font-black text-gray-400 uppercase tracking-widest text-sm">
+            Unable to load analytics data.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

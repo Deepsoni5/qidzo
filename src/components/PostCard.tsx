@@ -68,6 +68,9 @@ interface FeedPost {
     color: string;
     icon: string;
   };
+  // Optional, per-viewer flags attached by the feed server action
+  isLikedByViewer?: boolean;
+  isViewerFollowingAuthor?: boolean;
 }
 
 // Helper to render dynamic Lucide icons
@@ -114,7 +117,7 @@ export default function PostCard({
 
   const [likesCount, setLikesCount] = useState(post.likes_count);
   const [commentsCount, setCommentsCount] = useState(post.comments_count);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(post.isLikedByViewer ?? false);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -164,16 +167,17 @@ export default function PostCard({
     setCommentsCount(post.comments_count);
   }, [post.comments_count]);
 
-  // Check if liked on mount
+  // Check if liked on mount only if server didn't provide this info
   useEffect(() => {
-    // Only check if we think we might be logged in (optimisation?)
-    // Or just always check.
+    if (post.isLikedByViewer !== undefined) {
+      return;
+    }
     const checkLikeStatus = async () => {
       const liked = await hasLikedPost(post.post_id);
       setIsLiked(liked);
     };
     checkLikeStatus();
-  }, [post.post_id]);
+  }, [post.post_id, post.isLikedByViewer]);
 
   // Fetch categories for edit modal
   useEffect(() => {
@@ -356,12 +360,17 @@ export default function PostCard({
                 </h3>
               </Link>
               {!isSchoolPost && showFollowButton && post.child_id && (
-                <FollowButton targetId={post.child_id} targetType="CHILD" />
+                <FollowButton
+                  targetId={post.child_id}
+                  targetType="CHILD"
+                  initialIsFollowing={post.isViewerFollowingAuthor}
+                />
               )}
               {isSchoolPost && post.school?.school_id && showFollowButton && (
                 <FollowButton
                   targetId={post.school.school_id}
                   targetType="SCHOOL"
+                  initialIsFollowing={post.isViewerFollowingAuthor}
                 />
               )}
             </div>

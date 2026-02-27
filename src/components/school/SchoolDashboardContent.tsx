@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getSchoolDashboardData } from "@/actions/school";
+import { useMemo } from "react";
 import {
   Users,
   FileText,
@@ -32,77 +31,54 @@ import {
 } from "recharts";
 import Image from "next/image";
 
-export default function SchoolDashboardContent() {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<any>(null);
+interface SchoolDashboardContentProps {
+  data: any;
+}
 
-  useEffect(() => {
-    async function fetchData() {
-      const result = await getSchoolDashboardData();
-      if (result) {
-        setData(result);
-      }
-      setLoading(false);
-    }
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4 animate-in fade-in duration-500">
-        <div className="relative">
-          <Loader2 className="w-12 h-12 text-sky-blue animate-spin" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <School className="w-5 h-5 text-sky-blue/50" />
-          </div>
-        </div>
-        <p className="font-nunito font-black text-gray-400 uppercase tracking-widest text-sm animate-pulse">
-          Loading Partner Portal...
-        </p>
-      </div>
-    );
-  }
-
-  if (!data) return null;
-
-  const stats = [
-    {
-      label: "Total Followers",
-      value: data.analytics.totalFollowers.toLocaleString(),
-      growth: data.analytics.followerGrowth,
-      icon: Users,
-      color: "text-sky-blue",
-      bg: "bg-sky-blue/10",
-      trend: data.analytics.followerGrowth > 0 ? "up" : "down",
-    },
-    {
-      label: "Post Engagement",
-      value: data.analytics.postEngagement.toLocaleString(),
-      growth: data.analytics.engagementGrowth,
-      icon: BarChart3,
-      color: "text-brand-purple",
-      bg: "bg-brand-purple/10",
-      trend: data.analytics.engagementGrowth > 0 ? "up" : "down",
-    },
-    {
-      label: "Admission Inquiries",
-      value: data.analytics.admissionInquiries.toLocaleString(),
-      growth: data.analytics.inquiryGrowth,
-      icon: GraduationCap,
-      color: "text-grass-green",
-      bg: "bg-grass-green/10",
-      trend: data.analytics.inquiryGrowth > 0 ? "up" : "down",
-    },
-    {
-      label: "Exam Participation",
-      value: data.analytics.examParticipation.toLocaleString(),
-      growth: data.analytics.participationGrowth,
-      icon: FileText,
-      color: "text-sunshine-yellow",
-      bg: "bg-sunshine-yellow/10",
-      trend: data.analytics.participationGrowth > 0 ? "up" : "down",
-    },
-  ];
+export default function SchoolDashboardContent({
+  data,
+}: SchoolDashboardContentProps) {
+  const stats = useMemo(
+    () => [
+      {
+        label: "Total Followers",
+        value: data.analytics.totalFollowers.toLocaleString(),
+        growth: data.analytics.followerGrowth,
+        icon: Users,
+        color: "text-sky-blue",
+        bg: "bg-sky-blue/10",
+        trend: data.analytics.followerGrowth > 0 ? "up" : "down",
+      },
+      {
+        label: "Post Engagement",
+        value: data.analytics.postEngagement.toLocaleString(),
+        growth: data.analytics.engagementGrowth,
+        icon: BarChart3,
+        color: "text-brand-purple",
+        bg: "bg-brand-purple/10",
+        trend: data.analytics.engagementGrowth > 0 ? "up" : "down",
+      },
+      {
+        label: "Admission Inquiries",
+        value: data.analytics.admissionInquiries.toLocaleString(),
+        growth: data.analytics.inquiryGrowth,
+        icon: GraduationCap,
+        color: "text-grass-green",
+        bg: "bg-grass-green/10",
+        trend: data.analytics.inquiryGrowth > 0 ? "up" : "down",
+      },
+      {
+        label: "Total Posts",
+        value: data.analytics.examParticipation.toLocaleString(),
+        growth: data.analytics.participationGrowth,
+        icon: FileText,
+        color: "text-sunshine-yellow",
+        bg: "bg-sunshine-yellow/10",
+        trend: data.analytics.participationGrowth > 0 ? "up" : "down",
+      },
+    ],
+    [data],
+  );
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">

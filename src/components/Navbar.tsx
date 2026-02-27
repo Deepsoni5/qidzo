@@ -1,24 +1,68 @@
-"use client";
+ "use client";
 
-import { Search, Bell, User, ArrowRight, LayoutDashboard, LogOut, Trophy, Flame, Wand2, Star, Badge, Users, UserCheck, Heart, MessageCircle, UserPlus, Shield, FileText, RefreshCw, Mail, ChevronDown, School } from "lucide-react";
+import {
+  Search,
+  Bell,
+  User,
+  ArrowRight,
+  LayoutDashboard,
+  LogOut,
+  Trophy,
+  Flame,
+  Wand2,
+  Star,
+  Badge,
+  Users,
+  UserCheck,
+  Heart,
+  MessageCircle,
+  UserPlus,
+  Shield,
+  FileText,
+  RefreshCw,
+  Mail,
+  ChevronDown,
+  School,
+} from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { getCurrentUserRole } from "@/actions/auth";
-import { getChildSession, logoutChild } from "@/actions/auth";
+import { getCurrentUserRole, getChildSession, logoutChild } from "@/actions/auth";
 import { getChildProfile, ChildProfile } from "@/actions/profile";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import Image from "next/image";
 import type { GlobalSearchResult } from "@/actions/search";
 
-export default function Navbar() {
+type UserRoleState = {
+  role: string;
+  isParent: boolean;
+  isSchool?: boolean;
+  isChild: boolean;
+  child?: any;
+} | null;
+
+interface NavbarProps {
+  /**
+   * Optional data pre-fetched on the server to avoid client-side roundtrips.
+   * When not provided, the navbar falls back to its original client fetching behavior.
+   */
+  initialUserRole?: UserRoleState;
+  initialKid?: any | null;
+  initialKidProfile?: ChildProfile | null;
+}
+
+export default function Navbar({
+  initialUserRole = null,
+  initialKid = null,
+  initialKidProfile = null,
+}: NavbarProps) {
   const { user } = useUser();
   const pathname = usePathname();
-  const [userRole, setUserRole] = useState<{ role: string, isParent: boolean, isSchool?: boolean, isChild: boolean, child?: any } | null>(null);
-  const [kid, setKid] = useState<any>(null);
-  const [kidProfile, setKidProfile] = useState<ChildProfile | null>(null);
+  const [userRole, setUserRole] = useState<UserRoleState>(initialUserRole);
+  const [kid, setKid] = useState<any>(initialKid);
+  const [kidProfile, setKidProfile] = useState<ChildProfile | null>(initialKidProfile);
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<GlobalSearchResult[]>([]);
@@ -28,23 +72,30 @@ export default function Navbar() {
 
   useEffect(() => {
     const init = async () => {
-      const roleData = await getCurrentUserRole();
-      setUserRole(roleData);
+      // Only fetch role if we don't already have it from server props
+      if (!userRole) {
+        const roleData = await getCurrentUserRole();
+        setUserRole(roleData);
+      }
     };
     init();
-    
+
     // Check for kid session
     const checkKid = async () => {
-        const session = await getChildSession();
-        if (session) {
-            setKid(session);
-            // Fetch detailed profile
-            const profile = await getChildProfile(session.username as string);
-            setKidProfile(profile);
+      if (kid && kidProfile) return;
+
+      const session = await getChildSession();
+      if (session) {
+        setKid(session);
+
+        if (!kidProfile && session.username) {
+          const profile = await getChildProfile(session.username as string);
+          setKidProfile(profile);
         }
+      }
     };
     checkKid();
-  }, [user]);
+  }, [user, userRole, kid, kidProfile]);
 
   useEffect(() => {
     const q = searchTerm.trim();

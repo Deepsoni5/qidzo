@@ -12,7 +12,7 @@ import "./globals.css";
 import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
-import Navbar from "@/components/Navbar";
+import NavbarShell from "@/components/NavbarShell";
 import { Viewport } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import ScreenTimeTracker from "@/components/utils/ScreenTimeTracker";
@@ -107,7 +107,7 @@ export default function RootLayout({
       className={`${nunito.variable} ${poppins.variable} ${inter.variable}`}
     >
       <body className="antialiased font-inter bg-white text-gray-900">
-        <Navbar />
+        <NavbarShell />
         <Script
           id="orchids-browser-logs"
           src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts/orchids-browser-logs.js"

@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getSchoolAnalytics } from "@/actions/school-analytics";
 import {
   Users,
   FileText,
@@ -41,34 +39,11 @@ const COLORS = {
   grassGreen: "#10B981",
 };
 
-export default function SchoolAnalyticsContent() {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<any>(null);
+interface SchoolAnalyticsContentProps {
+  data: any;
+}
 
-  useEffect(() => {
-    async function fetchData() {
-      const result = await getSchoolAnalytics();
-      if (result) {
-        setData(result);
-      }
-      setLoading(false);
-    }
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <Loader2 className="w-12 h-12 text-sky-blue animate-spin" />
-        <p className="font-nunito font-black text-gray-400 uppercase tracking-widest text-sm">
-          Loading Analytics...
-        </p>
-      </div>
-    );
-  }
-
-  if (!data) return null;
-
+export default function SchoolAnalyticsContent({ data }: SchoolAnalyticsContentProps) {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Overview Stats */}

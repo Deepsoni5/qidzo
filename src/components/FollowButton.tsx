@@ -10,14 +10,26 @@ interface FollowButtonProps {
   targetId: string;
   targetType: 'PARENT' | 'CHILD' | 'SCHOOL';
   className?: string;
+  /**
+   * Optional initial follow state from server.
+   * When provided, we skip the initial getFollowStatus() call for better performance.
+   */
+  initialIsFollowing?: boolean;
 }
 
-export function FollowButton({ targetId, targetType, className }: FollowButtonProps) {
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+export function FollowButton({ targetId, targetType, className, initialIsFollowing }: FollowButtonProps) {
+  const [isFollowing, setIsFollowing] = useState(initialIsFollowing ?? false);
+  const [isLoading, setIsLoading] = useState(initialIsFollowing === undefined);
   const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
+    // If we already know the initial state from the server, skip client fetch
+    if (initialIsFollowing !== undefined) {
+      setIsFollowing(initialIsFollowing);
+      setIsLoading(false);
+      return;
+    }
+
     let mounted = true;
     const checkStatus = async () => {
       try {
@@ -45,8 +57,8 @@ export function FollowButton({ targetId, targetType, className }: FollowButtonPr
     return () => { 
       mounted = false;
       window.removeEventListener('qidzo:follow-update' as any, handleFollowUpdate);
-    };
-  }, [targetId, targetType]);
+      };
+  }, [targetId, targetType, initialIsFollowing]);
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent link navigation if inside a Link

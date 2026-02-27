@@ -45,103 +45,103 @@ export async function getSchoolDashboardData() {
       async () => {
         // 2. Get Real Analytics
 
-        // Total Followers (from follows table)
-        const { count: totalFollowers } = await supabase
-          .from("follows")
-          .select("*", { count: "exact", head: true })
-          .eq("following_school_id", school.school_id);
-
-        // Followers from last month for growth calculation
+        // Followers and inquiries analytics use a 30-day lookback
         const lastMonth = new Date();
         lastMonth.setMonth(lastMonth.getMonth() - 1);
-        const { count: followersLastMonth } = await supabase
-          .from("follows")
-          .select("*", { count: "exact", head: true })
-          .eq("following_school_id", school.school_id)
-          .lt("created_at", lastMonth.toISOString());
+        const lastMonthISO = lastMonth.toISOString();
 
-        const followerGrowth = followersLastMonth
-          ? Math.round(
-              (((totalFollowers || 0) - followersLastMonth) /
-                Math.max(followersLastMonth, 1)) *
-                100,
-            )
-          : 0;
+        // Base queries in parallel
+        const [
+          // Followers total and last month snapshot
+          { count: totalFollowers },
+          { count: followersLastMonth },
+          // All posts for this school (used by multiple analytics)
+          { data: allSchoolPosts },
+          // Inquiries total and last month snapshot
+          { count: admissionInquiries },
+          { count: inquiriesLastMonth },
+        ] = await Promise.all([
+          supabase
+            .from("follows")
+            .select("*", { count: "exact", head: true })
+            .eq("following_school_id", school.school_id),
+          supabase
+            .from("follows")
+            .select("*", { count: "exact", head: true })
+            .eq("following_school_id", school.school_id)
+            .lt("created_at", lastMonthISO),
+          supabase
+            .from("posts")
+            .select("id, likes_count, comments_count, created_at, category_id")
+            .eq("school_id", school.id),
+          supabase
+            .from("school_inquiries")
+            .select("*", { count: "exact", head: true })
+            .eq("school_id", school.id),
+          supabase
+            .from("school_inquiries")
+            .select("*", { count: "exact", head: true })
+            .eq("school_id", school.id)
+            .lt("created_at", lastMonthISO),
+        ]);
 
-        // Post Engagement (total likes + comments on school posts)
-        const { data: schoolPosts } = await supabase
-          .from("posts")
-          .select("likes_count, comments_count")
-          .eq("school_id", school.id);
-
+        // Aggregate engagement from posts
+        const schoolPosts = allSchoolPosts || [];
         const postEngagement =
-          schoolPosts?.reduce(
-            (sum, post) =>
+          schoolPosts.reduce(
+            (sum: number, post: any) =>
               sum + (post.likes_count || 0) + (post.comments_count || 0),
             0,
           ) || 0;
 
-        // Engagement from last month
-        const { data: postsLastMonth } = await supabase
-          .from("posts")
-          .select("likes_count, comments_count")
-          .eq("school_id", school.id)
-          .lt("created_at", lastMonth.toISOString());
-
+        const postsLastMonth = schoolPosts.filter(
+          (post: any) => post.created_at < lastMonthISO,
+        );
         const engagementLastMonth =
-          postsLastMonth?.reduce(
-            (sum, post) =>
+          postsLastMonth.reduce(
+            (sum: number, post: any) =>
               sum + (post.likes_count || 0) + (post.comments_count || 0),
             0,
           ) || 0;
 
-        const engagementGrowth = engagementLastMonth
-          ? Math.round(
-              ((postEngagement - engagementLastMonth) /
-                Math.max(engagementLastMonth, 1)) *
-                100,
-            )
-          : 0;
+        const totalPosts = schoolPosts.length;
+        const postsLastMonthCount = postsLastMonth.length;
 
-        // Admission Inquiries (from school_inquiries table)
-        const { count: admissionInquiries } = await supabase
-          .from("school_inquiries")
-          .select("*", { count: "exact", head: true })
-          .eq("school_id", school.id);
+        const followerGrowth =
+          followersLastMonth && followersLastMonth > 0
+            ? Math.round(
+                (((totalFollowers || 0) - followersLastMonth) /
+                  Math.max(followersLastMonth, 1)) *
+                  100,
+              )
+            : 0;
 
-        const { count: inquiriesLastMonth } = await supabase
-          .from("school_inquiries")
-          .select("*", { count: "exact", head: true })
-          .eq("school_id", school.id)
-          .lt("created_at", lastMonth.toISOString());
+        const engagementGrowth =
+          engagementLastMonth && engagementLastMonth > 0
+            ? Math.round(
+                ((postEngagement - engagementLastMonth) /
+                  Math.max(engagementLastMonth, 1)) *
+                  100,
+              )
+            : 0;
 
-        const inquiryGrowth = inquiriesLastMonth
-          ? Math.round(
-              (((admissionInquiries || 0) - inquiriesLastMonth) /
-                Math.max(inquiriesLastMonth, 1)) *
-                100,
-            )
-          : 0;
+        const inquiryGrowth =
+          inquiriesLastMonth && inquiriesLastMonth > 0
+            ? Math.round(
+                (((admissionInquiries || 0) - inquiriesLastMonth) /
+                  Math.max(inquiriesLastMonth, 1)) *
+                  100,
+              )
+            : 0;
 
-        // Total Posts
-        const { count: totalPosts } = await supabase
-          .from("posts")
-          .select("*", { count: "exact", head: true })
-          .eq("school_id", school.id);
-
-        const { count: postsLastMonthCount } = await supabase
-          .from("posts")
-          .select("*", { count: "exact", head: true })
-          .eq("school_id", school.id)
-          .lt("created_at", lastMonth.toISOString());
-
-        const participationGrowth = postsLastMonthCount
-          ? Math.round(
-              (((totalPosts || 0) - postsLastMonthCount) /
-                Math.max(postsLastMonthCount, 1)) *
-                100,
-            )
-          : 0;
+        const participationGrowth =
+          postsLastMonthCount && postsLastMonthCount > 0
+            ? Math.round(
+                (((totalPosts || 0) - postsLastMonthCount) /
+                  Math.max(postsLastMonthCount, 1)) *
+                  100,
+              )
+            : 0;
 
         const analytics = {
           totalFollowers: totalFollowers || 0,
@@ -154,70 +154,89 @@ export async function getSchoolDashboardData() {
           participationGrowth,
         };
 
-        // 3. Activity Data (Last 7 days)
-        const activityData = [];
+        // 3. Activity Data (Last 7 days) — aggregate from single queries
+        const now = new Date();
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(now.getDate() - 6);
+
+        const sevenDaysStartISO = new Date(
+          sevenDaysAgo.setHours(0, 0, 0, 0),
+        ).toISOString();
+
+        // Preload likes/comments/inquiries/follows for last 7 days in parallel
+        const [recentFollowers, recentLikes, recentComments, recentInquiriesForActivity] =
+          await Promise.all([
+            supabase
+              .from("follows")
+              .select("created_at")
+              .eq("following_school_id", school.school_id)
+              .gte("created_at", sevenDaysStartISO),
+            supabase
+              .from("likes")
+              .select("post_id, created_at")
+              .in(
+                "post_id",
+                schoolPosts.map((p: any) => p.id),
+              )
+              .gte("created_at", sevenDaysStartISO),
+            supabase
+              .from("comments")
+              .select("post_id, created_at")
+              .in(
+                "post_id",
+                schoolPosts.map((p: any) => p.id),
+              )
+              .gte("created_at", sevenDaysStartISO),
+            supabase
+              .from("school_inquiries")
+              .select("created_at")
+              .eq("school_id", school.id)
+              .gte("created_at", sevenDaysStartISO),
+          ]);
+
+        const followersArr = recentFollowers?.data || [];
+        const likesArr = recentLikes?.data || [];
+        const commentsArr = recentComments?.data || [];
+        const inquiriesArr = recentInquiriesForActivity?.data || [];
+
+        const activityData: any[] = [];
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
         for (let i = 6; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(date.getDate() - i);
-          const dayStart = new Date(date.setHours(0, 0, 0, 0)).toISOString();
-          const dayEnd = new Date(date.setHours(23, 59, 59, 999)).toISOString();
+          const day = new Date();
+          day.setDate(day.getDate() - i);
+          const dayStart = new Date(day.setHours(0, 0, 0, 0));
+          const dayEnd = new Date(day.setHours(23, 59, 59, 999));
 
-          // Followers gained that day
-          const { count: dayFollowers } = await supabase
-            .from("follows")
-            .select("*", { count: "exact", head: true })
-            .eq("following_school_id", school.school_id)
-            .gte("created_at", dayStart)
-            .lte("created_at", dayEnd);
+          const dayFollowers =
+            followersArr.filter((f: any) => {
+              const created = new Date(f.created_at);
+              return created >= dayStart && created <= dayEnd;
+            }).length || 0;
 
-          // Engagement that day (likes + comments on posts)
-          const { data: dayPosts } = await supabase
-            .from("posts")
-            .select("id")
-            .eq("school_id", school.id);
+          const dayLikes =
+            likesArr.filter((l: any) => {
+              const created = new Date(l.created_at);
+              return created >= dayStart && created <= dayEnd;
+            }).length || 0;
 
-          const postIds = dayPosts?.map((p) => p.id) || [];
+          const dayComments =
+            commentsArr.filter((c: any) => {
+              const created = new Date(c.created_at);
+              return created >= dayStart && created <= dayEnd;
+            }).length || 0;
 
-          let dayEngagement = 0;
-          if (postIds.length > 0) {
-            const { count: dayLikes } = await supabase
-              .from("likes")
-              .select("*", { count: "exact", head: true })
-              .in(
-                "post_id",
-                postIds.map((id) => id),
-              )
-              .gte("created_at", dayStart)
-              .lte("created_at", dayEnd);
-
-            const { count: dayComments } = await supabase
-              .from("comments")
-              .select("*", { count: "exact", head: true })
-              .in(
-                "post_id",
-                postIds.map((id) => id),
-              )
-              .gte("created_at", dayStart)
-              .lte("created_at", dayEnd);
-
-            dayEngagement = (dayLikes || 0) + (dayComments || 0);
-          }
-
-          // Inquiries that day
-          const { count: dayInquiries } = await supabase
-            .from("school_inquiries")
-            .select("*", { count: "exact", head: true })
-            .eq("school_id", school.id)
-            .gte("created_at", dayStart)
-            .lte("created_at", dayEnd);
+          const dayInquiries =
+            inquiriesArr.filter((inq: any) => {
+              const created = new Date(inq.created_at);
+              return created >= dayStart && created <= dayEnd;
+            }).length || 0;
 
           activityData.push({
-            name: days[date.getDay()],
-            followers: dayFollowers || 0,
-            engagement: dayEngagement,
-            inquiries: dayInquiries || 0,
+            name: days[dayStart.getDay()],
+            followers: dayFollowers,
+            engagement: dayLikes + dayComments,
+            inquiries: dayInquiries,
           });
         }
 

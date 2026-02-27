@@ -129,7 +129,11 @@ export default function Feed() {
   return (
     <div className="space-y-6 w-full max-w-full overflow-hidden">
       {posts.map((post) => (
-        <PostCard key={post.id} post={post} currentUserId={currentUserId} />
+        <PostCard
+          key={post.id}
+          post={post}
+          currentUserId={currentUserId}
+        />
       ))}
 
       {/* Loading State & Skeleton */}
