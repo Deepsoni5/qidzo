@@ -63,7 +63,7 @@ export default function SchoolSignInForm() {
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         toast.success("Welcome back");
-        router.push("/school/sso-callback");
+        router.push("/school/dashboard");
       } else {
         toast.error("Login failed", {
           description: "Please check your details and try again.",
