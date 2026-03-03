@@ -1,4 +1,4 @@
- "use server";
+"use server";
 
 import { supabase } from "@/lib/supabaseClient";
 import { redis } from "@/lib/redis";
@@ -38,6 +38,8 @@ export interface FeedPost {
     slug: string;
     logo_url: string | null;
     brand_primary_color?: string;
+    city?: string | null;
+    country?: string | null;
   };
   category: {
     name: string;
@@ -66,7 +68,9 @@ export async function getFeedPosts(
     const cachedData = await redis.get<FeedPost[]>(cacheKey);
 
     // Helper to attach per-viewer state (likes / follows) without affecting cache
-    const attachViewerState = async (basePosts: FeedPost[]): Promise<FeedPost[]> => {
+    const attachViewerState = async (
+      basePosts: FeedPost[],
+    ): Promise<FeedPost[]> => {
       if (!basePosts.length) return basePosts;
 
       // Determine current viewer (child, parent, or school)
@@ -128,7 +132,9 @@ export async function getFeedPosts(
 
         const { data: likesData, error: likesError } = await likesQuery;
         if (!likesError && likesData) {
-          likedPostIds = new Set(likesData.map((l: any) => l.post_id as string));
+          likedPostIds = new Set(
+            likesData.map((l: any) => l.post_id as string),
+          );
         }
       }
 
@@ -154,7 +160,9 @@ export async function getFeedPosts(
 
       // Follow CHILD targets
       if (childAuthorIds.length) {
-        let followsQuery = supabase.from("follows").select("following_child_id");
+        let followsQuery = supabase
+          .from("follows")
+          .select("following_child_id");
 
         if (viewerChildId) {
           followsQuery = followsQuery.eq("follower_child_id", viewerChildId);
@@ -178,7 +186,9 @@ export async function getFeedPosts(
 
       // Follow SCHOOL targets
       if (schoolAuthorIds.length) {
-        let followsQuery = supabase.from("follows").select("following_school_id");
+        let followsQuery = supabase
+          .from("follows")
+          .select("following_school_id");
 
         if (viewerChildId) {
           followsQuery = followsQuery.eq("follower_child_id", viewerChildId);
@@ -244,7 +254,9 @@ export async function getFeedPosts(
           name,
           slug,
           logo_url,
-          brand_primary_color
+          brand_primary_color,
+          city,
+          country
         ),
         category:categories (
           name,

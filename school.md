@@ -8,33 +8,270 @@ specifically for schools and colleges.
 
 Each school gets its own dedicated page where they can:
 
--   Share updates and announcements
--   Post events, notices, and circulars
--   Interact with parents and students
--   Conduct paid online exams
--   Build their digital presence
+- Share updates and announcements
+- Post events, notices, and circulars
+- Interact with parents and students
+- Conduct paid online exams
+- Build their digital presence
 
 Example URL:
 
     qidzo.com/abc-school
 
-------------------------------------------------------------------------
+---
+
+CREATE TABLE exams (
+id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+exam_id VARCHAR(20) UNIQUE NOT NULL,
+
+school_id VARCHAR(20) NOT NULL REFERENCES schools(school_id) ON DELETE CASCADE,
+
+-- Basic Details
+title VARCHAR(300) NOT NULL,
+description TEXT,
+subject VARCHAR(100),
+
+-- No grade restriction - anyone can take!
+suggested_age_min INTEGER,
+suggested_age_max INTEGER,
+
+-- Timing
+duration_minutes INTEGER NOT NULL CHECK (duration_minutes > 0),
+start_date TIMESTAMPTZ NOT NULL,
+end_date TIMESTAMPTZ NOT NULL,
+
+-- Scoring
+total_marks INTEGER NOT NULL CHECK (total_marks > 0),
+pass_marks INTEGER NOT NULL CHECK (pass_marks > 0 AND pass_marks <= total_marks),
+
+-- Settings
+shuffle_questions BOOLEAN DEFAULT true,
+shuffle_options BOOLEAN DEFAULT true,
+show_results_immediately BOOLEAN DEFAULT true,
+
+-- Pricing (FREE or PAID)
+is_free BOOLEAN DEFAULT true,
+price NUMERIC(10, 2) DEFAULT 0 CHECK (price >= 0),
+
+-- Stats
+total_questions INTEGER DEFAULT 0 CHECK (total_questions >= 0),
+total_attempts INTEGER DEFAULT 0 CHECK (total_attempts >= 0),
+average_score NUMERIC(5, 2) DEFAULT 0,
+
+-- Status
+is_published BOOLEAN DEFAULT false,
+is_active BOOLEAN DEFAULT true,
+
+-- Timestamps
+created_at TIMESTAMPTZ DEFAULT NOW(),
+updated_at TIMESTAMPTZ DEFAULT NOW(),
+published_at TIMESTAMPTZ
+);
+
+-- Create indexes
+CREATE INDEX idx_exams_exam_id ON exams(exam_id);
+CREATE INDEX idx_exams_school_id ON exams(school_id);
+CREATE INDEX idx_exams_subject ON exams(subject);
+CREATE INDEX idx_exams_is_published ON exams(is_published);
+CREATE INDEX idx_exams_is_active ON exams(is_active);
+CREATE INDEX idx_exams_start_date ON exams(start_date);
+CREATE INDEX idx_exams_end_date ON exams(end_date);
+
+-- Create updated_at trigger
+CREATE TRIGGER update_exams_updated_at
+BEFORE UPDATE ON exams
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Add comments
+COMMENT ON TABLE exams IS 'Exams created by schools';
+COMMENT ON COLUMN exams.exam_id IS 'Custom exam ID (EXAM-0001234)';
+COMMENT ON COLUMN exams.suggested_age_min IS 'Suggested minimum age (not enforced - anyone can take)';
+COMMENT ON COLUMN exams.is_free IS 'true = free exam, false = paid exam';
+COMMENT ON COLUMN exams.price IS 'Price in rupees if paid exam';
+
+-- 2. EXAM_QUESTIONS TABLE
+CREATE TABLE exam_questions (
+id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+question_id VARCHAR(20) UNIQUE NOT NULL,
+
+exam_id VARCHAR(20) NOT NULL REFERENCES exams(exam_id) ON DELETE CASCADE,
+
+-- Question Content
+question_text TEXT NOT NULL,
+question_image_url TEXT,
+
+-- MCQ Options (4 options)
+option_a TEXT NOT NULL,
+option_b TEXT NOT NULL,
+option_c TEXT NOT NULL,
+option_d TEXT NOT NULL,
+
+correct_option VARCHAR(1) NOT NULL CHECK (correct_option IN ('A', 'B', 'C', 'D')),
+
+-- Scoring
+marks INTEGER NOT NULL DEFAULT 1 CHECK (marks > 0),
+
+-- Additional Info
+difficulty VARCHAR(20) CHECK (difficulty IN ('EASY', 'MEDIUM', 'HARD')),
+explanation TEXT,
+hint TEXT,
+
+-- Order
+question_order INTEGER NOT NULL,
+
+is_active BOOLEAN DEFAULT true,
+
+created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create indexes
+CREATE INDEX idx_exam_questions_question_id ON exam_questions(question_id);
+CREATE INDEX idx_exam_questions_exam_id ON exam_questions(exam_id);
+CREATE INDEX idx_exam_questions_order ON exam_questions(exam_id, question_order);
+
+-- Add comments
+COMMENT ON TABLE exam_questions IS 'MCQ questions for each exam';
+COMMENT ON COLUMN exam_questions.correct_option IS 'A, B, C, or D';
+COMMENT ON COLUMN exam_questions.explanation IS 'Shown after exam submission';
+COMMENT ON COLUMN exam_questions.hint IS 'Optional hint for students';
+
+-- 3. EXAM_ATTEMPTS TABLE
+CREATE TABLE exam_attempts (
+id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+attempt_id VARCHAR(20) UNIQUE NOT NULL,
+
+exam_id VARCHAR(20) NOT NULL REFERENCES exams(exam_id) ON DELETE CASCADE,
+
+-- Who took the exam (child only - parents don't take exams)
+child_id VARCHAR(20) NOT NULL REFERENCES children(child_id) ON DELETE CASCADE,
+
+-- Timing
+started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+submitted_at TIMESTAMPTZ,
+duration_seconds INTEGER,
+
+-- Scoring
+total_questions INTEGER NOT NULL,
+answered_questions INTEGER DEFAULT 0,
+correct_answers INTEGER DEFAULT 0,
+wrong_answers INTEGER DEFAULT 0,
+skipped_questions INTEGER DEFAULT 0,
+
+score_obtained NUMERIC(10, 2) DEFAULT 0,
+total_marks NUMERIC(10, 2) NOT NULL,
+percentage NUMERIC(5, 2) DEFAULT 0,
+
+-- Result
+is_passed BOOLEAN,
+
+-- Status
+status VARCHAR(20) DEFAULT 'IN_PROGRESS' CHECK (status IN ('IN_PROGRESS', 'SUBMITTED', 'ABANDONED')),
+
+-- Additional Data
+answers_data JSONB DEFAULT '{}'::jsonb,
+
+created_at TIMESTAMPTZ DEFAULT NOW(),
+
+-- One attempt per child per exam
+UNIQUE(exam_id, child_id)
+);
+
+-- Create indexes
+CREATE INDEX idx_exam_attempts_attempt_id ON exam_attempts(attempt_id);
+CREATE INDEX idx_exam_attempts_exam_id ON exam_attempts(exam_id);
+CREATE INDEX idx_exam_attempts_child_id ON exam_attempts(child_id);
+CREATE INDEX idx_exam_attempts_status ON exam_attempts(status);
+CREATE INDEX idx_exam_attempts_submitted_at ON exam_attempts(submitted_at DESC);
+
+-- Add comments
+COMMENT ON TABLE exam_attempts IS 'Track exam attempts by children (ONE ATTEMPT ONLY per child)';
+COMMENT ON COLUMN exam_attempts.status IS 'IN_PROGRESS, SUBMITTED, or ABANDONED';
+COMMENT ON COLUMN exam_attempts.answers_data IS 'JSON with question-wise answers and timing';
+
+-- 4. EXAM_ANSWERS TABLE
+CREATE TABLE exam_answers (
+id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+attempt_id VARCHAR(20) NOT NULL REFERENCES exam_attempts(attempt_id) ON DELETE CASCADE,
+question_id VARCHAR(20) NOT NULL REFERENCES exam_questions(question_id) ON DELETE CASCADE,
+
+-- Answer
+selected_option VARCHAR(1) CHECK (selected_option IN ('A', 'B', 'C', 'D')),
+is_correct BOOLEAN,
+
+-- Timing
+time_taken_seconds INTEGER,
+
+-- Scoring
+marks_obtained NUMERIC(10, 2) DEFAULT 0,
+
+answered_at TIMESTAMPTZ DEFAULT NOW(),
+
+UNIQUE(attempt_id, question_id)
+);
+
+-- Create indexes
+CREATE INDEX idx_exam_answers_attempt ON exam_answers(attempt_id);
+CREATE INDEX idx_exam_answers_question ON exam_answers(question_id);
+
+-- Add comments
+COMMENT ON TABLE exam_answers IS 'Individual answers for each question in an attempt';
+
+-- 5. EXAM_RESULTS TABLE (Summary/Cache for fast loading)
+CREATE TABLE exam_results (
+id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+attempt_id VARCHAR(20) NOT NULL UNIQUE REFERENCES exam_attempts(attempt_id) ON DELETE CASCADE,
+exam_id VARCHAR(20) NOT NULL REFERENCES exams(exam_id) ON DELETE CASCADE,
+child_id VARCHAR(20) NOT NULL REFERENCES children(child_id) ON DELETE CASCADE,
+
+-- Result Summary
+score_obtained NUMERIC(10, 2) NOT NULL,
+total_marks NUMERIC(10, 2) NOT NULL,
+percentage NUMERIC(5, 2) NOT NULL,
+
+correct_count INTEGER NOT NULL,
+wrong_count INTEGER NOT NULL,
+skipped_count INTEGER NOT NULL,
+
+time_taken_seconds INTEGER NOT NULL,
+
+is_passed BOOLEAN NOT NULL,
+rank INTEGER,
+
+-- Subject-wise performance (optional)
+performance_data JSONB DEFAULT '{}'::jsonb,
+
+created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create indexes
+CREATE INDEX idx_exam_results_exam ON exam_results(exam_id);
+CREATE INDEX idx_exam_results_child ON exam_results(child_id);
+CREATE INDEX idx_exam_results_percentage ON exam_results(exam_id, percentage DESC);
+
+-- Add comments
+COMMENT ON TABLE exam_results IS 'Final results summary for quick access and leaderboards';
+COMMENT ON COLUMN exam_results.rank IS 'Rank among all students who took this exam';
+
+---
 
 ## 🏫 Part 1: School Profile Page
 
 Similar to an Instagram profile, each school page will include:
 
--   School logo
--   Banner image
--   Custom brand colors
--   About section (vision, mission, facilities)
--   Contact information
--   Location details
--   Courses and grades offered
--   Photo and video gallery
--   Verified badge (for paid schools)
+- School logo
+- Banner image
+- Custom brand colors
+- About section (vision, mission, facilities)
+- Contact information
+- Location details
+- Courses and grades offered
+- Photo and video gallery
+- Verified badge (for paid schools)
 
-------------------------------------------------------------------------
+---
 
 ## 📢 Part 2: School Content Posting
 
@@ -42,63 +279,63 @@ Schools can create posts similar to Facebook Pages:
 
 Supported content types:
 
--   Text announcements
--   Images (event posters, notices)
--   PDF files (timetables, circulars)
--   Short videos (event invitations)
+- Text announcements
+- Images (event posters, notices)
+- PDF files (timetables, circulars)
+- Short videos (event invitations)
 
-------------------------------------------------------------------------
+---
 
 ## 📂 Part 3: Post Categories and Tabs
 
 School pages will organize posts into categories:
 
--   📢 Announcements (exam dates, holidays)
--   🎓 Admissions (admission open notices)
--   📝 Exams (exam schedules)
--   📊 Surveys (parent feedback)
--   🖼 Gallery (event photos)
--   📅 Events (sports day, annual function)
+- 📢 Announcements (exam dates, holidays)
+- 🎓 Admissions (admission open notices)
+- 📝 Exams (exam schedules)
+- 📊 Surveys (parent feedback)
+- 🖼 Gallery (event photos)
+- 📅 Events (sports day, annual function)
 
-------------------------------------------------------------------------
+---
 
 ## ❤️ Part 4: Social Interaction Features
 
 Parents and students can interact with school pages:
 
--   Follow schools
--   See school posts in their feed
--   Like posts
--   Comment on posts
--   School admins can moderate comments
+- Follow schools
+- See school posts in their feed
+- Like posts
+- Comment on posts
+- School admins can moderate comments
 
-------------------------------------------------------------------------
+---
 
 ## 💰 Part 5: Paid Exams Feature (Monetization)
 
 Schools can create online exams with premium features:
 
--   Multiple-choice tests
--   Time-limited exams
--   Automatic grading
--   Result reports generation
--   Student performance tracking
+- Multiple-choice tests
+- Time-limited exams
+- Automatic grading
+- Result reports generation
+- Student performance tracking
 
 This is a **paid feature** --- schools pay Qidzo to use it.
 
-------------------------------------------------------------------------
+---
 
 ## 📊 Part 6: School Dashboard
 
 School administrators get access to analytics including:
 
--   Total followers
--   Post engagement (likes, comments)
--   Survey responses
--   Exam participation statistics
--   Admission inquiries
+- Total followers
+- Post engagement (likes, comments)
+- Survey responses
+- Exam participation statistics
+- Admission inquiries
 
-------------------------------------------------------------------------
+---
 
 ## 🌍 Real-World Example
 
@@ -110,51 +347,51 @@ Profile URL:
 
 ### Profile Information
 
--   Logo and banner
--   About section
--   Grades: Nursery to 12th
--   Campus and facility photos
+- Logo and banner
+- About section
+- Grades: Nursery to 12th
+- Campus and facility photos
 
 ### Example Posts
 
--   📢 Annual Day on Dec 25th! Parents invited.
--   📝 Mid-term exams from Jan 10--15. Timetable attached.
--   🎓 Admissions open for 2025--26 session.
+- 📢 Annual Day on Dec 25th! Parents invited.
+- 📝 Mid-term exams from Jan 10--15. Timetable attached.
+- 🎓 Admissions open for 2025--26 session.
 
 ### Parent Interaction Example
 
--   Sarah follows ABC School
--   Sarah sees posts in her feed
--   Sarah likes the Annual Day post
--   Sarah comments: "Excited for this event!"
+- Sarah follows ABC School
+- Sarah sees posts in her feed
+- Sarah likes the Annual Day post
+- Sarah comments: "Excited for this event!"
 
 ### Exam Example
 
 Math test for Class 5:
 
--   20 MCQs
--   30-minute duration
--   Auto grading enabled
--   Results emailed automatically
+- 20 MCQs
+- 30-minute duration
+- Auto grading enabled
+- Results emailed automatically
 
 ### Analytics Example
 
--   Followers: 1,200
--   Annual Day Post: 450 likes, 89 comments
--   Math Exam Participation: 85 students
+- Followers: 1,200
+- Annual Day Post: 450 likes, 89 comments
+- Math Exam Participation: 85 students
 
-------------------------------------------------------------------------
+---
 
 ## 🚀 Summary
 
 The School Pages feature enables schools to:
 
--   Build digital presence
--   Communicate effectively
--   Engage parents and students
--   Conduct online exams
--   Access analytics
--   Monetize through premium features
+- Build digital presence
+- Communicate effectively
+- Engage parents and students
+- Conduct online exams
+- Access analytics
+- Monetize through premium features
 
 This transforms Qidzo into a complete **digital ecosystem for schools**.
 

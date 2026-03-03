@@ -13,7 +13,7 @@ export interface Category {
 
 export async function getCategories(type: "CHILD" | "SCHOOL" = "CHILD") {
   const cacheKey = `categories:${type.toLowerCase()}:all`;
-  
+
   return getOrSetCache<Category[]>(
     cacheKey,
     async () => {
@@ -25,13 +25,15 @@ export async function getCategories(type: "CHILD" | "SCHOOL" = "CHILD") {
         .order("display_order", { ascending: true })
         .order("name", { ascending: true });
 
-      if (error) {
+      // Only treat it as error if it has actual error properties
+      if (error && (error.message || error.code)) {
         console.error(`Error fetching ${type} categories:`, error);
         return [];
       }
 
-      return data as Category[];
+      // Return data even if error is empty object
+      return (data || []) as Category[];
     },
-    3600 // 1 hour cache
+    3600, // 1 hour cache
   );
 }

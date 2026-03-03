@@ -145,12 +145,12 @@ export default function LeftSidebar() {
                       href: "/",
                     },
                     {
-                      label: "Tutorials",
-                      icon: "📺",
+                      label: "Study Hub",
+                      icon: "📚",
                       color: "text-sky-blue",
                       bg: "bg-sky-blue/10",
                       active: false,
-                      action: () => handleComingSoon("Tutorials"),
+                      href: "/study",
                     },
                     {
                       label: "Play Zone",

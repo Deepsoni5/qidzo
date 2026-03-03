@@ -150,16 +150,16 @@ export default function MobileNav() {
             </span>
           </Link>
 
-          {/* 2. Tutorials */}
-          <button
-            onClick={() => handleComingSoon("Tutorials")}
+          {/* 2. Study Hub */}
+          <Link
+            href="/study"
             className="flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-sky-blue transition-colors w-full"
           >
             <MonitorPlay className="w-6 h-6" />
             <span className="text-[10px] font-bold uppercase tracking-wide">
-              Tutorials
+              Study
             </span>
-          </button>
+          </Link>
 
           {/* 3. Create Button (Center) */}
           <div className="flex justify-center items-center w-full relative -top-6">

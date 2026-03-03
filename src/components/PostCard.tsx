@@ -28,7 +28,6 @@ import { useUser } from "@clerk/nextjs"; // Parent check
 import CommentsModal from "@/components/comments/CommentsModal";
 import { FollowButton } from "@/components/FollowButton";
 
-
 interface FeedPost {
   id: string;
   post_id: string;
@@ -62,6 +61,8 @@ interface FeedPost {
     slug: string;
     logo_url: string | null;
     brand_primary_color?: string;
+    city?: string | null;
+    country?: string | null;
   };
   category: {
     name: string;
@@ -146,11 +147,11 @@ export default function PostCard({
 
   // Determine if the current user is the author of this post
   // We check all possible ID matches to be absolutely sure
-  const isOwner = !!currentUserId && (
-    currentUserId === post.child_id || 
-    currentUserId === post.school_id || 
-    currentUserId === post.school?.id
-  );
+  const isOwner =
+    !!currentUserId &&
+    (currentUserId === post.child_id ||
+      currentUserId === post.school_id ||
+      currentUserId === post.school?.id);
 
   // Determine if we should show the follow button
   // Show if:
@@ -338,17 +339,17 @@ export default function PostCard({
             </div>
           </Link>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-0.5">
+            <div className="flex items-start gap-x-2 gap-y-0.5 mb-0.5">
               <Link
                 href={
                   isSchoolPost
                     ? `/schools/${post.school?.slug}`
                     : `/child/${post.child?.username}`
                 }
-                className="hover:underline decoration-brand-purple decoration-2 underline-offset-2 truncate max-w-[120px] sm:max-w-none"
+                className="hover:underline decoration-brand-purple decoration-2 underline-offset-2 flex-1 min-w-0"
               >
-                <h3 className="font-nunito font-extrabold text-gray-900 text-sm sm:text-lg leading-tight flex items-center gap-1.5 sm:gap-2">
-                  <span className="truncate">
+                <h3 className="font-nunito font-extrabold text-gray-900 text-sm sm:text-lg leading-tight flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <span className="break-words">
                     {isSchoolPost ? post.school?.name : post.child?.name}
                   </span>
                   {isSchoolPost && (
@@ -359,26 +360,38 @@ export default function PostCard({
                   )}
                 </h3>
               </Link>
-              {!isSchoolPost && showFollowButton && post.child_id && (
-                <FollowButton
-                  targetId={post.child_id}
-                  targetType="CHILD"
-                  initialIsFollowing={post.isViewerFollowingAuthor}
-                />
-              )}
-              {isSchoolPost && post.school?.school_id && showFollowButton && (
-                <FollowButton
-                  targetId={post.school.school_id}
-                  targetType="SCHOOL"
-                  initialIsFollowing={post.isViewerFollowingAuthor}
-                />
-              )}
+              <div className="shrink-0">
+                {!isSchoolPost && showFollowButton && post.child_id && (
+                  <FollowButton
+                    key={`follow-child-${post.child_id}`}
+                    targetId={post.child_id}
+                    targetType="CHILD"
+                    initialIsFollowing={post.isViewerFollowingAuthor}
+                  />
+                )}
+                {isSchoolPost && post.school?.school_id && showFollowButton && (
+                  <FollowButton
+                    key={`follow-school-${post.school.school_id}`}
+                    targetId={post.school.school_id}
+                    targetType="SCHOOL"
+                    initialIsFollowing={post.isViewerFollowingAuthor}
+                  />
+                )}
+              </div>
             </div>
             <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
               {!isSchoolPost && post.child?.country && (
                 <span className="px-1.5 py-0.5 rounded-lg bg-gray-100 text-gray-700 text-[8px] sm:text-[10px] font-black border border-gray-200 inline-flex items-center gap-1 shrink-0">
                   <Globe2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   {post.child?.country}
+                </span>
+              )}
+              {isSchoolPost && (post.school?.city || post.school?.country) && (
+                <span className="px-1.5 py-0.5 rounded-lg bg-gray-100 text-gray-700 text-[8px] sm:text-[10px] font-black border border-gray-200 inline-flex items-center gap-1 shrink-0">
+                  <Globe2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                  {[post.school?.city, post.school?.country]
+                    .filter(Boolean)
+                    .join(", ")}
                 </span>
               )}
               {!isSchoolPost && (
@@ -579,7 +592,8 @@ export default function PostCard({
           onClick={() => setIsShareOpen(true)}
           className="bg-brand-purple text-white px-3 py-1.5 sm:px-6 sm:py-2.5 rounded-full font-nunito font-black text-[10px] sm:text-sm shadow-lg shadow-brand-purple/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 ml-auto sm:ml-0"
         >
-          Share <span className="hidden xs:inline">Magic</span> <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+          Share <span className="hidden xs:inline">Magic</span>{" "}
+          <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
         </button>
       </div>
 

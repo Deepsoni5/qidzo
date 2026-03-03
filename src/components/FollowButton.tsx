@@ -23,31 +23,36 @@ export function FollowButton({ targetId, targetType, className, initialIsFollowi
   const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
-    // If we already know the initial state from the server, skip client fetch
+    // If we already know the initial state from the server, update state
     if (initialIsFollowing !== undefined) {
       setIsFollowing(initialIsFollowing);
       setIsLoading(false);
-      return;
-    }
-
-    let mounted = true;
-    const checkStatus = async () => {
-      try {
-        const status = await getFollowStatus(targetId, targetType);
-        if (mounted) {
-          setIsFollowing(status);
-          setIsLoading(false);
+    } else {
+      // Otherwise, fetch initial status from server
+      let mounted = true;
+      const checkStatus = async () => {
+        try {
+          const status = await getFollowStatus(targetId, targetType);
+          if (mounted) {
+            setIsFollowing(status);
+            setIsLoading(false);
+          }
+        } catch (error) {
+          console.error("Failed to check follow status", error);
+          if (mounted) setIsLoading(false);
         }
-      } catch (error) {
-        console.error("Failed to check follow status", error);
-        if (mounted) setIsLoading(false);
-      }
-    };
-    checkStatus();
+      };
+      checkStatus();
+      return () => {
+        mounted = false;
+      };
+    }
+  }, [targetId, targetType, initialIsFollowing]);
 
+  useEffect(() => {
     // Listen for global follow updates to sync multiple buttons for the same user
-    const handleFollowUpdate = (e: CustomEvent<{ targetId: string; isFollowing: boolean }>) => {
-      if (e.detail.targetId === targetId) {
+    const handleFollowUpdate = (e: CustomEvent<{ targetId: string; targetType: string; isFollowing: boolean }>) => {
+      if (e.detail.targetId === targetId && e.detail.targetType === targetType) {
         setIsFollowing(e.detail.isFollowing);
       }
     };
@@ -55,10 +60,9 @@ export function FollowButton({ targetId, targetType, className, initialIsFollowi
     window.addEventListener('qidzo:follow-update' as any, handleFollowUpdate);
 
     return () => { 
-      mounted = false;
       window.removeEventListener('qidzo:follow-update' as any, handleFollowUpdate);
-      };
-  }, [targetId, targetType, initialIsFollowing]);
+    };
+  }, [targetId, targetType]);
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent link navigation if inside a Link
@@ -75,7 +79,7 @@ export function FollowButton({ targetId, targetType, className, initialIsFollowi
 
     // Notify other components immediately
     window.dispatchEvent(new CustomEvent('qidzo:follow-update', { 
-      detail: { targetId, isFollowing: newIsFollowing } 
+      detail: { targetId, targetType, isFollowing: newIsFollowing } 
     }));
 
     try {
@@ -86,7 +90,7 @@ export function FollowButton({ targetId, targetType, className, initialIsFollowi
         setIsFollowing(prevIsFollowing);
         // Revert other components
         window.dispatchEvent(new CustomEvent('qidzo:follow-update', { 
-          detail: { targetId, isFollowing: prevIsFollowing } 
+          detail: { targetId, targetType, isFollowing: prevIsFollowing } 
         }));
 
         if (result.error === "Must be logged in to follow users.") {
