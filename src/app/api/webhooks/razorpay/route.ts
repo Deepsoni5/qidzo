@@ -147,6 +147,32 @@ export async function POST(req: Request) {
 
         console.log(`Successfully incremented slots: ${currentSlots} -> ${newSlots} for parent ${parentId}`);
       }
+
+      if (notes?.type === "exam_payment") {
+        const examId = notes.exam_id;
+        const childId = notes.child_id;
+        const paymentId = event === "payment.captured" ? payload.payload.payment.entity.id : payload.payload.order.entity.id;
+        const orderId = event === "order.paid" ? payload.payload.order.entity.id : payload.payload.payment.entity.order_id;
+
+        console.log(`Processing exam payment for exam: ${examId}, child: ${childId}`);
+
+        const { error: insertError } = await supabase.from("exam_payments").insert({
+          payment_id: paymentId,
+          order_id: orderId,
+          exam_id: examId,
+          child_id: childId,
+          amount: 99,
+          status: "CAPTURED",
+        });
+
+        if (insertError) {
+          console.error("Webhook exam payment record failed:", insertError);
+          // Don't return 500 if it's a duplicate (already handled by verify action)
+          if (insertError.code !== "23505") {
+            return NextResponse.json({ error: "Exam payment record failed" }, { status: 500 });
+          }
+        }
+      }
     }
 
     // Handle cancellation

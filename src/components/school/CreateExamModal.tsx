@@ -348,7 +348,10 @@ export default function CreateExamModal({
                 <input
                   type="radio"
                   checked={isFree}
-                  onChange={() => setIsFree(true)}
+                  onChange={() => {
+                    setIsFree(true);
+                    setPrice(0);
+                  }}
                   className="w-5 h-5 text-grass-green focus:ring-grass-green"
                 />
                 <span className="text-sm font-black text-gray-900">
@@ -360,7 +363,10 @@ export default function CreateExamModal({
                 <input
                   type="radio"
                   checked={!isFree}
-                  onChange={() => setIsFree(false)}
+                  onChange={() => {
+                    setIsFree(false);
+                    setPrice(99);
+                  }}
                   className="w-5 h-5 text-hot-pink focus:ring-hot-pink"
                 />
                 <span className="text-sm font-black text-gray-900">
@@ -370,18 +376,18 @@ export default function CreateExamModal({
             </div>
 
             {!isFree && (
-              <div className="max-w-xs">
-                <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">
-                  Price (₹)
-                </label>
-                <input
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
-                  min={0}
-                  step={0.01}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-sunshine-yellow focus:ring-4 focus:ring-sunshine-yellow/10 outline-none transition-all text-sm font-bold text-gray-900"
-                />
+              <div className="flex items-center gap-2 p-4 rounded-2xl bg-sunshine-yellow/10 border-2 border-sunshine-yellow/20 max-w-sm">
+                <div className="p-2 rounded-xl bg-white shadow-sm">
+                  <DollarSign className="w-4 h-4 text-sunshine-yellow" />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-gray-900">
+                    Fixed Price: ₹99
+                  </p>
+                  <p className="text-[10px] font-bold text-gray-500">
+                    All paid exams have a standard fee of ₹99.
+                  </p>
+                </div>
               </div>
             )}
           </div>

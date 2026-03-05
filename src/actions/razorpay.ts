@@ -284,3 +284,114 @@ export async function redeemCoupon(code: string) {
     return { success: false, error: "Something went wrong while redeeming this code" };
   }
 }
+
+export async function createExamOrder(examId: string) {
+  try {
+    const { getChildSession } = await import("./auth");
+    const childSession = await getChildSession();
+    if (!childSession) throw new Error("Unauthorized");
+
+    // child_id is directly in the session
+    const childId = childSession.id as string;
+    const { data: child } = await supabase
+      .from("children")
+      .select("name, username")
+      .eq("child_id", childId)
+      .single();
+
+    if (!child) throw new Error("Child profile not found");
+
+    const amount = 99; // Fixed price for exams
+
+    const order = await razorpay.orders.create({
+      amount: amount * 100,
+      currency: "INR",
+      receipt: `exam_pay_${examId}_${childId}_${Date.now()}`,
+      notes: {
+        type: "exam_payment",
+        exam_id: examId,
+        child_id: childId as string,
+      },
+    });
+
+    return {
+      success: true,
+      orderId: order.id as string,
+      amount: order.amount as number,
+      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      childName: child.name,
+      childUsername: child.username,
+    };
+  } catch (error: any) {
+    console.error("Error creating exam order:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function verifyExamPayment(params: {
+  orderId: string;
+  paymentId: string;
+  signature: string;
+  examId: string;
+}) {
+  try {
+    const { getChildSession } = await import("./auth");
+    const childSession = await getChildSession();
+    if (!childSession) throw new Error("Unauthorized");
+
+    const { orderId, paymentId, signature, examId } = params;
+    const childId = childSession.id as string;
+
+    // Verify signature
+    const crypto = await import("crypto");
+    const generated_signature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+      .update(orderId + "|" + paymentId)
+      .digest("hex");
+
+    if (generated_signature !== signature) {
+      throw new Error("Invalid payment signature");
+    }
+
+    // Record payment in database
+    const { error } = await supabase.from("exam_payments").insert({
+      payment_id: paymentId,
+      order_id: orderId,
+      exam_id: examId,
+      child_id: childId,
+      amount: 99,
+      status: "CAPTURED",
+    });
+
+    if (error) {
+      console.error("Error saving exam payment:", error);
+      throw new Error("Failed to record payment in database");
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error verifying exam payment:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function checkExamPaymentStatus(examId: string) {
+  try {
+    const { getChildSession } = await import("./auth");
+    const childSession = await getChildSession();
+    if (!childSession) return false;
+
+    const { data } = await supabase
+      .from("exam_payments")
+      .select("id")
+      .eq("exam_id", examId)
+      .eq("child_id", childSession.id)
+      .eq("status", "CAPTURED")
+      .maybeSingle();
+
+    return !!data;
+  } catch (error) {
+    return false;
+  }
+}
+

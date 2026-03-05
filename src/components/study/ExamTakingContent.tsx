@@ -10,13 +10,19 @@ import {
   ArrowLeft,
   ArrowRight,
   Send,
+  Lock,
+  Loader2,
+  DollarSign,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import Script from "next/script";
 import {
   getExamForTaking,
   startExamAttempt,
   submitExamAttempt,
 } from "@/actions/exams";
+import { createExamOrder, verifyExamPayment, checkExamPaymentStatus } from "@/actions/razorpay";
 
 interface ExamTakingContentProps {
   examId: string;
@@ -34,10 +40,86 @@ export default function ExamTakingContent({ examId }: ExamTakingContentProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
+  const [hasPaid, setHasPaid] = useState(false);
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   useEffect(() => {
     loadExam();
   }, [examId]);
+
+  useEffect(() => {
+    if (exam && !exam.is_free) {
+      checkPayment();
+    }
+  }, [exam]);
+
+  const checkPayment = async () => {
+    setIsCheckingPayment(true);
+    try {
+      const paid = await checkExamPaymentStatus(examId);
+      setHasPaid(paid);
+    } catch (error) {
+      console.error("Error checking payment status:", error);
+    } finally {
+      setIsCheckingPayment(false);
+    }
+  };
+
+  const handlePayment = async () => {
+    setIsProcessingPayment(true);
+    try {
+      const result = await createExamOrder(examId);
+      if (!result.success || !result.orderId) {
+        toast.error(result.error || "Failed to create payment order");
+        return;
+      }
+
+      const options = {
+        key: result.keyId,
+        amount: result.amount,
+        currency: "INR",
+        name: "Qidzo Exam",
+        description: `Payment for ${exam.title}`,
+        order_id: result.orderId,
+        handler: async (response: any) => {
+          try {
+            const verifyResult = await verifyExamPayment({
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+              examId: examId,
+            });
+
+            if (verifyResult.success) {
+              setHasPaid(true);
+              toast.success("Payment Successful! You can now start the exam. 📝");
+            } else {
+              toast.error(verifyResult.error || "Payment verification failed");
+            }
+          } catch (error) {
+            toast.error("Error verifying payment");
+          }
+        },
+        prefill: {
+          name: result.childName,
+          email: "",
+          contact: "",
+        },
+        theme: {
+          color: "#8B5CF6",
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error("Something went wrong with the payment");
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
 
   useEffect(() => {
     if (!hasStarted || timeRemaining <= 0) return;
@@ -168,10 +250,13 @@ export default function ExamTakingContent({ examId }: ExamTakingContentProps) {
   const currentQuestion = questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
-  if (isLoading) {
+  if (isLoading || isCheckingPayment) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-brand-purple/30 border-t-brand-purple rounded-full animate-spin" />
+      <div className="flex flex-col items-center justify-center py-40 gap-4">
+        <Loader2 className="w-10 h-10 text-brand-purple animate-spin" />
+        <p className="text-sm font-bold text-gray-500 animate-pulse">
+          Setting up your magic desk... ✨
+        </p>
       </div>
     );
   }
@@ -180,6 +265,80 @@ export default function ExamTakingContent({ examId }: ExamTakingContentProps) {
     return (
       <div className="text-center py-20">
         <p className="text-gray-500 font-bold">Exam not found</p>
+      </div>
+    );
+  }
+
+  // Payment Screen for Paid Exams
+  if (!exam.is_free && !hasPaid && !hasStarted) {
+    return (
+      <div className="min-h-screen pt-20 pb-12 px-4 sm:px-6 bg-gray-50/50">
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="lazyOnload"
+        />
+        <div className="max-w-md mx-auto">
+          <div className="bg-white rounded-3xl p-8 border-2 border-gray-100 shadow-xl shadow-brand-purple/5 text-center">
+            <div className="w-20 h-20 rounded-2xl bg-sunshine-yellow/10 flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-10 h-10 text-sunshine-yellow" />
+            </div>
+
+            <h2 className="text-2xl font-black font-nunito text-gray-900 mb-2">
+              Paid Exam Content 🔒
+            </h2>
+            <p className="text-gray-500 font-bold mb-8">
+              This is a premium school exam. Pay once to unlock it forever and
+              start your attempt!
+            </p>
+
+            <div className="bg-gray-50 rounded-2xl p-6 mb-8 border border-gray-100">
+              <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+                <span className="text-sm font-bold text-gray-500">
+                  Exam Fee
+                </span>
+                <span className="text-xl font-black text-gray-900">₹99</span>
+              </div>
+              <div className="flex items-center gap-3 text-left">
+                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                  <Sparkles className="w-5 h-5 text-brand-purple" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-gray-900 leading-tight">
+                    {exam.title}
+                  </p>
+                  <p className="text-[10px] font-bold text-gray-400">
+                    By {exam.school?.name}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handlePayment}
+              disabled={isProcessingPayment}
+              className="w-full py-4 rounded-2xl bg-brand-purple text-white font-black text-lg shadow-lg shadow-brand-purple/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {isProcessingPayment ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <DollarSign className="w-5 h-5" />
+                  Pay ₹99 to Unlock
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={() => router.push("/study")}
+              className="mt-4 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Maybe Later
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
