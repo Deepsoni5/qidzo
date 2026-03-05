@@ -103,11 +103,19 @@ export async function getParentStats() {
     const totalActivitySeconds = logsData?.reduce((sum, log: any) => sum + (log.seconds_spent || 0), 0) || 0;
     const activityHours = totalActivitySeconds / 3600;
 
+    // 4. Get total exams taken
+    const { count: totalExams } = await supabase
+      .from("exam_attempts")
+      .select("*", { count: "exact", head: true })
+      .in("child_id", childIds)
+      .eq("status", "SUBMITTED");
+
     return {
       totalChildren,
       totalPosts,
       learningHours,
-      activityHours
+      activityHours,
+      totalExams: totalExams || 0
     };
   } catch (error) {
     console.error("Error in getParentStats:", error);
@@ -277,6 +285,55 @@ export async function getChildrenRecentActivity() {
     return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 10);
   } catch (error) {
     console.error("Error fetching children recent activity:", error);
+    return [];
+  }
+}
+
+// 3b. Get Exam Results for Children
+export async function getChildrenExamResults() {
+  try {
+    const user = await currentUser();
+    if (!user) return null;
+
+    // 1. Get parent_id
+    const { data: parentData, error: parentError } = await supabase
+      .from("parents")
+      .select("parent_id")
+      .eq("clerk_id", user.id)
+      .single();
+
+    if (parentError || !parentData) return null;
+
+    // 2. Get children
+    const { data: childrenData } = await supabase
+      .from("children")
+      .select("child_id")
+      .eq("parent_id", parentData.parent_id);
+
+    if (!childrenData || childrenData.length === 0) return [];
+
+    const childIds = childrenData.map(c => c.child_id);
+
+    // 3. Get exam attempts for these children
+    const { data: attempts, error: attemptsError } = await supabase
+      .from("exam_attempts")
+      .select(`
+        *,
+        child:children(name, username, avatar),
+        exam:exams(title, subject, total_marks, pass_marks, school:schools(name, logo_url))
+      `)
+      .in("child_id", childIds)
+      .eq("status", "SUBMITTED")
+      .order("submitted_at", { ascending: false });
+
+    if (attemptsError) {
+      console.error("Error fetching exam attempts:", attemptsError);
+      return [];
+    }
+
+    return attempts;
+  } catch (error) {
+    console.error("Error in getChildrenExamResults:", error);
     return [];
   }
 }

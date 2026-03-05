@@ -1,5 +1,5 @@
 "use client";
-import { LayoutDashboard, Users, Settings, Zap, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Users, Settings, Zap, ArrowLeft, Award } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,6 +8,7 @@ export default function ParentSidebar() {
 
   const menuItems = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/parent/dashboard", color: "text-brand-purple" },
+    { label: "Exam Results", icon: Award, href: "/parent/results", color: "text-hot-pink" },
     { label: "My Children", icon: Users, href: "/parent/children", color: "text-sky-blue" },
     { label: "Settings", icon: Settings, href: "/parent/settings", color: "text-gray-500" },
     { label: "Upgrade", icon: Zap, href: "/parent/upgrade", color: "text-sunshine-yellow" },

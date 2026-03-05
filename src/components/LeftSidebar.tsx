@@ -94,6 +94,29 @@ export default function LeftSidebar() {
     router.push("/playzone");
   };
 
+  const handleStudyHub = async () => {
+    const currentRole = await getCurrentUserRole();
+
+    if (!currentRole.isChild) {
+      toast("Kid Account Required! 🎓", {
+        description: "Please log in with a children account to view the Study Hub. ✨",
+        duration: 5000,
+        style: {
+          background: "#F0F9FF", // sky-50
+          border: "3px solid #0EA5E9", // sky-blue
+          color: "#075985", // sky-900
+          fontSize: "16px",
+          fontFamily: "Nunito, sans-serif",
+          fontWeight: "bold",
+        },
+        className: "rounded-2xl shadow-xl",
+      });
+      return;
+    }
+
+    router.push("/study");
+  };
+
   const handleComingSoon = (feature: string) => {
     toast.info(`${feature} is Coming Soon! 🚧`, {
       description: "We're building something awesome for you! Stay tuned.",
@@ -150,7 +173,7 @@ export default function LeftSidebar() {
                       color: "text-sky-blue",
                       bg: "bg-sky-blue/10",
                       active: false,
-                      href: "/study",
+                      action: handleStudyHub,
                     },
                     {
                       label: "Play Zone",

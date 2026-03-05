@@ -10,7 +10,7 @@ import AnalyticsCharts from "@/components/parent/dashboard/AnalyticsCharts";
 import RecentActivity from "@/components/parent/dashboard/RecentActivity";
 import PostsList from "@/components/parent/dashboard/PostsList";
 import PricingSection from "@/components/parent/pricing/PricingSection";
-import { Sparkles, ArrowRight, UserPlus, Baby } from "lucide-react";
+import { Sparkles, ArrowRight, UserPlus, Baby, Award } from "lucide-react";
 import { getParentProfile } from "@/actions/parent";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -154,6 +154,30 @@ export default function ParentDashboard() {
       </div>
 
       <StatsCards />
+      
+      {/* Exam Results Link */}
+      <div className="mb-8">
+        <Link 
+          href="/parent/results"
+          className="group relative overflow-hidden bg-white border-2 border-gray-100 p-6 rounded-[32px] flex items-center justify-between hover:border-brand-purple/20 hover:shadow-xl hover:shadow-brand-purple/5 transition-all active:scale-[0.99] cursor-pointer"
+        >
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-brand-purple/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Award className="w-7 h-7 text-brand-purple" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black font-nunito text-gray-900">View Exam Results 📝</h2>
+              <p className="text-gray-500 font-bold">Track your children's school performance and scores.</p>
+            </div>
+          </div>
+          <div className="bg-gray-50 p-3 rounded-xl group-hover:bg-brand-purple group-hover:text-white transition-colors">
+            <ArrowRight className="w-6 h-6" />
+          </div>
+          
+          {/* Decorative background element */}
+          <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-brand-purple/5 rounded-full blur-2xl group-hover:bg-brand-purple/10 transition-colors" />
+        </Link>
+      </div>
       
       <ChildrenList />
       

@@ -115,6 +115,30 @@ export default function MobileNav() {
     });
   };
 
+  const handleStudyHub = async () => {
+    const currentRole = await getCurrentUserRole();
+
+    if (!currentRole.isChild) {
+      toast("Kid Account Required! 🎓", {
+        description:
+          "Please log in with a children account to view the Study Hub. ✨",
+        duration: 5000,
+        style: {
+          background: "#F0F9FF", // sky-50
+          border: "3px solid #0EA5E9", // sky-blue
+          color: "#075985", // sky-900
+          fontSize: "16px",
+          fontFamily: "Nunito, sans-serif",
+          fontWeight: "bold",
+        },
+        className: "rounded-2xl shadow-xl",
+      });
+      return;
+    }
+
+    router.push("/study");
+  };
+
   const handleMessages = async () => {
     const currentRole = await getCurrentUserRole();
 
@@ -151,15 +175,15 @@ export default function MobileNav() {
           </Link>
 
           {/* 2. Study Hub */}
-          <Link
-            href="/study"
+          <button
+            onClick={handleStudyHub}
             className="flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-sky-blue transition-colors w-full"
           >
             <MonitorPlay className="w-6 h-6" />
             <span className="text-[10px] font-bold uppercase tracking-wide">
               Study
             </span>
-          </Link>
+          </button>
 
           {/* 3. Create Button (Center) */}
           <div className="flex justify-center items-center w-full relative -top-6">
