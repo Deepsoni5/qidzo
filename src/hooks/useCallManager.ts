@@ -36,7 +36,9 @@ export function useCallManager() {
 
       try {
         const callId = `${connectedUser.id}-${targetUserId}-${Date.now()}`;
-        const call = client.call(isVideo ? "default" : "audio", callId);
+        // Use "default" for both video and audio calls
+        // The difference is handled by camera/microphone settings
+        const call = client.call("default", callId);
 
         await call.getOrCreate({
           ring: true,
@@ -44,6 +46,11 @@ export function useCallManager() {
             members: [{ user_id: connectedUser.id }, { user_id: targetUserId }],
           },
         });
+
+        // For audio-only calls, disable camera before joining
+        if (!isVideo) {
+          await call.camera.disable();
+        }
 
         await call.join();
         setActiveCall(call);
