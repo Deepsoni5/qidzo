@@ -30,11 +30,28 @@ export default function CallButtons({ otherUserId }: CallButtonsProps) {
       return;
     }
 
-    if (typeof window !== "undefined" && (window as any).qidzoStartVideoCall) {
-      (window as any).qidzoStartVideoCall(otherUserId);
-    } else {
-      toast.error("Video calls not available");
-    }
+    // Wait a bit for the global function to be available
+    const tryCall = () => {
+      if (
+        typeof window !== "undefined" &&
+        (window as any).qidzoStartVideoCall
+      ) {
+        (window as any).qidzoStartVideoCall(otherUserId);
+      } else {
+        // Retry after a short delay
+        setTimeout(() => {
+          if (
+            typeof window !== "undefined" &&
+            (window as any).qidzoStartVideoCall
+          ) {
+            (window as any).qidzoStartVideoCall(otherUserId);
+          } else {
+            toast.error("Video calls not ready yet. Please try again.");
+          }
+        }, 500);
+      }
+    };
+    tryCall();
   };
 
   const handleAudioCall = () => {
@@ -45,11 +62,28 @@ export default function CallButtons({ otherUserId }: CallButtonsProps) {
       return;
     }
 
-    if (typeof window !== "undefined" && (window as any).qidzoStartAudioCall) {
-      (window as any).qidzoStartAudioCall(otherUserId);
-    } else {
-      toast.error("Audio calls not available");
-    }
+    // Wait a bit for the global function to be available
+    const tryCall = () => {
+      if (
+        typeof window !== "undefined" &&
+        (window as any).qidzoStartAudioCall
+      ) {
+        (window as any).qidzoStartAudioCall(otherUserId);
+      } else {
+        // Retry after a short delay
+        setTimeout(() => {
+          if (
+            typeof window !== "undefined" &&
+            (window as any).qidzoStartAudioCall
+          ) {
+            (window as any).qidzoStartAudioCall(otherUserId);
+          } else {
+            toast.error("Audio calls not ready yet. Please try again.");
+          }
+        }, 500);
+      }
+    };
+    tryCall();
   };
 
   // Don't show buttons while loading

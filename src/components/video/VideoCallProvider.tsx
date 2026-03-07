@@ -1,8 +1,11 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { StreamVideo } from "@stream-io/video-react-sdk";
 import { useVideoClient } from "@/hooks/useVideoClient";
+import { useCallManager } from "@/hooks/useCallManager";
+import IncomingCallModal from "./IncomingCallModal";
+import ActiveCallScreen from "./ActiveCallScreen";
 
 interface VideoCallProviderProps {
   children: ReactNode;
@@ -11,10 +14,6 @@ interface VideoCallProviderProps {
 
 // Inner component that uses hooks requiring StreamVideo context
 function VideoCallManager({ children }: { children: ReactNode }) {
-  const { useCallManager } = require("@/hooks/useCallManager");
-  const IncomingCallModal = require("./IncomingCallModal").default;
-  const ActiveCallScreen = require("./ActiveCallScreen").default;
-
   const {
     activeCall,
     incomingCall,
@@ -26,12 +25,14 @@ function VideoCallManager({ children }: { children: ReactNode }) {
   } = useCallManager();
 
   // Expose call functions globally for the chat header to use
-  if (typeof window !== "undefined") {
-    (window as any).qidzoStartVideoCall = (userId: string) =>
-      startCall(userId, true);
-    (window as any).qidzoStartAudioCall = (userId: string) =>
-      startCall(userId, false);
-  }
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any).qidzoStartVideoCall = (userId: string) =>
+        startCall(userId, true);
+      (window as any).qidzoStartAudioCall = (userId: string) =>
+        startCall(userId, false);
+    }
+  }, [startCall]);
 
   return (
     <>
