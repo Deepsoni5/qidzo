@@ -30,10 +30,13 @@ export async function POST() {
     // Generate Stream Video token using jose (already in your dependencies)
     const secret = new TextEncoder().encode(apiSecret);
 
+    // Subtract 10 seconds from current time to account for clock skew
+    const now = Math.floor(Date.now() / 1000) - 10;
+
     const token = await new SignJWT({ user_id: userId })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setIssuedAt()
-      .setExpirationTime("24h")
+      .setIssuedAt(now)
+      .setExpirationTime(now + 24 * 60 * 60) // 24 hours from adjusted time
       .sign(secret);
 
     return NextResponse.json({
