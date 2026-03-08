@@ -36,18 +36,19 @@ export function useCallManager() {
 
       try {
         const callId = `${connectedUser.id}-${targetUserId}-${Date.now()}`;
-        // Use "default" for both video and audio calls
-        // The difference is handled by camera/microphone settings
         const call = client.call("default", callId);
 
         await call.getOrCreate({
           ring: true,
           data: {
             members: [{ user_id: connectedUser.id }, { user_id: targetUserId }],
+            custom: {
+              isAudioOnly: !isVideo,
+            },
           },
         });
 
-        // For audio-only calls, disable camera before joining
+        // For audio-only calls, disable camera immediately
         if (!isVideo) {
           await call.camera.disable();
         }
@@ -72,6 +73,13 @@ export function useCallManager() {
     if (!incomingCall) return;
 
     try {
+      // Check if it's an audio-only call
+      const isAudioOnly = incomingCall.state.custom?.isAudioOnly === true;
+
+      if (isAudioOnly) {
+        await incomingCall.camera.disable();
+      }
+
       await incomingCall.join();
       setActiveCall(incomingCall);
       setIsInCall(true);
@@ -87,7 +95,7 @@ export function useCallManager() {
     if (!incomingCall) return;
 
     try {
-      await incomingCall.leave();
+      await incomingCall.reject();
       toast("Call declined");
     } catch (error) {
       console.error("Error rejecting call:", error);
@@ -100,12 +108,14 @@ export function useCallManager() {
 
     try {
       await activeCall.leave();
+      // End the call for everyone
       await activeCall.endCall();
       setActiveCall(null);
       setIsInCall(false);
       toast("Call ended");
     } catch (error) {
       console.error("Error ending call:", error);
+      // Even if there's an error, clean up local state
       setActiveCall(null);
       setIsInCall(false);
     }

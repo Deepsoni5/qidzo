@@ -38,9 +38,15 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
     (p) => p.userId !== localParticipant?.userId,
   );
 
-  // Call duration timer
+  // Check if this is an audio-only call
+  const isAudioOnly = call?.state.custom?.isAudioOnly === true;
+
+  // Call duration timer - only start when JOINED
   useEffect(() => {
-    if (callingState !== CallingState.JOINED) return;
+    if (callingState !== CallingState.JOINED) {
+      setCallDuration(0);
+      return;
+    }
 
     const interval = setInterval(() => {
       setCallDuration((prev) => prev + 1);
@@ -87,7 +93,7 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
       {/* Video Layout */}
       <div className="relative w-full h-full">
         {/* Remote Participant (Full Screen) */}
-        {otherParticipant && (
+        {otherParticipant && !isAudioOnly && (
           <div className="absolute inset-0">
             <ParticipantView
               participant={otherParticipant}
@@ -96,8 +102,27 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
           </div>
         )}
 
-        {/* Local Participant (Picture-in-Picture) */}
-        {localParticipant && (
+        {/* Audio-only call - show avatar */}
+        {isAudioOnly && (
+          <div className="absolute inset-0 bg-linear-to-br from-brand-purple to-hot-pink flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm border-4 border-white/30 flex items-center justify-center mx-auto mb-4">
+                <span className="text-white font-black text-4xl">
+                  {otherParticipant?.name?.[0]?.toUpperCase() || "?"}
+                </span>
+              </div>
+              <p className="text-white font-bold text-xl mb-1">
+                {otherParticipant?.name || "Friend"}
+              </p>
+              <p className="text-white/70 text-sm font-medium">
+                Audio Call • {formatDuration(callDuration)}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Local Participant (Picture-in-Picture) - only for video calls */}
+        {localParticipant && !isAudioOnly && !isCameraMuted && (
           <div className="absolute top-4 right-4 w-32 h-40 sm:w-40 sm:h-52 rounded-2xl overflow-hidden border-2 border-white/30 shadow-2xl">
             <ParticipantView
               participant={localParticipant}
@@ -154,21 +179,23 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
               <Phone className="w-7 h-7 text-white rotate-135" />
             </button>
 
-            {/* Video Toggle Button */}
-            <button
-              onClick={toggleVideo}
-              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 cursor-pointer ${
-                isCameraMuted
-                  ? "bg-red-500 hover:bg-red-600"
-                  : "bg-white/20 hover:bg-white/30 backdrop-blur-sm"
-              }`}
-            >
-              {isCameraMuted ? (
-                <VideoOff className="w-6 h-6 text-white" />
-              ) : (
-                <Video className="w-6 h-6 text-white" />
-              )}
-            </button>
+            {/* Video Toggle Button - only show for video calls */}
+            {!isAudioOnly && (
+              <button
+                onClick={toggleVideo}
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 cursor-pointer ${
+                  isCameraMuted
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-white/20 hover:bg-white/30 backdrop-blur-sm"
+                }`}
+              >
+                {isCameraMuted ? (
+                  <VideoOff className="w-6 h-6 text-white" />
+                ) : (
+                  <Video className="w-6 h-6 text-white" />
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
