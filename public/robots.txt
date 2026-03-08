@@ -1,0 +1,50 @@
+# Qidzo - Social Learning Platform for Kids
+# https://qidzo.com
+
+User-agent: *
+
+# Allow public pages
+Allow: /
+Allow: /about
+Allow: /features
+Allow: /pricing
+Allow: /contact
+
+# Allow school public pages
+Allow: /school/*/public
+
+# Allow child public profiles (for discovery)
+Allow: /child/*/
+
+# Block private/authenticated areas
+Disallow: /api/
+Disallow: /messages
+Disallow: /parent/
+Disallow: /admin/
+Disallow: /sign-in
+Disallow: /sign-up
+Disallow: /login
+
+# Block sensitive child data
+Disallow: /child/*/edit
+Disallow: /child/*/settings
+
+# Block school private areas
+Disallow: /school/*/dashboard
+Disallow: /school/*/analytics
+Disallow: /school/*/settings
+
+# Block exam and study materials (premium content)
+Disallow: /study/
+Disallow: /exams/
+Disallow: /games/
+
+# Block internal routes
+Disallow: /_next/
+Disallow: /static/
+
+# Sitemap location
+Sitemap: https://qidzo.com/sitemap.xml
+
+# Crawl delay (be nice to servers)
+Crawl-delay: 1
