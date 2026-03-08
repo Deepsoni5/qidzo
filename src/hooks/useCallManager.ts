@@ -26,7 +26,7 @@ export function useCallManager() {
         call.state.createdBy?.id !== connectedUser?.id,
     ) || null;
 
-  // Listen for call end events
+  // Listen for call end events and state changes
   useEffect(() => {
     if (!activeCall) return;
 
@@ -37,15 +37,48 @@ export function useCallManager() {
       toast("Call ended");
     };
 
-    // Listen for call end events
+    const handleCallAccepted = () => {
+      console.log("Call accepted - updating state");
+      // When receiver accepts, ensure caller shows active call screen
+      setIsInCall(true);
+    };
+
+    const handleCallRejected = () => {
+      console.log("Call rejected");
+      setActiveCall(null);
+      setIsInCall(false);
+      toast("Call was declined");
+    };
+
+    // Monitor call state changes
+    const checkCallState = () => {
+      const state = activeCall.state.callingState;
+      console.log("Call state:", state);
+
+      // If call is joined but isInCall is false, update it
+      if (state === "joined" && !isInCall) {
+        console.log("Call joined - showing active screen");
+        setIsInCall(true);
+      }
+    };
+
+    // Check state periodically
+    const stateInterval = setInterval(checkCallState, 500);
+
+    // Listen for call events
     activeCall.on("call.ended", handleCallEnded);
     activeCall.on("call.session_ended", handleCallEnded);
+    activeCall.on("call.accepted", handleCallAccepted);
+    activeCall.on("call.rejected", handleCallRejected);
 
     return () => {
+      clearInterval(stateInterval);
       activeCall.off("call.ended", handleCallEnded);
       activeCall.off("call.session_ended", handleCallEnded);
+      activeCall.off("call.accepted", handleCallAccepted);
+      activeCall.off("call.rejected", handleCallRejected);
     };
-  }, [activeCall]);
+  }, [activeCall, isInCall]);
 
   // Start a call (outgoing)
   const startCall = useCallback(
