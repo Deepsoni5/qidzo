@@ -12,7 +12,6 @@ import {
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 import { Phone, Mic, MicOff, Video, VideoOff } from "lucide-react";
 import { toast } from "sonner";
-import console from "console";
 
 interface ActiveCallScreenProps {
   call: Call;
