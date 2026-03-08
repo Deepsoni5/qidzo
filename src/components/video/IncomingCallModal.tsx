@@ -17,7 +17,9 @@ export default function IncomingCallModal({
 }: IncomingCallModalProps) {
   const [callerName, setCallerName] = useState("Someone");
   const [callerAvatar, setCallerAvatar] = useState<string | null>(null);
-  const isVideoCall = call.type === "default";
+
+  // Check if it's an audio-only call
+  const isAudioOnly = call.state.custom?.isAudioOnly === true;
 
   useEffect(() => {
     // Get caller info
@@ -69,15 +71,15 @@ export default function IncomingCallModal({
           {callerName}
         </h2>
         <p className="text-white/90 font-bold text-sm mb-8 flex items-center justify-center gap-2">
-          {isVideoCall ? (
-            <>
-              <Video className="w-4 h-4" />
-              Incoming Video Call
-            </>
-          ) : (
+          {isAudioOnly ? (
             <>
               <Phone className="w-4 h-4" />
               Incoming Audio Call
+            </>
+          ) : (
+            <>
+              <Video className="w-4 h-4" />
+              Incoming Video Call
             </>
           )}
         </p>

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Call,
   useConnectedUser,
@@ -25,6 +25,27 @@ export function useCallManager() {
         call.state.callingState === "ringing" &&
         call.state.createdBy?.id !== connectedUser?.id,
     ) || null;
+
+  // Listen for call end events
+  useEffect(() => {
+    if (!activeCall) return;
+
+    const handleCallEnded = () => {
+      console.log("Call ended event received");
+      setActiveCall(null);
+      setIsInCall(false);
+      toast("Call ended");
+    };
+
+    // Listen for call end events
+    activeCall.on("call.ended", handleCallEnded);
+    activeCall.on("call.session_ended", handleCallEnded);
+
+    return () => {
+      activeCall.off("call.ended", handleCallEnded);
+      activeCall.off("call.session_ended", handleCallEnded);
+    };
+  }, [activeCall]);
 
   // Start a call (outgoing)
   const startCall = useCallback(
