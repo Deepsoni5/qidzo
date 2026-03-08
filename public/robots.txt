@@ -5,13 +5,15 @@ User-agent: *
 
 # Allow public pages
 Allow: /
-Allow: /about
-Allow: /features
-Allow: /pricing
 Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /refund
+Allow: /playzone
 
-# Allow school public pages
-Allow: /school/*/public
+# Allow schools listing and individual school pages
+Allow: /schools
+Allow: /schools/*/
 
 # Allow child public profiles (for discovery)
 Allow: /child/*/
@@ -21,23 +23,31 @@ Disallow: /api/
 Disallow: /messages
 Disallow: /parent/
 Disallow: /admin/
+Disallow: /admin-login
 Disallow: /sign-in
 Disallow: /sign-up
 Disallow: /login
+Disallow: /sso-callback
 
 # Block sensitive child data
 Disallow: /child/*/edit
 Disallow: /child/*/settings
 
 # Block school private areas
-Disallow: /school/*/dashboard
-Disallow: /school/*/analytics
-Disallow: /school/*/settings
+Disallow: /school/dashboard
+Disallow: /school/analytics
+Disallow: /school/settings
+Disallow: /school/sign-in
+Disallow: /school/sign-up
+Disallow: /school/admissions
+Disallow: /school/exams
+Disallow: /school/gallery
+Disallow: /school/inquiries
+Disallow: /school/posts
+Disallow: /school/profile
 
 # Block exam and study materials (premium content)
 Disallow: /study/
-Disallow: /exams/
-Disallow: /games/
 
 # Block internal routes
 Disallow: /_next/
