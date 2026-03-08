@@ -69,8 +69,11 @@ export function useCallManager() {
           },
         });
 
-        // For audio-only calls, disable camera immediately
-        if (!isVideo) {
+        // For video calls, enable camera explicitly
+        if (isVideo) {
+          await call.camera.enable();
+        } else {
+          // For audio-only calls, disable camera
           await call.camera.disable();
         }
 
@@ -99,6 +102,9 @@ export function useCallManager() {
 
       if (isAudioOnly) {
         await incomingCall.camera.disable();
+      } else {
+        // For video calls, enable camera
+        await incomingCall.camera.enable();
       }
 
       await incomingCall.join();

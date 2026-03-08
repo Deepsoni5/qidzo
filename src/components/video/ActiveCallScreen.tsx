@@ -92,9 +92,19 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
     <div className="fixed inset-0 z-9999 bg-black">
       {/* Video Layout */}
       <div className="relative w-full h-full">
-        {/* Remote Participant (Full Screen) */}
+        {/* Remote Participant (Full Screen) - Always render for audio */}
         {otherParticipant && !isAudioOnly && (
           <div className="absolute inset-0">
+            <ParticipantView
+              participant={otherParticipant}
+              ParticipantViewUI={null}
+            />
+          </div>
+        )}
+
+        {/* Hidden audio participant for audio-only calls */}
+        {otherParticipant && isAudioOnly && (
+          <div className="absolute inset-0 opacity-0 pointer-events-none">
             <ParticipantView
               participant={otherParticipant}
               ParticipantViewUI={null}
@@ -115,7 +125,9 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
                 {otherParticipant?.name || "Friend"}
               </p>
               <p className="text-white/70 text-sm font-medium">
-                Audio Call • {formatDuration(callDuration)}
+                {callingState === CallingState.JOINED
+                  ? `Audio Call • ${formatDuration(callDuration)}`
+                  : "Connecting..."}
               </p>
             </div>
           </div>
@@ -145,7 +157,9 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
                   {otherParticipant?.name || "Friend"}
                 </p>
                 <p className="text-white/70 text-xs font-medium">
-                  {formatDuration(callDuration)}
+                  {callingState === CallingState.JOINED
+                    ? formatDuration(callDuration)
+                    : "Connecting..."}
                 </p>
               </div>
             </div>
