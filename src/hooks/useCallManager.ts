@@ -26,7 +26,7 @@ export function useCallManager() {
         call.state.createdBy?.id !== connectedUser?.id,
     ) || null;
 
-  // Listen for call end events and state changes
+  // Listen for call end events
   useEffect(() => {
     if (!activeCall) return;
 
@@ -37,33 +37,15 @@ export function useCallManager() {
       toast("Call ended");
     };
 
-    const handleCallAccepted = () => {
-      console.log("Call accepted - joining now");
-      // When the other person accepts, join the call
-      if (!isInCall) {
-        activeCall
-          .join()
-          .then(() => {
-            setIsInCall(true);
-            toast.success("Call connected");
-          })
-          .catch((error) => {
-            console.error("Error joining after accept:", error);
-          });
-      }
-    };
-
     // Listen for call end events
     activeCall.on("call.ended", handleCallEnded);
     activeCall.on("call.session_ended", handleCallEnded);
-    activeCall.on("call.accepted", handleCallAccepted);
 
     return () => {
       activeCall.off("call.ended", handleCallEnded);
       activeCall.off("call.session_ended", handleCallEnded);
-      activeCall.off("call.accepted", handleCallAccepted);
     };
-  }, [activeCall, isInCall]);
+  }, [activeCall]);
 
   // Start a call (outgoing)
   const startCall = useCallback(
@@ -103,12 +85,12 @@ export function useCallManager() {
           await call.camera.disable();
         }
 
-        // DON'T join yet - wait for the other person to accept
-        // The call will auto-join when they accept
+        // Caller must join for ringing to work
+        await call.join();
         setActiveCall(call);
-        setIsInCall(false); // Not in call yet, just ringing
+        setIsInCall(true);
 
-        toast.success(isVideo ? "Calling..." : "Calling...");
+        toast.success("Calling...");
         return call;
       } catch (error) {
         console.error("Error starting call:", error);

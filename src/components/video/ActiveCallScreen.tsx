@@ -11,6 +11,8 @@ import {
 } from "@stream-io/video-react-sdk";
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 import { Phone, Mic, MicOff, Video, VideoOff } from "lucide-react";
+import { toast } from "sonner";
+import console from "console";
 
 interface ActiveCallScreenProps {
   call: Call;
@@ -74,6 +76,9 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
       await call?.camera.toggle();
     } catch (error) {
       console.error("Error toggling video:", error);
+      toast.error("Failed to turn on camera", {
+        description: "Your camera may be in use by another app",
+      });
     }
   };
 
@@ -114,7 +119,7 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
 
         {/* Audio-only call - show avatar */}
         {isAudioOnly && (
-          <div className="absolute inset-0 bg-linear-to-br from-brand-purple to-hot-pink flex items-center justify-center">
+          <div className="absolute inset-0 bg-brand-purple flex items-center justify-center">
             <div className="text-center">
               <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm border-4 border-white/30 flex items-center justify-center mx-auto mb-4">
                 <span className="text-white font-black text-4xl">
