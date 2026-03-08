@@ -23,7 +23,8 @@ export function useCallManager() {
     calls.find(
       (call) =>
         call.state.callingState === "ringing" &&
-        call.state.createdBy?.id !== connectedUser?.id,
+        call.state.createdBy?.id !== connectedUser?.id &&
+        call.id !== activeCall?.id, // Don't show incoming modal for active call
     ) || null;
 
   // Listen for call end events and state changes

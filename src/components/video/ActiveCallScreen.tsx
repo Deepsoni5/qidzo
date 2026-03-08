@@ -42,6 +42,33 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
   // Check if this is an audio-only call
   const isAudioOnly = call?.state.custom?.isAudioOnly === true;
 
+  // Debug logging for audio
+  useEffect(() => {
+    console.log("=== CALL DEBUG INFO ===");
+    console.log("Calling State:", callingState);
+    console.log("Is Audio Only:", isAudioOnly);
+    console.log("Participants:", participants.length);
+    console.log("Other Participant:", otherParticipant?.userId);
+    console.log(
+      "Other Participant Audio Stream:",
+      otherParticipant?.audioStream,
+    );
+    console.log(
+      "Other Participant Published Tracks:",
+      otherParticipant?.publishedTracks,
+    );
+    console.log("Local Participant:", localParticipant?.userId);
+    console.log("Local Mic Muted:", isMicMuted);
+    console.log("======================");
+  }, [
+    callingState,
+    isAudioOnly,
+    participants,
+    otherParticipant,
+    localParticipant,
+    isMicMuted,
+  ]);
+
   // Call duration timer - only start when JOINED
   useEffect(() => {
     if (callingState !== CallingState.JOINED) {
@@ -107,14 +134,26 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
         )}
 
         {/* Hidden audio participant for audio-only calls */}
-        {otherParticipant && isAudioOnly && (
-          <div className="absolute inset-0 opacity-0 pointer-events-none">
-            <ParticipantView
-              participant={otherParticipant}
-              ParticipantViewUI={null}
-            />
-          </div>
-        )}
+        {otherParticipant &&
+          isAudioOnly &&
+          (() => {
+            console.log(
+              "Rendering hidden audio ParticipantView for:",
+              otherParticipant.userId,
+            );
+            console.log(
+              "Audio stream available:",
+              !!otherParticipant.audioStream,
+            );
+            return (
+              <div className="absolute inset-0 opacity-0 pointer-events-none">
+                <ParticipantView
+                  participant={otherParticipant}
+                  ParticipantViewUI={null}
+                />
+              </div>
+            );
+          })()}
 
         {/* Audio-only call - show avatar */}
         {isAudioOnly && (
