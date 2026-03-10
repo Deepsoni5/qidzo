@@ -54,7 +54,7 @@ Disallow: /_next/
 Disallow: /static/
 
 # Sitemap location
-Sitemap: https://qidzo.com/sitemap.xml
+Sitemap: https://www.qidzo.com/sitemap.xml
 
 # Crawl delay (be nice to servers)
 Crawl-delay: 1

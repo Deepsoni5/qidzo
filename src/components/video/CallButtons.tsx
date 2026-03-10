@@ -12,20 +12,24 @@ interface CallButtonsProps {
 export default function CallButtons({ otherUserId }: CallButtonsProps) {
   const [canCall, setCanCall] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorReason, setErrorReason] = useState<string>("");
 
   useEffect(() => {
     async function checkPermission() {
-      const allowed = await canMakeVideoCalls();
-      setCanCall(allowed);
+      const result = await canMakeVideoCalls(otherUserId);
+      setCanCall(result.canCall);
+      setErrorReason(result.reason || "");
       setIsLoading(false);
     }
     checkPermission();
-  }, []);
+  }, [otherUserId]);
 
   const handleVideoCall = () => {
     if (!canCall) {
-      toast.error("Upgrade to PRO or ELITE plan to make video calls", {
-        description: "Ask your parent to upgrade your plan",
+      toast.error(errorReason || "Video calls not available", {
+        description: errorReason.includes("plan")
+          ? "Ask your parent to upgrade your plan"
+          : undefined,
       });
       return;
     }
@@ -56,8 +60,10 @@ export default function CallButtons({ otherUserId }: CallButtonsProps) {
 
   const handleAudioCall = () => {
     if (!canCall) {
-      toast.error("Upgrade to PRO or ELITE plan to make audio calls", {
-        description: "Ask your parent to upgrade your plan",
+      toast.error(errorReason || "Audio calls not available", {
+        description: errorReason.includes("plan")
+          ? "Ask your parent to upgrade your plan"
+          : undefined,
       });
       return;
     }
