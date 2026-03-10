@@ -298,3 +298,50 @@
     border-radius: 9999px;
   }
 }
+
+/* Video Call Styling - Natural full screen video without cropping */
+.str-video__participant-view {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #000 !important;
+}
+
+.str-video__participant-view video {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  border-radius: 0 !important;
+}
+
+.str-video__participant-details {
+  display: none !important;
+}
+
+.str-video__participant-view .str-video__video-placeholder {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Ensure video containers take full space */
+.str-video__call-controls {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 10 !important;
+}
+
+/* Hide default Stream UI elements we don't want */
+.str-video__call-stats,
+.str-video__participant-name,
+.str-video__connection-quality-indicator {
+  display: none !important;
+}

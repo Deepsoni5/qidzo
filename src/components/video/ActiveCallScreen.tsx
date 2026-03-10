@@ -125,7 +125,7 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
       <div className="relative w-full h-full">
         {/* Remote Participant (Full Screen) - Always render for audio */}
         {otherParticipant && !isAudioOnly && (
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 w-full h-full">
             <ParticipantView
               participant={otherParticipant}
               ParticipantViewUI={null}
@@ -178,7 +178,7 @@ function CallUI({ onLeave }: { onLeave: () => void }) {
 
         {/* Local Participant (Picture-in-Picture) - only for video calls */}
         {localParticipant && !isAudioOnly && !isCameraMuted && (
-          <div className="absolute top-4 right-4 w-32 h-40 sm:w-40 sm:h-52 rounded-2xl overflow-hidden border-2 border-white/30 shadow-2xl">
+          <div className="absolute top-4 right-4 w-20 h-28 sm:w-24 sm:h-32 rounded-lg overflow-hidden border-2 border-white/60 shadow-xl bg-black z-10">
             <ParticipantView
               participant={localParticipant}
               ParticipantViewUI={null}
