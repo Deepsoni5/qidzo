@@ -37,6 +37,11 @@ export default function LeftSidebar() {
     init();
   }, [user]); // Re-run if Clerk user changes
 
+  // Prefetch pages on hover
+  const handlePrefetch = (path: string) => {
+    router.prefetch(path);
+  };
+
   const handleCreatePost = async () => {
     // Refresh role check to be sure
     const currentRole = await getCurrentUserRole();
@@ -99,7 +104,8 @@ export default function LeftSidebar() {
 
     if (!currentRole.isChild) {
       toast("Kid Account Required! 🎓", {
-        description: "Please log in with a children account to view the Study Hub. ✨",
+        description:
+          "Please log in with a children account to view the Study Hub. ✨",
         duration: 5000,
         style: {
           background: "#F0F9FF", // sky-50
@@ -238,6 +244,18 @@ export default function LeftSidebar() {
                       <Component
                         href={item.href as string}
                         onClick={item.action}
+                        onMouseEnter={() => {
+                          // Prefetch on hover for better navigation speed
+                          if (item.href) {
+                            handlePrefetch(item.href);
+                          } else if (item.label === "Study Hub") {
+                            handlePrefetch("/study");
+                          } else if (item.label === "Play Zone") {
+                            handlePrefetch("/playzone");
+                          } else if (item.label === "Messages") {
+                            handlePrefetch("/messages");
+                          }
+                        }}
                         key={i}
                         className={`w-full group flex items-center gap-3 p-2.5 rounded-2xl font-nunito font-bold cursor-pointer transition-all duration-300 text-left border-2 border-transparent hover:border-gray-100 hover:bg-white hover:shadow-lg hover:shadow-gray-200/40 ${item.active ? "bg-white shadow-lg shadow-gray-200/40 border-gray-100 scale-105" : "hover:scale-[1.02]"}`}
                       >

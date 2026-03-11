@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs"; // Parent check
 import CommentsModal from "@/components/comments/CommentsModal";
 import { FollowButton } from "@/components/FollowButton";
+import { optimizeCloudinaryImage, ImagePresets } from "@/lib/imageOptimizer";
 
 interface FeedPost {
   id: string;
@@ -110,11 +111,19 @@ export default function PostCard({
 
   // Use a deterministic color if category color is missing or invalid
   const categoryColor = post.category?.color || "#8B5CF6";
+
+  // Optimize avatar URLs
   const avatarUrl = isSchoolPost
-    ? post.school?.logo_url ||
-      `https://api.dicebear.com/7.x/initials/svg?seed=${post.school?.name || "School"}`
-    : post.child?.avatar ||
-      `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.child?.username || "kid"}`;
+    ? optimizeCloudinaryImage(
+        post.school?.logo_url ||
+          `https://api.dicebear.com/7.x/initials/svg?seed=${post.school?.name || "School"}`,
+        ImagePresets.LOGO,
+      )
+    : optimizeCloudinaryImage(
+        post.child?.avatar ||
+          `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.child?.username || "kid"}`,
+        ImagePresets.AVATAR,
+      );
 
   const [likesCount, setLikesCount] = useState(post.likes_count);
   const [commentsCount, setCommentsCount] = useState(post.comments_count);
@@ -522,7 +531,10 @@ export default function PostCard({
               {post.media_type === "IMAGE" ? (
                 <div className="relative w-full h-full">
                   <Image
-                    src={post.media_url}
+                    src={optimizeCloudinaryImage(
+                      post.media_url,
+                      ImagePresets.FEED_POST,
+                    )}
                     alt="Post content"
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -534,10 +546,16 @@ export default function PostCard({
                 </div>
               ) : (
                 <video
-                  src={post.media_url}
+                  src={optimizeCloudinaryImage(
+                    post.media_url,
+                    ImagePresets.FEED_POST,
+                  )}
                   controls
                   className="w-full h-full object-cover bg-black"
-                  poster={post.media_thumbnail || undefined}
+                  poster={optimizeCloudinaryImage(
+                    post.media_thumbnail,
+                    ImagePresets.FEED_THUMBNAIL,
+                  )}
                   onContextMenu={(e) => e.preventDefault()}
                   playsInline
                   controlsList="nodownload noplaybackrate noremoteplayback"

@@ -164,35 +164,39 @@ export async function getSchoolDashboardData() {
         ).toISOString();
 
         // Preload likes/comments/inquiries/follows for last 7 days in parallel
-        const [recentFollowers, recentLikes, recentComments, recentInquiriesForActivity] =
-          await Promise.all([
-            supabase
-              .from("follows")
-              .select("created_at")
-              .eq("following_school_id", school.school_id)
-              .gte("created_at", sevenDaysStartISO),
-            supabase
-              .from("likes")
-              .select("post_id, created_at")
-              .in(
-                "post_id",
-                schoolPosts.map((p: any) => p.id),
-              )
-              .gte("created_at", sevenDaysStartISO),
-            supabase
-              .from("comments")
-              .select("post_id, created_at")
-              .in(
-                "post_id",
-                schoolPosts.map((p: any) => p.id),
-              )
-              .gte("created_at", sevenDaysStartISO),
-            supabase
-              .from("school_inquiries")
-              .select("created_at")
-              .eq("school_id", school.id)
-              .gte("created_at", sevenDaysStartISO),
-          ]);
+        const [
+          recentFollowers,
+          recentLikes,
+          recentComments,
+          recentInquiriesForActivity,
+        ] = await Promise.all([
+          supabase
+            .from("follows")
+            .select("created_at")
+            .eq("following_school_id", school.school_id)
+            .gte("created_at", sevenDaysStartISO),
+          supabase
+            .from("likes")
+            .select("post_id, created_at")
+            .in(
+              "post_id",
+              schoolPosts.map((p: any) => p.id),
+            )
+            .gte("created_at", sevenDaysStartISO),
+          supabase
+            .from("comments")
+            .select("post_id, created_at")
+            .in(
+              "post_id",
+              schoolPosts.map((p: any) => p.id),
+            )
+            .gte("created_at", sevenDaysStartISO),
+          supabase
+            .from("school_inquiries")
+            .select("created_at")
+            .eq("school_id", school.id)
+            .gte("created_at", sevenDaysStartISO),
+        ]);
 
         const followersArr = recentFollowers?.data || [];
         const likesArr = recentLikes?.data || [];
@@ -511,45 +515,59 @@ export interface SchoolProfile extends School {
 export async function getSchoolBySlug(
   slug: string,
 ): Promise<SchoolProfile | null> {
-  try {
-    const { data, error } = await supabase
-      .from("schools")
-      .select("*")
-      .eq("slug", slug)
-      .eq("is_active", true)
-      .single();
+  const cacheKey = `school:profile:${slug}`;
 
-    if (error || !data) return null;
+  return getOrSetCache<SchoolProfile | null>(
+    cacheKey,
+    async () => {
+      try {
+        const { data, error } = await supabase
+          .from("schools")
+          .select("*")
+          .eq("slug", slug)
+          .eq("is_active", true)
+          .single();
 
-    // Fetch Followers Count
-    const { count: followersCount } = await supabase
-      .from("follows")
-      .select("*", { count: "exact", head: true })
-      .eq("following_school_id", data.id);
+        if (error || !data) return null;
 
-    // Fetch Following Count
-    const { count: followingCount } = await supabase
-      .from("follows")
-      .select("*", { count: "exact", head: true })
-      .eq("follower_school_id", data.id);
+        // Fetch followers and following counts in parallel (much faster)
+        const [{ count: followersCount }, { count: followingCount }] =
+          await Promise.all([
+            supabase
+              .from("follows")
+              .select("*", { count: "exact", head: true })
+              .eq("following_school_id", data.id),
+            supabase
+              .from("follows")
+              .select("*", { count: "exact", head: true })
+              .eq("follower_school_id", data.id),
+          ]);
 
-    return {
-      ...data,
-      followers_count: followersCount || 0,
-      following_count: followingCount || 0,
-    } as SchoolProfile;
-  } catch (error) {
-    console.error("Error in getSchoolBySlug:", error);
-    return null;
-  }
+        return {
+          ...data,
+          followers_count: followersCount || 0,
+          following_count: followingCount || 0,
+        } as SchoolProfile;
+      } catch (error) {
+        console.error("Error in getSchoolBySlug:", error);
+        return null;
+      }
+    },
+    300, // 5 minutes cache
+  );
 }
 
 export async function getSchoolPosts(schoolId: string) {
-  try {
-    const { data, error } = await supabase
-      .from("posts")
-      .select(
-        `
+  const cacheKey = `school:posts:${schoolId}`;
+
+  return getOrSetCache(
+    cacheKey,
+    async () => {
+      try {
+        const { data, error } = await supabase
+          .from("posts")
+          .select(
+            `
         *,
         schools!posts_school_id_fkey (
           id,
@@ -565,51 +583,62 @@ export async function getSchoolPosts(schoolId: string) {
           icon
         )
       `,
-      )
-      .eq("school_id", schoolId)
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
+          )
+          .eq("school_id", schoolId)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching school posts:", error);
-      return [];
-    }
+        if (error) {
+          console.error("Error fetching school posts:", error);
+          return [];
+        }
 
-    // Map school data properly
-    return (data || []).map((post: any) => ({
-      ...post,
-      school: post.schools, // Rename schools to school for consistency
-      child: {
-        name: post.schools?.name,
-        username: post.schools?.slug,
-        avatar: post.schools?.logo_url,
-        // schools don't have these, but PostCard expects them or handles missing
-        age: 0,
-        level: 1,
-      },
-    }));
-  } catch (error) {
-    console.error("Error in getSchoolPosts:", error);
-    return [];
-  }
+        // Map school data properly
+        return (data || []).map((post: any) => ({
+          ...post,
+          school: post.schools, // Rename schools to school for consistency
+          child: {
+            name: post.schools?.name,
+            username: post.schools?.slug,
+            avatar: post.schools?.logo_url,
+            // schools don't have these, but PostCard expects them or handles missing
+            age: 0,
+            level: 1,
+          },
+        }));
+      } catch (error) {
+        console.error("Error in getSchoolPosts:", error);
+        return [];
+      }
+    },
+    60, // 1 minute cache
+  );
 }
 
 // ─── Public: get gallery for a school by school id ────────────────────────────
 export async function getSchoolGalleryBySchoolId(
   schoolId: string,
 ): Promise<GalleryItem[]> {
-  try {
-    const { data, error } = await supabase
-      .from("school_gallery")
-      .select("*")
-      .eq("school_id", schoolId)
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(20);
+  const cacheKey = `school:gallery:${schoolId}`;
 
-    if (error) return [];
-    return (data as GalleryItem[]) || [];
-  } catch {
-    return [];
-  }
+  return getOrSetCache(
+    cacheKey,
+    async () => {
+      try {
+        const { data, error } = await supabase
+          .from("school_gallery")
+          .select("*")
+          .eq("school_id", schoolId)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(20);
+
+        if (error) return [];
+        return (data as GalleryItem[]) || [];
+      } catch {
+        return [];
+      }
+    },
+    300, // 5 minutes cache
+  );
 }

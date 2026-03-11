@@ -287,8 +287,8 @@ export async function getFeedPosts(
       school: post.schools, // Rename schools to school
     })) as unknown as FeedPost[];
 
-    // 3. Cache the base result in Redis (expire in 60 seconds)
-    await redis.set(cacheKey, basePosts, { ex: 60 });
+    // 3. Cache the base result in Redis (expire in 5 minutes for better performance)
+    await redis.set(cacheKey, basePosts, { ex: 300 });
 
     // 4. Attach per-viewer flags before returning
     return attachViewerState(basePosts);

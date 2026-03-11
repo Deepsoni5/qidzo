@@ -29,6 +29,7 @@ export async function getChildProfile(username: string) {
   return getOrSetCache<ChildProfile | null>(
     cacheKey,
     async () => {
+      // Get child data first
       const { data, error } = await supabase
         .from("children")
         .select("*")
@@ -40,17 +41,18 @@ export async function getChildProfile(username: string) {
         return null;
       }
 
-      // Fetch Followers Count
-      const { count: followersCount, error: followersError } = await supabase
-        .from("follows")
-        .select("*", { count: "exact", head: true })
-        .eq("following_child_id", data.child_id);
-
-      // Fetch Following Count
-      const { count: followingCount, error: followingError } = await supabase
-        .from("follows")
-        .select("*", { count: "exact", head: true })
-        .eq("follower_child_id", data.child_id);
+      // Fetch followers and following counts in parallel (much faster than sequential)
+      const [{ count: followersCount }, { count: followingCount }] =
+        await Promise.all([
+          supabase
+            .from("follows")
+            .select("*", { count: "exact", head: true })
+            .eq("following_child_id", data.child_id),
+          supabase
+            .from("follows")
+            .select("*", { count: "exact", head: true })
+            .eq("follower_child_id", data.child_id),
+        ]);
 
       return {
         ...data,
@@ -58,7 +60,7 @@ export async function getChildProfile(username: string) {
         following_count: followingCount || 0,
       } as ChildProfile;
     },
-    300 // 5 minutes
+    300, // 5 minutes
   );
 }
 
@@ -77,7 +79,8 @@ export async function getChildPosts(childId: string) {
     async () => {
       const { data, error } = await supabase
         .from("posts")
-        .select(`
+        .select(
+          `
           *,
           child:children (
             name,
@@ -92,7 +95,8 @@ export async function getChildPosts(childId: string) {
             color,
             icon
           )
-        `)
+        `,
+        )
         .eq("child_id", childId)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
@@ -104,6 +108,6 @@ export async function getChildPosts(childId: string) {
 
       return data as unknown as FeedPost[];
     },
-    60 // 1 minute
+    60, // 1 minute
   );
 }

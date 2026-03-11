@@ -105,7 +105,8 @@
         "three": "^0.178.0",
         "three-globe": "^2.43.0",
         "vaul": "^1.1.2",
-        "zod": "^4.1.12"
+        "zod": "^4.1.12",
+        "zustand": "^5.0.11"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.3.1",
