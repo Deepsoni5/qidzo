@@ -198,7 +198,7 @@ export default function KidsLoginPage() {
                 <Link href="/school/sign-in" className="w-full">
                   <button className="w-full py-3 px-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 hover:text-brand-purple hover:border-brand-purple hover:bg-purple-50 font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
                     <School className="w-4 h-4" />
-                    School Login
+                    School/College Login
                   </button>
                 </Link>
               </div>
