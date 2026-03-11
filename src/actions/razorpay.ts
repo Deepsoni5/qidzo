@@ -6,7 +6,8 @@ import { supabase } from "@/lib/supabaseClient";
 
 export async function createSubscription(
   plan: "basic" | "pro" | "elite",
-  planType: "monthly" | "yearly"
+  planType: "monthly" | "yearly",
+  currency: "INR" | "USD" = "INR",
 ) {
   try {
     const user = await currentUser();
@@ -20,19 +21,33 @@ export async function createSubscription(
 
     if (parentError || !parent) throw new Error("Parent profile not found");
 
-    const planEnvMap: Record<string, string | undefined> = {
-      basic_monthly: process.env.RAZORPAY_BASIC_MONTHLY_PLAN_ID,
-      basic_yearly: process.env.RAZORPAY_BASIC_YEARLY_PLAN_ID,
-      pro_monthly: process.env.RAZORPAY_PRO_MONTHLY_PLAN_ID,
-      pro_yearly: process.env.RAZORPAY_PRO_YEARLY_PLAN_ID,
-      elite_monthly: process.env.RAZORPAY_ELITE_MONTHLY_PLAN_ID,
-      elite_yearly: process.env.RAZORPAY_ELITE_YEARLY_PLAN_ID,
-    };
+    // Select plan ID based on currency
+    const planEnvMap: Record<string, string | undefined> =
+      currency === "USD"
+        ? {
+            basic_monthly: process.env.RAZORPAY_BASIC_MONTHLY_USD_PLAN_ID,
+            basic_yearly: process.env.RAZORPAY_BASIC_YEARLY_USD_PLAN_ID,
+            pro_monthly: process.env.RAZORPAY_PRO_MONTHLY_USD_PLAN_ID,
+            pro_yearly: process.env.RAZORPAY_PRO_YEARLY_USD_PLAN_ID,
+            elite_monthly: process.env.RAZORPAY_ELITE_MONTHLY_USD_PLAN_ID,
+            elite_yearly: process.env.RAZORPAY_ELITE_YEARLY_USD_PLAN_ID,
+          }
+        : {
+            basic_monthly: process.env.RAZORPAY_BASIC_MONTHLY_PLAN_ID,
+            basic_yearly: process.env.RAZORPAY_BASIC_YEARLY_PLAN_ID,
+            pro_monthly: process.env.RAZORPAY_PRO_MONTHLY_PLAN_ID,
+            pro_yearly: process.env.RAZORPAY_PRO_YEARLY_PLAN_ID,
+            elite_monthly: process.env.RAZORPAY_ELITE_MONTHLY_PLAN_ID,
+            elite_yearly: process.env.RAZORPAY_ELITE_YEARLY_PLAN_ID,
+          };
 
     const planKey = `${plan}_${planType}`;
     const planId = planEnvMap[planKey];
 
-    if (!planId) throw new Error("Razorpay Plan ID not configured in environment variables");
+    if (!planId)
+      throw new Error(
+        `Razorpay Plan ID not configured for ${currency} ${planKey}`,
+      );
 
     const subscription = await razorpay.subscriptions.create({
       plan_id: planId,
@@ -44,6 +59,7 @@ export async function createSubscription(
         clerk_id: user.id,
         plan_type: planType,
         plan_name: plan.toUpperCase(),
+        currency: currency,
       },
     });
 
@@ -61,7 +77,7 @@ export async function createSubscription(
   }
 }
 
-export async function createOneTimeOrder() {
+export async function createOneTimeOrder(currency: "INR" | "USD" = "INR") {
   try {
     const user = await currentUser();
     if (!user) throw new Error("Unauthorized");
@@ -74,16 +90,20 @@ export async function createOneTimeOrder() {
 
     if (!parent) throw new Error("Parent profile not found");
 
-    const amount = parseInt(process.env.RAZORPAY_ADD_CHILD_PRICE || "99");
+    const amount =
+      currency === "USD"
+        ? parseInt(process.env.RAZORPAY_ADD_CHILD_PRICE_USD || "2")
+        : parseInt(process.env.RAZORPAY_ADD_CHILD_PRICE || "99");
 
     const order = await razorpay.orders.create({
       amount: amount * 100,
-      currency: "INR",
+      currency: currency,
       receipt: `receipt_add_child_${Date.now()}`,
       notes: {
         parent_id: parent.parent_id,
         clerk_id: user.id,
         type: "add_child_slot",
+        currency: currency,
       },
     });
 
@@ -167,8 +187,14 @@ export async function redeemCoupon(code: string) {
       return { success: false, error: "This code has expired" };
     }
 
-    if (coupon.max_global_uses !== null && coupon.used_count >= coupon.max_global_uses) {
-      return { success: false, error: "All uses for this code have been claimed" };
+    if (
+      coupon.max_global_uses !== null &&
+      coupon.used_count >= coupon.max_global_uses
+    ) {
+      return {
+        success: false,
+        error: "All uses for this code have been claimed",
+      };
     }
 
     const targetPlan = coupon.target_plan as string | null;
@@ -218,13 +244,19 @@ export async function redeemCoupon(code: string) {
     }
 
     if (!targetPlan) {
-      return { success: false, error: "This magic code is not linked to a plan" };
+      return {
+        success: false,
+        error: "This magic code is not linked to a plan",
+      };
     }
 
     const planUpper = targetPlan.toUpperCase();
 
     if (!["BASIC", "PRO", "ELITE"].includes(planUpper)) {
-      return { success: false, error: "This magic code cannot be redeemed right now" };
+      return {
+        success: false,
+        error: "This magic code cannot be redeemed right now",
+      };
     }
 
     const startDate = new Date();
@@ -243,7 +275,8 @@ export async function redeemCoupon(code: string) {
     };
 
     if (planUpper === "BASIC") {
-      const basicMonthlyPlanId = process.env.RAZORPAY_BASIC_MONTHLY_PLAN_ID || null;
+      const basicMonthlyPlanId =
+        process.env.RAZORPAY_BASIC_MONTHLY_PLAN_ID || null;
       parentUpdate.razorpay_plan_id = basicMonthlyPlanId;
     }
 
@@ -281,7 +314,10 @@ export async function redeemCoupon(code: string) {
     };
   } catch (error: any) {
     console.error("Error redeeming coupon:", error);
-    return { success: false, error: "Something went wrong while redeeming this code" };
+    return {
+      success: false,
+      error: "Something went wrong while redeeming this code",
+    };
   }
 }
 
@@ -394,4 +430,3 @@ export async function checkExamPaymentStatus(examId: string) {
     return false;
   }
 }
-
