@@ -466,6 +466,7 @@ export default function MessagesPage() {
           activeChannel={activeChannel}
           setActiveChannel={setActiveChannel}
           currentUserId={user.id}
+          onMobileClick={() => setShowMobileList(false)}
         />
       );
     }

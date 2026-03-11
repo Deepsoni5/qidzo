@@ -8,6 +8,7 @@ interface GroupChannelPreviewProps {
   activeChannel: any;
   setActiveChannel: (channel: any) => void;
   currentUserId: string;
+  onMobileClick?: () => void;
 }
 
 export default function GroupChannelPreview({
@@ -15,7 +16,9 @@ export default function GroupChannelPreview({
   activeChannel,
   setActiveChannel,
   currentUserId,
+  onMobileClick,
 }: GroupChannelPreviewProps) {
+  const { client } = useChatContext();
   const isActive = channel?.id === activeChannel?.id;
   const isGroup = channel?.type === "team";
 
@@ -58,23 +61,28 @@ export default function GroupChannelPreview({
 
   const handleClick = async () => {
     if (!channel) return;
-    await channel.watch();
-    setActiveChannel(channel);
+
+    // Handle mobile click - same as 1-on-1 chat
+    if (typeof window !== "undefined" && window.innerWidth < 640 && client) {
+      const chan = client.channel(channel.type || "team", channel.id);
+      await chan.watch();
+      setActiveChannel(chan);
+      if (onMobileClick) onMobileClick();
+    } else {
+      await channel.watch();
+      setActiveChannel(channel);
+    }
   };
 
   return (
     <button
       type="button"
       onClick={handleClick}
-      className={`w-full px-3 py-2.5 mb-1.5 rounded-2xl transition-all flex items-center gap-3 text-left cursor-pointer ${
-        isActive
-          ? "bg-brand-purple/10 border-2 border-brand-purple/20"
-          : "bg-transparent hover:bg-slate-50 border-2 border-transparent"
-      }`}
+      className="w-full px-3 py-2.5 mb-1.5 rounded-2xl transition-all flex items-center gap-3 text-left hover:bg-slate-50 bg-transparent cursor-pointer"
     >
       <div className="relative">
         {/* Group Avatar */}
-        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-brand-purple to-hot-pink overflow-hidden flex items-center justify-center text-xs font-extrabold text-white shadow-lg">
+        <div className="w-11 h-11 rounded-full bg-brand-purple/10 overflow-hidden flex items-center justify-center text-xs font-extrabold text-brand-purple shadow-lg">
           {channelImage ? (
             <img
               src={channelImage}
