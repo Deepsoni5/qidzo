@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { StreamChat } from "stream-chat";
-import { ChevronLeft, MoreVertical, MessageCircle } from "lucide-react";
+import { ChevronLeft, MoreVertical, MessageCircle, Users } from "lucide-react";
 import {
   Chat,
   Channel,
@@ -20,6 +20,8 @@ import {
 import "stream-chat-react/dist/css/v2/index.css";
 import { toast } from "sonner";
 import CallButtons from "@/components/video/CallButtons";
+import CreateGroupButton from "@/components/chat/CreateGroupButton";
+import GroupChannelPreview from "@/components/chat/GroupChannelPreview";
 
 let chatClient: StreamChat | null = null;
 
@@ -194,7 +196,7 @@ export default function MessagesPage() {
   }
 
   const filters = {
-    type: "messaging",
+    type: { $in: ["messaging", "team"] }, // Include both 1-on-1 and group chats
     members: { $in: [user.id] },
   };
 
@@ -228,6 +230,66 @@ export default function MessagesPage() {
 
   function ConversationHeader() {
     const { channel } = useChannelStateContext();
+
+    // Check if it's a group channel
+    const isGroup = channel?.type === "team";
+
+    if (isGroup) {
+      // Group chat header
+      const groupName =
+        ((channel?.data as any)?.name as string) || "Group Chat";
+      const groupImage = ((channel?.data as any)?.image as string) || undefined;
+      const memberCount = Object.keys(channel?.state?.members || {}).length;
+
+      return (
+        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-3">
+            <button
+              className="sm:hidden inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 active:scale-95"
+              onClick={() => router.back()}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-brand-purple/10 overflow-hidden flex items-center justify-center text-xs font-extrabold text-brand-purple">
+                {groupImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={groupImage}
+                    alt={groupName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Users className="w-5 h-5" />
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-extrabold text-gray-900 leading-tight">
+                  {groupName}
+                </p>
+                <p className="text-[11px] font-bold text-brand-purple uppercase tracking-[0.18em]">
+                  {memberCount} members
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              className="sm:hidden inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-900 text-white text-[11px] font-bold uppercase tracking-[0.14em] active:scale-95"
+              onClick={() => setShowMobileList(true)}
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Chats
+            </button>
+            <button className="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-500 active:scale-95">
+              <MoreVertical className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // 1-on-1 chat header
     const members = Object.values(channel?.state.members || {});
     const otherMember =
       members.find((m: any) => m.user && m.user.id !== user?.id) || members[0];
@@ -392,6 +454,23 @@ export default function MessagesPage() {
   function ChannelPreview(props: any) {
     const { channel, activeChannel } = props;
     const { client, setActiveChannel } = useChatContext();
+
+    // Check if it's a group channel
+    const isGroup = channel?.type === "team";
+
+    // Use custom preview for groups
+    if (isGroup && user) {
+      return (
+        <GroupChannelPreview
+          channel={channel}
+          activeChannel={activeChannel}
+          setActiveChannel={setActiveChannel}
+          currentUserId={user.id}
+        />
+      );
+    }
+
+    // Regular 1-on-1 channel preview
     const isActive = channel?.id === activeChannel?.id;
     const members = Object.values(channel?.state?.members || {}) as any[];
     const otherMember =
@@ -531,12 +610,15 @@ export default function MessagesPage() {
                       Pick a chat to open
                     </p>
                   </div>
-                  <button
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 active:scale-95"
-                    onClick={() => setShowMobileList(false)}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {user && <CreateGroupButton currentUserId={user.id} />}
+                    <button
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 active:scale-95"
+                      onClick={() => setShowMobileList(false)}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <ChannelList
@@ -556,12 +638,17 @@ export default function MessagesPage() {
           <div className="h-full mt-2 mb-3 sm:mt-0 sm:mb-0 rounded-[32px] bg-gradient-to-br from-white via-indigo-50/70 to-white shadow-[0_22px_70px_rgba(15,23,42,0.20)] border border-white/80 overflow-hidden flex backdrop-blur-xl">
             <div className="w-0 sm:w-64 md:w-72 border-r border-gray-100 hidden sm:flex flex-col bg-gradient-to-b from-white via-sky-50/40 to-white">
               <div className="px-4 py-4 border-b border-gray-100">
-                <p className="text-[11px] font-black text-hot-pink uppercase tracking-[0.18em] mb-0.5">
-                  Messages
-                </p>
-                <p className="text-xs font-bold text-gray-500">
-                  Chat with your Qidzo friends
-                </p>
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-[11px] font-black text-hot-pink uppercase tracking-[0.18em] mb-0.5">
+                      Messages
+                    </p>
+                    <p className="text-xs font-bold text-gray-500">
+                      Chat with your Qidzo friends
+                    </p>
+                  </div>
+                  {user && <CreateGroupButton currentUserId={user.id} />}
+                </div>
               </div>
               <div className="flex-1 overflow-hidden">
                 <ChannelList
