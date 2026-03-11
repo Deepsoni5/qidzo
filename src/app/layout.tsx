@@ -17,6 +17,7 @@ import { Viewport } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import ScreenTimeTracker from "@/components/utils/ScreenTimeTracker";
 import ScreenTimeGuard from "@/components/utils/ScreenTimeGuard";
+import GlobalVideoCallProvider from "@/components/video/GlobalVideoCallProvider";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -174,8 +175,10 @@ export default function RootLayout({
             data-custom-data='{"appName": "YourApp", "version": "1.0.0", "greeting": "hi"}'
           />
           <ScreenTimeGuard>
-            {children}
-            <ScreenTimeTracker />
+            <GlobalVideoCallProvider>
+              {children}
+              <ScreenTimeTracker />
+            </GlobalVideoCallProvider>
           </ScreenTimeGuard>
           <VisualEditsMessenger />
           <Toaster richColors closeButton position="top-right" />

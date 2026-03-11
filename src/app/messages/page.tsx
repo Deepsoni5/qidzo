@@ -19,7 +19,6 @@ import {
 } from "stream-chat-react";
 import "stream-chat-react/dist/css/v2/index.css";
 import { toast } from "sonner";
-import VideoCallProvider from "@/components/video/VideoCallProvider";
 import CallButtons from "@/components/video/CallButtons";
 
 let chatClient: StreamChat | null = null;
@@ -516,54 +515,28 @@ export default function MessagesPage() {
   }
 
   return (
-    <VideoCallProvider>
-      <div className="h-[100dvh] bg-gradient-to-b from-gray-50 via-sky-50/60 to-gray-50 pt-16 pb-8 sm:pt-20 sm:pb-24 lg:pb-0 overflow-hidden">
-        <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 h-full">
-          <Chat client={client} theme="str-chat__theme-light qidzo-chat-theme">
-            <InitialChannelSetter channelId={initialChannelId} />
-            {showMobileList && (
-              <div className="fixed inset-0 z-40 sm:hidden bg-black/40">
-                <div className="absolute inset-x-0 bottom-0 top-16 bg-white shadow-2xl flex flex-col">
-                  <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                    <div>
-                      <p className="text-[11px] font-black text-hot-pink uppercase tracking-[0.18em] mb-0.5">
-                        Messages
-                      </p>
-                      <p className="text-xs font-bold text-gray-500">
-                        Pick a chat to open
-                      </p>
-                    </div>
-                    <button
-                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 active:scale-95"
-                      onClick={() => setShowMobileList(false)}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
+    <div className="h-[100dvh] bg-gradient-to-b from-gray-50 via-sky-50/60 to-gray-50 pt-16 pb-8 sm:pt-20 sm:pb-24 lg:pb-0 overflow-hidden">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 h-full">
+        <Chat client={client} theme="str-chat__theme-light qidzo-chat-theme">
+          <InitialChannelSetter channelId={initialChannelId} />
+          {showMobileList && (
+            <div className="fixed inset-0 z-40 sm:hidden bg-black/40">
+              <div className="absolute inset-x-0 bottom-0 top-16 bg-white shadow-2xl flex flex-col">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-black text-hot-pink uppercase tracking-[0.18em] mb-0.5">
+                      Messages
+                    </p>
+                    <p className="text-xs font-bold text-gray-500">
+                      Pick a chat to open
+                    </p>
                   </div>
-                  <div className="flex-1 overflow-hidden">
-                    <ChannelList
-                      filters={filters}
-                      sort={sort}
-                      options={{}}
-                      showChannelSearch
-                      Preview={ChannelPreview}
-                      Paginator={(props) => (
-                        <InfiniteScroll {...props} threshold={150} />
-                      )}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className="h-full mt-2 mb-3 sm:mt-0 sm:mb-0 rounded-[32px] bg-gradient-to-br from-white via-indigo-50/70 to-white shadow-[0_22px_70px_rgba(15,23,42,0.20)] border border-white/80 overflow-hidden flex backdrop-blur-xl">
-              <div className="w-0 sm:w-64 md:w-72 border-r border-gray-100 hidden sm:flex flex-col bg-gradient-to-b from-white via-sky-50/40 to-white">
-                <div className="px-4 py-4 border-b border-gray-100">
-                  <p className="text-[11px] font-black text-hot-pink uppercase tracking-[0.18em] mb-0.5">
-                    Messages
-                  </p>
-                  <p className="text-xs font-bold text-gray-500">
-                    Chat with your Qidzo friends
-                  </p>
+                  <button
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 active:scale-95"
+                    onClick={() => setShowMobileList(false)}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <ChannelList
@@ -578,25 +551,49 @@ export default function MessagesPage() {
                   />
                 </div>
               </div>
-
-              <div className="flex-1 flex flex-col bg-[#F5F5FB]">
-                <Channel>
-                  <Window>
-                    <ConversationHeader />
-                    <div className="flex-1 min-h-0">
-                      <MessageList />
-                    </div>
-                    <div className="border-t border-gray-100 bg-white/90">
-                      <TypingIndicatorBar />
-                      <MessageInput />
-                    </div>
-                  </Window>
-                </Channel>
+            </div>
+          )}
+          <div className="h-full mt-2 mb-3 sm:mt-0 sm:mb-0 rounded-[32px] bg-gradient-to-br from-white via-indigo-50/70 to-white shadow-[0_22px_70px_rgba(15,23,42,0.20)] border border-white/80 overflow-hidden flex backdrop-blur-xl">
+            <div className="w-0 sm:w-64 md:w-72 border-r border-gray-100 hidden sm:flex flex-col bg-gradient-to-b from-white via-sky-50/40 to-white">
+              <div className="px-4 py-4 border-b border-gray-100">
+                <p className="text-[11px] font-black text-hot-pink uppercase tracking-[0.18em] mb-0.5">
+                  Messages
+                </p>
+                <p className="text-xs font-bold text-gray-500">
+                  Chat with your Qidzo friends
+                </p>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <ChannelList
+                  filters={filters}
+                  sort={sort}
+                  options={{}}
+                  showChannelSearch
+                  Preview={ChannelPreview}
+                  Paginator={(props) => (
+                    <InfiniteScroll {...props} threshold={150} />
+                  )}
+                />
               </div>
             </div>
-          </Chat>
-        </div>
+
+            <div className="flex-1 flex flex-col bg-[#F5F5FB]">
+              <Channel>
+                <Window>
+                  <ConversationHeader />
+                  <div className="flex-1 min-h-0">
+                    <MessageList />
+                  </div>
+                  <div className="border-t border-gray-100 bg-white/90">
+                    <TypingIndicatorBar />
+                    <MessageInput />
+                  </div>
+                </Window>
+              </Channel>
+            </div>
+          </div>
+        </Chat>
       </div>
-    </VideoCallProvider>
+    </div>
   );
 }
