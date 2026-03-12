@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import {
   Search,
@@ -24,12 +24,22 @@ import {
   ChevronDown,
   School,
 } from "lucide-react";
-import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton,
+  useUser,
+} from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { getCurrentUserRole, getChildSession, logoutChild } from "@/actions/auth";
+import {
+  getCurrentUserRole,
+  getChildSession,
+  logoutChild,
+} from "@/actions/auth";
 import { getChildProfile, ChildProfile } from "@/actions/profile";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import Image from "next/image";
@@ -62,7 +72,9 @@ export default function Navbar({
   const pathname = usePathname();
   const [userRole, setUserRole] = useState<UserRoleState>(initialUserRole);
   const [kid, setKid] = useState<any>(initialKid);
-  const [kidProfile, setKidProfile] = useState<ChildProfile | null>(initialKidProfile);
+  const [kidProfile, setKidProfile] = useState<ChildProfile | null>(
+    initialKidProfile,
+  );
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<GlobalSearchResult[]>([]);
@@ -121,7 +133,6 @@ export default function Navbar({
 
     return () => clearTimeout(timeout);
   }, [searchTerm]);
-  
 
   // Derived stats
   const currentLevel = kidProfile?.level || 1;
@@ -132,7 +143,7 @@ export default function Navbar({
   const magics = kidProfile?.total_posts || 0;
 
   // Don't display navbar on admin routes
-  if (pathname.startsWith('/admin')) {
+  if (pathname.startsWith("/admin")) {
     return null;
   }
 
@@ -140,20 +151,19 @@ export default function Navbar({
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link href="/" className="flex-shrink-0 flex items-center">
-              <Image 
-                src="/f_q_logo.png" 
-                alt="Qidzo Logo" 
-                width={220} 
-                height={88} 
-                className="h-[64px] sm:h-[88px] w-auto object-contain hover:scale-105 transition-transform absolute top-1/2 -translate-y-1/2"
-                priority
-              />
-              {/* Invisible spacer to maintain layout flow if needed */}
-              <div className="h-16 w-[140px] sm:w-[180px]" />
-            </Link>
-
+          {/* Logo */}
+          <Link href="/" className="flex-shrink-0 flex items-center">
+            <Image
+              src="/f_q_logo.png"
+              alt="Qidzo Logo"
+              width={220}
+              height={88}
+              className="h-[64px] sm:h-[88px] w-auto object-contain hover:scale-105 transition-transform absolute top-1/2 -translate-y-1/2"
+              priority
+            />
+            {/* Invisible spacer to maintain layout flow if needed */}
+            <div className="h-16 w-[140px] sm:w-[180px]" />
+          </Link>
 
           {/* Search */}
           <div className="flex-1 max-w-xs xs:max-w-sm sm:max-w-md mx-2 sm:mx-8 block">
@@ -168,7 +178,9 @@ export default function Navbar({
                   setIsNavigating(false);
                   setSearchTerm(e.target.value);
                 }}
-                onFocus={() => searchResults.length > 0 && setShowSearchResults(true)}
+                onFocus={() =>
+                  searchResults.length > 0 && setShowSearchResults(true)
+                }
                 className="block w-full pl-11 pr-10 py-2.5 border-2 border-brand-purple bg-gray-50 rounded-full text-sm placeholder-gray-400 focus:outline-none focus:bg-white focus:border-brand-purple focus:ring-4 focus:ring-brand-purple/10 transition-all duration-300 font-bold text-gray-700 shadow-sm group-hover:shadow-md"
                 placeholder="Search kids & posts... ✨"
               />
@@ -179,302 +191,363 @@ export default function Navbar({
                 </div>
               )}
 
-              {showSearchResults && (searchResults.length > 0 || isSearching) && (
-                <div className="absolute mt-3 left-0 right-0 bg-white rounded-3xl shadow-2xl border-2 border-gray-100 overflow-hidden z-40">
-                  <div className="max-h-80 overflow-y-auto beautiful-scrollbar">
-                    {isSearching && (
-                      <div className="px-4 py-3 text-xs font-bold text-gray-400">
-                        Searching for “{searchTerm.trim()}”...
-                      </div>
-                    )}
-                    {!isSearching && searchResults.length === 0 && (
-                      <div className="px-4 py-6 text-center text-xs font-bold text-gray-400">
-                        No magic found. Try another word!
-                      </div>
-                    )}
-                    {!isSearching && searchResults.length > 0 && (
-                      <>
-                        {searchResults
-                          .filter((r) => r.type === "child")
-                          .map((child) => (
-                            <button
-                              key={`child-${child.id}`}
-                              onClick={() => {
-                                setIsNavigating(true);
-                                setShowSearchResults(false);
-                                setSearchTerm("");
-                                router.push(`/child/${child.username}`);
-                              }}
-                              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-all cursor-pointer"
-                            >
-                              <div className="w-10 h-10 rounded-full bg-brand-purple/10 flex items-center justify-center overflow-hidden">
-                                {child.avatar ? (
-                                  <Image
-                                    src={child.avatar}
-                                    alt={child.name}
-                                    width={40}
-                                    height={40}
-                                    className="object-cover w-full h-full"
-                                  />
-                                ) : (
-                                  <span className="font-black text-brand-purple text-sm">
-                                    {child.name?.[0] || "K"}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex-1 text-left">
-                                <p className="text-sm font-black text-gray-900 leading-tight">
-                                  {child.name}
-                                </p>
-                                <p className="text-[11px] font-bold text-gray-400">
-                                  @{child.username} · Level {child.level} · {child.total_posts} posts
-                                </p>
-                              </div>
-                            </button>
-                          ))}
+              {showSearchResults &&
+                (searchResults.length > 0 || isSearching) && (
+                  <div className="absolute mt-3 left-0 right-0 bg-white rounded-3xl shadow-2xl border-2 border-gray-100 overflow-hidden z-40">
+                    <div className="max-h-80 overflow-y-auto beautiful-scrollbar">
+                      {isSearching && (
+                        <div className="px-4 py-3 text-xs font-bold text-gray-400">
+                          Searching for “{searchTerm.trim()}”...
+                        </div>
+                      )}
+                      {!isSearching && searchResults.length === 0 && (
+                        <div className="px-4 py-6 text-center text-xs font-bold text-gray-400">
+                          No magic found. Try another word!
+                        </div>
+                      )}
+                      {!isSearching && searchResults.length > 0 && (
+                        <>
+                          {searchResults
+                            .filter((r) => r.type === "child")
+                            .map((child) => (
+                              <button
+                                key={`child-${child.id}`}
+                                onClick={() => {
+                                  setIsNavigating(true);
+                                  setShowSearchResults(false);
+                                  setSearchTerm("");
+                                  router.push(`/child/${child.username}`);
+                                }}
+                                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-all cursor-pointer"
+                              >
+                                <div className="w-10 h-10 rounded-full bg-brand-purple/10 flex items-center justify-center overflow-hidden">
+                                  {child.avatar ? (
+                                    <Image
+                                      src={child.avatar}
+                                      alt={child.name}
+                                      width={40}
+                                      height={40}
+                                      className="object-cover w-full h-full"
+                                    />
+                                  ) : (
+                                    <span className="font-black text-brand-purple text-sm">
+                                      {child.name?.[0] || "K"}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex-1 text-left">
+                                  <p className="text-sm font-black text-gray-900 leading-tight">
+                                    {child.name}
+                                  </p>
+                                  <p className="text-[11px] font-bold text-gray-400">
+                                    @{child.username} · Level {child.level} ·{" "}
+                                    {child.total_posts} posts
+                                  </p>
+                                </div>
+                              </button>
+                            ))}
 
-                        {searchResults.some((r) => r.type === "post") && (
-                          <div className="px-4 pt-2 pb-1 text-[10px] font-black text-gray-400 uppercase tracking-wider">
-                            Posts
-                          </div>
-                        )}
+                          {searchResults.some((r) => r.type === "post") && (
+                            <div className="px-4 pt-2 pb-1 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                              Posts
+                            </div>
+                          )}
 
-                        {searchResults
-                          .filter((r) => r.type === "post")
-                          .map((post) => (
-                            <button
-                              key={`post-${post.id}`}
-                              onClick={() => {
-                                setIsNavigating(true);
-                                setShowSearchResults(false);
-                                setSearchTerm("");
-                                if (post.child?.username) {
-                                  router.push(`/child/${post.child?.username}?postId=${post.post_id}`);
-                                } else {
-                                  router.push("/");
-                                }
-                              }}
-                              className="w-full px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition-all cursor-pointer"
-                            >
-                              <div className="w-9 h-9 rounded-2xl bg-sky-blue/10 flex items-center justify-center text-sky-blue flex-shrink-0">
-                                <MessageCircle className="w-4 h-4" />
-                              </div>
-                              <div className="flex-1 text-left">
-                                <p className="text-sm font-black text-gray-900 leading-snug line-clamp-2">
-                                  {post.title || "Untitled Post"}
-                                </p>
-                                <p className="text-[11px] font-bold text-gray-400 line-clamp-1 mt-0.5">
-                                  {post.child?.name && post.child?.username
-                                    ? `${post.child?.name} · @${post.child?.username}`
-                                    : "Qidzo Post"}
-                                </p>
-                              </div>
-                            </button>
-                          ))}
-                      </>
-                    )}
+                          {searchResults
+                            .filter((r) => r.type === "post")
+                            .map((post) => (
+                              <button
+                                key={`post-${post.id}`}
+                                onClick={() => {
+                                  setIsNavigating(true);
+                                  setShowSearchResults(false);
+                                  setSearchTerm("");
+                                  if (post.child?.username) {
+                                    router.push(
+                                      `/child/${post.child?.username}?postId=${post.post_id}`,
+                                    );
+                                  } else {
+                                    router.push("/");
+                                  }
+                                }}
+                                className="w-full px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition-all cursor-pointer"
+                              >
+                                <div className="w-9 h-9 rounded-2xl bg-sky-blue/10 flex items-center justify-center text-sky-blue flex-shrink-0">
+                                  <MessageCircle className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1 text-left">
+                                  <p className="text-sm font-black text-gray-900 leading-snug line-clamp-2">
+                                    {post.title || "Untitled Post"}
+                                  </p>
+                                  <p className="text-[11px] font-bold text-gray-400 line-clamp-1 mt-0.5">
+                                    {post.child?.name && post.child?.username
+                                      ? `${post.child?.name} · @${post.child?.username}`
+                                      : "Qidzo Post"}
+                                  </p>
+                                </div>
+                              </button>
+                            ))}
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           </div>
 
           {/* Icons */}
           <div className="flex items-center gap-2 sm:gap-4">
             <SignedIn>
-                <UserButton 
-                    appearance={{
-                        elements: {
-                            avatarBox: "w-10 h-10 border-2 border-white shadow-md hover:scale-105 transition-transform duration-200 cursor-pointer",
-                            userButtonPopoverFooter: "!hidden"
-                        }
-                    }}
-                >
-                  {userRole?.isParent && (
-                    <UserButton.MenuItems>
-                      <UserButton.Action
-                        label="Parent Dashboard"
-                        labelIcon={<LayoutDashboard className="h-4 w-4" />}
-                        onClick={() => router.push("/parent/dashboard")}
-                      />
-                      <UserButton.Action
-                        label="Add Child"
-                        labelIcon={<UserPlus className="h-4 w-4" />}
-                        onClick={() => router.push("/parent/add-child")}
-                      />
-                    </UserButton.MenuItems>
-                  )}
-                  {userRole?.isSchool && (
-                    <UserButton.MenuItems>
-                      <UserButton.Action
-                        label="School Dashboard"
-                        labelIcon={<School className="h-4 w-4" />}
-                        onClick={() => router.push("/school/dashboard")}
-                      />
-                    </UserButton.MenuItems>
-                  )}
-                </UserButton>
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox:
+                      "w-10 h-10 border-2 border-white shadow-md hover:scale-105 transition-transform duration-200 cursor-pointer",
+                    userButtonPopoverFooter: "!hidden",
+                  },
+                }}
+              >
+                {userRole?.isParent && (
+                  <UserButton.MenuItems>
+                    <UserButton.Action
+                      label="Parent Dashboard"
+                      labelIcon={<LayoutDashboard className="h-4 w-4" />}
+                      onClick={() => router.push("/parent/dashboard")}
+                    />
+                    <UserButton.Action
+                      label="Add Child"
+                      labelIcon={<UserPlus className="h-4 w-4" />}
+                      onClick={() => router.push("/parent/add-child")}
+                    />
+                  </UserButton.MenuItems>
+                )}
+                {userRole?.isSchool && (
+                  <UserButton.MenuItems>
+                    <UserButton.Action
+                      label="School Dashboard"
+                      labelIcon={<School className="h-4 w-4" />}
+                      onClick={() => router.push("/school/dashboard")}
+                    />
+                  </UserButton.MenuItems>
+                )}
+              </UserButton>
             </SignedIn>
             <SignedOut>
-                {kid ? (
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <button className="flex items-center gap-3 pl-2 border-l-2 border-gray-100 ml-2 group outline-none cursor-pointer">
-                                <div className="hidden sm:flex flex-col items-end">
-                                    <span className="font-black text-sm text-gray-700 leading-none mb-1 group-hover:text-brand-purple transition-colors">{kid.username}</span>
-                                    <span className="text-[10px] font-bold text-sky-500 uppercase tracking-wider bg-sky-50 px-2 py-0.5 rounded-full group-hover:bg-sky-100 transition-colors">Kid Account</span>
-                                </div>
-                                <div className="w-10 h-10 bg-sky-400 rounded-full flex items-center justify-center text-white font-black text-lg border-2 border-white shadow-md ring-2 ring-sky-100 group-hover:ring-brand-purple/20 transition-all overflow-hidden relative">
-                                    {kidProfile?.avatar ? (
-                                        <Image 
-                                            src={kidProfile.avatar} 
-                                            alt={kid.username} 
-                                            fill 
-                                            className="object-cover"
-                                            unoptimized
-                                        />
-                                    ) : (
-                                        kid.username[0].toUpperCase()
-                                    )}
-                                </div>
-                            </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80 p-0 rounded-3xl border-4 border-gray-100 shadow-xl overflow-hidden mr-4" align="end">
-                            {/* Header */}
-                            <div className="bg-gradient-to-br from-sky-400 to-brand-purple p-6 text-white relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-                                <div className="flex items-center gap-4 relative z-10">
-                                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-sky-500 font-black text-3xl border-4 border-white/20 shadow-lg overflow-hidden relative">
-                                        {kidProfile?.avatar ? (
-                                            <Image 
-                                                src={kidProfile.avatar} 
-                                                alt={kid.username} 
-                                                fill 
-                                                className="object-cover"
-                                                unoptimized
-                                            />
-                                        ) : (
-                                            kid.username[0].toUpperCase()
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h4 className="font-black text-xl leading-none mb-1">{kidProfile?.name || kid.username}</h4>
-                                        <p className="text-sky-100 font-bold text-sm">@{kid.username}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {/* Stats */}
-                            <div className="p-5 space-y-5 bg-white">
-                                {/* Level Progress */}
-                                <div>
-                                  <div className="flex justify-between items-end mb-2">
-                                    <span className="text-sm font-black text-gray-700">Level {currentLevel}</span>
-                                    <span className="text-xs font-bold text-brand-purple">{currentXP} / {nextLevelXP} XP</span>
-                                  </div>
-                                  <div className="h-4 bg-gray-100 rounded-full p-1 shadow-inner border border-gray-50 overflow-hidden">
-                                    <div 
-                                      className="h-full bg-gradient-to-r from-brand-purple to-hot-pink rounded-full shadow-sm transition-all duration-1000 ease-out relative overflow-hidden"
-                                      style={{ width: `${progress}%` }}
-                                    >
-                                        <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]"></div>
-                                    </div>
-                                  </div>
-                                </div>
+              {kid ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center gap-3 pl-2 border-l-2 border-gray-100 ml-2 group outline-none cursor-pointer">
+                      <div className="hidden sm:flex flex-col items-end">
+                        <span className="font-black text-sm text-gray-700 leading-none mb-1 group-hover:text-brand-purple transition-colors">
+                          {kid.username}
+                        </span>
+                        <span className="text-[10px] font-bold text-sky-500 uppercase tracking-wider bg-sky-50 px-2 py-0.5 rounded-full group-hover:bg-sky-100 transition-colors">
+                          Kid Account
+                        </span>
+                      </div>
+                      <div className="w-10 h-10 bg-sky-400 rounded-full flex items-center justify-center text-white font-black text-lg border-2 border-white shadow-md ring-2 ring-sky-100 group-hover:ring-brand-purple/20 transition-all overflow-hidden relative">
+                        {kidProfile?.avatar ? (
+                          <Image
+                            src={kidProfile.avatar}
+                            alt={kid.username}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          kid.username[0].toUpperCase()
+                        )}
+                      </div>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-80 p-0 rounded-3xl border-4 border-gray-100 shadow-xl overflow-hidden mr-4"
+                    align="end"
+                  >
+                    {/* Header */}
+                    <div className="bg-gradient-to-br from-sky-400 to-brand-purple p-6 text-white relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                      <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-sky-500 font-black text-3xl border-4 border-white/20 shadow-lg overflow-hidden relative">
+                          {kidProfile?.avatar ? (
+                            <Image
+                              src={kidProfile.avatar}
+                              alt={kid.username}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          ) : (
+                            kid.username[0].toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-black text-xl leading-none mb-1">
+                            {kidProfile?.name || kid.username}
+                          </h4>
+                          <p className="text-sky-100 font-bold text-sm">
+                            @{kid.username}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
 
-                                {/* Grid */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    {/* Followers */}
-                                    <div className="bg-brand-purple/5 rounded-2xl p-3 border border-brand-purple/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
-                                        <Users className="w-6 h-6 text-brand-purple" />
-                                        <span className="font-black text-xl text-gray-800">{kidProfile?.followers_count || 0}</span>
-                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Followers</span>
-                                    </div>
+                    {/* Stats */}
+                    <div className="p-5 space-y-5 bg-white">
+                      {/* Level Progress */}
+                      <div>
+                        <div className="flex justify-between items-end mb-2">
+                          <span className="text-sm font-black text-gray-700">
+                            Level {currentLevel}
+                          </span>
+                          <span className="text-xs font-bold text-brand-purple">
+                            {currentXP} / {nextLevelXP} XP
+                          </span>
+                        </div>
+                        <div className="h-4 bg-gray-100 rounded-full p-1 shadow-inner border border-gray-50 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-brand-purple to-hot-pink rounded-full shadow-sm transition-all duration-1000 ease-out relative overflow-hidden"
+                            style={{ width: `${progress}%` }}
+                          >
+                            <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]"></div>
+                          </div>
+                        </div>
+                      </div>
 
-                                    {/* Following */}
-                                    <div className="bg-hot-pink/5 rounded-2xl p-3 border border-hot-pink/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
-                                        <UserCheck className="w-6 h-6 text-hot-pink" />
-                                        <span className="font-black text-xl text-gray-800">{kidProfile?.following_count || 0}</span>
-                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Following</span>
-                                    </div>
+                      {/* Grid */}
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* Followers */}
+                        <div className="bg-brand-purple/5 rounded-2xl p-3 border border-brand-purple/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                          <Users className="w-6 h-6 text-brand-purple" />
+                          <span className="font-black text-xl text-gray-800">
+                            {kidProfile?.followers_count || 0}
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                            Followers
+                          </span>
+                        </div>
 
-                                    {/* Total Likes */}
-                                    <div className="bg-pink-50 rounded-2xl p-3 border border-pink-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
-                                        <Heart className="w-6 h-6 text-hot-pink fill-hot-pink/20" />
-                                        <span className="font-black text-xl text-gray-800">{kidProfile?.total_likes_received || 0}</span>
-                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Likes Get</span>
-                                    </div>
+                        {/* Following */}
+                        <div className="bg-hot-pink/5 rounded-2xl p-3 border border-hot-pink/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                          <UserCheck className="w-6 h-6 text-hot-pink" />
+                          <span className="font-black text-xl text-gray-800">
+                            {kidProfile?.following_count || 0}
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                            Following
+                          </span>
+                        </div>
 
-                                    {/* Total Comments */}
-                                    <div className="bg-sky-50 rounded-2xl p-3 border border-sky-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
-                                        <MessageCircle className="w-6 h-6 text-sky-blue fill-sky-blue/20" />
-                                        <span className="font-black text-xl text-gray-800">{kidProfile?.total_comments_made || 0}</span>
-                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Comments</span>
-                                    </div>
-                                </div>
-                            </div>
+                        {/* Total Likes */}
+                        <div className="bg-pink-50 rounded-2xl p-3 border border-pink-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                          <Heart className="w-6 h-6 text-hot-pink fill-hot-pink/20" />
+                          <span className="font-black text-xl text-gray-800">
+                            {kidProfile?.total_likes_received || 0}
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                            Likes Get
+                          </span>
+                        </div>
 
-                            {/* Footer */}
-                            <div className="p-2 bg-gray-50 border-t border-gray-100">
-                                <button 
-                                    onClick={async () => {
-                                        await logoutChild();
-                                        window.location.reload();
-                                    }}
-                                    className="w-full flex items-center justify-center gap-2 p-3 text-red-500 font-black hover:bg-red-50 rounded-2xl transition-colors text-sm cursor-pointer"
-                                >
-                                    <LogOut className="w-4 h-4" />
-                                    Log Out
-                                </button>
-                            </div>
-                        </PopoverContent>
-                    </Popover>
-                ) : (
-                    <Link href="/login">
-                        <Button className="rounded-full cursor-pointer bg-gradient-to-r from-brand-purple to-purple-600 hover:from-brand-purple/90 hover:to-purple-600/90 text-white font-black px-6 pt-5 pb-4 shadow-lg shadow-brand-purple/25 hover:shadow-brand-purple/40 hover:-translate-y-0.5 transition-all duration-300 border-b-4 border-purple-800/20 active:border-b-0 active:translate-y-0.5 flex items-center justify-center gap-2">
-                            Login <ArrowRight className="w-5 h-5" />
-                        </Button>
-                    </Link>
-                )}
+                        {/* Total Comments */}
+                        <div className="bg-sky-50 rounded-2xl p-3 border border-sky-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                          <MessageCircle className="w-6 h-6 text-sky-blue fill-sky-blue/20" />
+                          <span className="font-black text-xl text-gray-800">
+                            {kidProfile?.total_comments_made || 0}
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                            Comments
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="p-2 bg-gray-50 border-t border-gray-100">
+                      <button
+                        onClick={async () => {
+                          await logoutChild();
+                          window.location.reload();
+                        }}
+                        className="w-full flex items-center justify-center gap-2 p-3 text-red-500 font-black hover:bg-red-50 rounded-2xl transition-colors text-sm cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Log Out
+                      </button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <Link href="/login">
+                  <Button className="rounded-full cursor-pointer bg-gradient-to-r from-brand-purple to-purple-600 hover:from-brand-purple/90 hover:to-purple-600/90 text-white font-black px-6 pt-5 pb-4 shadow-lg shadow-brand-purple/25 hover:shadow-brand-purple/40 hover:-translate-y-0.5 transition-all duration-300 border-b-4 border-purple-800/20 active:border-b-0 active:translate-y-0.5 flex items-center justify-center gap-2">
+                    Login <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+              )}
             </SignedOut>
 
             <Popover>
-                <PopoverTrigger asChild>
-                    <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors relative hover:scale-110 active:scale-95 duration-200 outline-none cursor-pointer">
-                        <ChevronDown className="w-6 h-6" />
-                    </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-2 rounded-3xl border-4 border-gray-100 shadow-xl overflow-hidden mt-2 mr-4" align="end">
-                    <div className="p-3">
-                        <h4 className="font-black text-gray-900 mb-3 px-2">Support & Info</h4>
-                        <div className="space-y-1">
-                            <Link href="/privacy" className="flex items-center gap-3 p-2 hover:bg-sky-50 rounded-2xl transition-colors group cursor-pointer">
-                                <div className="w-8 h-8 bg-sky-100 rounded-xl flex items-center justify-center text-sky-600 group-hover:bg-sky-200 transition-colors">
-                                    <Shield className="w-4 h-4" />
-                                </div>
-                                <span className="text-sm font-bold text-gray-700 group-hover:text-sky-700">Privacy Policy</span>
-                            </Link>
-                            <Link href="/terms" className="flex items-center gap-3 p-2 hover:bg-brand-purple/5 rounded-2xl transition-colors group cursor-pointer">
-                                <div className="w-8 h-8 bg-brand-purple/10 rounded-xl flex items-center justify-center text-brand-purple group-hover:bg-brand-purple/20 transition-colors">
-                                    <FileText className="w-4 h-4" />
-                                </div>
-                                <span className="text-sm font-bold text-gray-700 group-hover:text-brand-purple">Terms & Conditions</span>
-                            </Link>
-                            <Link href="/refund" className="flex items-center gap-3 p-2 hover:bg-hot-pink/5 rounded-2xl transition-colors group cursor-pointer">
-                                <div className="w-8 h-8 bg-hot-pink/10 rounded-xl flex items-center justify-center text-hot-pink group-hover:bg-hot-pink/20 transition-colors">
-                                    <RefreshCw className="w-4 h-4" />
-                                </div>
-                                <span className="text-sm font-bold text-gray-700 group-hover:text-hot-pink">Refund Policy</span>
-                            </Link>
-                            <Link href="/contact" className="flex items-center gap-3 p-2 hover:bg-green-50 rounded-2xl transition-colors group cursor-pointer">
-                                <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center text-green-600 group-hover:bg-green-200 transition-colors">
-                                    <Mail className="w-4 h-4" />
-                                </div>
-                                <span className="text-sm font-bold text-gray-700 group-hover:text-green-700">Contact Us</span>
-                            </Link>
-                        </div>
-                    </div>
-                </PopoverContent>
+              <PopoverTrigger asChild>
+                <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors relative hover:scale-110 active:scale-95 duration-200 outline-none cursor-pointer">
+                  <ChevronDown className="w-6 h-6" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-64 p-2 rounded-3xl border-4 border-gray-100 shadow-xl overflow-hidden mt-2 mr-4"
+                align="end"
+              >
+                <div className="p-3">
+                  <h4 className="font-black text-gray-900 mb-3 px-2">
+                    Support & Info
+                  </h4>
+                  <div className="space-y-1">
+                    <Link
+                      href="/privacy"
+                      className="flex items-center gap-3 p-2 hover:bg-sky-50 rounded-2xl transition-colors group cursor-pointer"
+                    >
+                      <div className="w-8 h-8 bg-sky-100 rounded-xl flex items-center justify-center text-sky-600 group-hover:bg-sky-200 transition-colors">
+                        <Shield className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-700 group-hover:text-sky-700">
+                        Privacy Policy
+                      </span>
+                    </Link>
+                    <Link
+                      href="/terms"
+                      className="flex items-center gap-3 p-2 hover:bg-brand-purple/5 rounded-2xl transition-colors group cursor-pointer"
+                    >
+                      <div className="w-8 h-8 bg-brand-purple/10 rounded-xl flex items-center justify-center text-brand-purple group-hover:bg-brand-purple/20 transition-colors">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-700 group-hover:text-brand-purple">
+                        Terms & Conditions
+                      </span>
+                    </Link>
+                    <Link
+                      href="/refund"
+                      className="flex items-center gap-3 p-2 hover:bg-hot-pink/5 rounded-2xl transition-colors group cursor-pointer"
+                    >
+                      <div className="w-8 h-8 bg-hot-pink/10 rounded-xl flex items-center justify-center text-hot-pink group-hover:bg-hot-pink/20 transition-colors">
+                        <RefreshCw className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-700 group-hover:text-hot-pink">
+                        Refund Policy
+                      </span>
+                    </Link>
+                    <Link
+                      href="/contact"
+                      className="flex items-center gap-3 p-2 hover:bg-green-50 rounded-2xl transition-colors group cursor-pointer"
+                    >
+                      <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center text-green-600 group-hover:bg-green-200 transition-colors">
+                        <Mail className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-700 group-hover:text-green-700">
+                        Contact Us
+                      </span>
+                    </Link>
+                  </div>
+                </div>
+              </PopoverContent>
             </Popover>
           </div>
         </div>

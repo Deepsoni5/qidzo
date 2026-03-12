@@ -575,6 +575,10 @@ export async function publishExam(examId: string) {
       return { success: false, error: error.message };
     }
 
+    // Invalidate available exams cache
+    const { invalidateCache } = await import("@/lib/redis");
+    await invalidateCache("exams:available");
+
     return { success: true };
   } catch (error: any) {
     console.error("Publish exam error:", error);
@@ -620,6 +624,10 @@ export async function unpublishExam(examId: string) {
       console.error("Error unpublishing exam:", error);
       return { success: false, error: error.message };
     }
+
+    // Invalidate available exams cache
+    const { invalidateCache } = await import("@/lib/redis");
+    await invalidateCache("exams:available");
 
     return { success: true };
   } catch (error: any) {
@@ -950,10 +958,17 @@ export async function submitExamAttempt(
 // Get available exams for students (published exams only)
 export async function getAvailableExams() {
   try {
-    const { data: exams, error } = await supabase
-      .from("exams")
-      .select(
-        `
+    // Import Redis cache utilities
+    const { getOrSetCache } = await import("@/lib/redis");
+
+    // Cache available exams for 5 minutes
+    return getOrSetCache(
+      "exams:available",
+      async () => {
+        const { data: exams, error } = await supabase
+          .from("exams")
+          .select(
+            `
         exam_id,
         title,
         description,
@@ -972,17 +987,20 @@ export async function getAvailableExams() {
           logo_url
         )
       `,
-      )
-      .eq("is_published", true)
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
+          )
+          .eq("is_published", true)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching available exams:", error);
-      return { success: false, error: error.message, data: [] };
-    }
+        if (error) {
+          console.error("Error fetching available exams:", error);
+          return { success: false, error: error.message, data: [] };
+        }
 
-    return { success: true, data: exams || [] };
+        return { success: true, data: exams || [] };
+      },
+      300, // 5 minutes cache
+    );
   } catch (error: any) {
     console.error("Get available exams error:", error);
     return {

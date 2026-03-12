@@ -21,28 +21,38 @@ interface Child {
   focus_mode?: boolean;
 }
 
-export default function ChildrenList() {
+interface ChildrenListProps {
+  initialChildren?: Child[];
+  initialProfile?: any;
+}
+
+export default function ChildrenList({
+  initialChildren = [],
+  initialProfile = null,
+}: ChildrenListProps) {
   const { user } = useUser();
   const router = useRouter();
-  const [children, setChildren] = useState<Child[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [children, setChildren] = useState<Child[]>(initialChildren);
+  const [loading, setLoading] = useState(!initialChildren.length);
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [isAdvancedModalOpen, setIsAdvancedModalOpen] = useState(false);
-  const [parentProfile, setParentProfile] = useState<any>(null);
+  const [parentProfile, setParentProfile] = useState<any>(initialProfile);
 
   const fetchChildren = async () => {
     try {
       const [childrenData, profileData] = await Promise.all([
         getMyChildren(),
-        getParentProfile()
+        getParentProfile(),
       ]);
-      
+
       if (childrenData) setChildren(childrenData);
       if (profileData) setParentProfile(profileData);
 
       // Also update selectedChild if it's currently open
       if (selectedChild && childrenData) {
-        const updatedSelectedChild = childrenData.find((c: Child) => c.id === selectedChild.id);
+        const updatedSelectedChild = childrenData.find(
+          (c: Child) => c.id === selectedChild.id,
+        );
         if (updatedSelectedChild) {
           setSelectedChild(updatedSelectedChild);
         }
@@ -58,19 +68,26 @@ export default function ChildrenList() {
     if (!parentProfile || parentProfile.max_children_slots <= 0) {
       e.preventDefault();
       toast.error("No slots available!", {
-        description: "Please Upgrade to Plan or Add Kid profile slot to continue.",
+        description:
+          "Please Upgrade to Plan or Add Kid profile slot to continue.",
         icon: <AlertCircle className="w-5 h-5 text-red-500" />,
         action: {
           label: "Upgrade",
-          onClick: () => router.push("/parent/upgrade")
-        }
+          onClick: () => router.push("/parent/upgrade"),
+        },
       });
     }
   };
 
   useEffect(() => {
     if (!user) return;
-    fetchChildren();
+
+    // Only fetch if we don't have initial data
+    if (!initialChildren.length || !initialProfile) {
+      fetchChildren();
+    } else {
+      setLoading(false);
+    }
   }, [user]);
 
   if (loading) {
@@ -84,8 +101,10 @@ export default function ChildrenList() {
   return (
     <div className="mb-8">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-black font-nunito text-gray-900">My Children</h2>
-        <Link 
+        <h2 className="text-xl font-black font-nunito text-gray-900">
+          My Children
+        </h2>
+        <Link
           href="/parent/add-child"
           onClick={handleAddChildClick}
           className="flex items-center gap-2 text-sm font-bold text-brand-purple hover:bg-brand-purple/5 px-3 py-1.5 rounded-xl transition-colors"
@@ -93,42 +112,66 @@ export default function ChildrenList() {
           <Plus className="w-4 h-4" /> Add Child
         </Link>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {children.map((child) => (
-          <div key={child.id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group">
+          <div
+            key={child.id}
+            className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group"
+          >
             <div className="flex items-center gap-4 mb-6">
-              <img 
-                src={child.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${child.username}`} 
-                alt={child.name} 
-                className="w-16 h-16 rounded-full border-4 border-gray-50 bg-gray-50 group-hover:scale-105 transition-transform object-cover" 
+              <img
+                src={
+                  child.avatar ||
+                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${child.username}`
+                }
+                alt={child.name}
+                className="w-16 h-16 rounded-full border-4 border-gray-50 bg-gray-50 group-hover:scale-105 transition-transform object-cover"
               />
               <div>
-                <h3 className="text-lg font-black font-nunito text-gray-900">{child.name}</h3>
-                <p className="text-xs font-bold text-gray-400">@{child.username} • {child.age} yrs</p>
+                <h3 className="text-lg font-black font-nunito text-gray-900">
+                  {child.name}
+                </h3>
+                <p className="text-xs font-bold text-gray-400">
+                  @{child.username} • {child.age} yrs
+                </p>
                 <div className="mt-1 inline-flex items-center gap-1 bg-sunshine-yellow/10 px-2 py-0.5 rounded-lg">
-                    <Star className="w-3 h-3 text-sunshine-yellow fill-sunshine-yellow" />
-                    <span className="text-xs font-bold text-amber-700">Lvl {child.level || 1}</span>
+                  <Star className="w-3 h-3 text-sunshine-yellow fill-sunshine-yellow" />
+                  <span className="text-xs font-bold text-amber-700">
+                    Lvl {child.level || 1}
+                  </span>
                 </div>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-gray-50 p-3 rounded-2xl text-center">
-                <p className="text-xs font-bold text-gray-400 uppercase">Posts</p>
-                <p className="text-xl font-black text-gray-900 font-nunito">{child.total_posts || 0}</p>
+                <p className="text-xs font-bold text-gray-400 uppercase">
+                  Posts
+                </p>
+                <p className="text-xl font-black text-gray-900 font-nunito">
+                  {child.total_posts || 0}
+                </p>
               </div>
               <div className="bg-gray-50 p-3 rounded-2xl text-center">
-                <p className="text-xs font-bold text-gray-400 uppercase">Total XP</p>
-                <p className="text-xl font-black text-gray-900 font-nunito">{child.xp_points || 0}</p>
+                <p className="text-xs font-bold text-gray-400 uppercase">
+                  Total XP
+                </p>
+                <p className="text-xl font-black text-gray-900 font-nunito">
+                  {child.xp_points || 0}
+                </p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <Link href={`/child/${child.username}`} target="_blank" className="bg-brand-purple text-white font-bold py-3 px-2 rounded-xl hover:bg-brand-purple/90 transition-all active:scale-95 shadow-lg shadow-brand-purple/20 text-sm flex items-center justify-center cursor-pointer">
-                View Profile 
+              <Link
+                href={`/child/${child.username}`}
+                target="_blank"
+                className="bg-brand-purple text-white font-bold py-3 px-2 rounded-xl hover:bg-brand-purple/90 transition-all active:scale-95 shadow-lg shadow-brand-purple/20 text-sm flex items-center justify-center cursor-pointer"
+              >
+                View Profile
               </Link>
-              <button 
+              <button
                 onClick={() => {
                   setSelectedChild(child);
                   setIsAdvancedModalOpen(true);
@@ -140,9 +183,9 @@ export default function ChildrenList() {
             </div>
           </div>
         ))}
-        
+
         {/* Add Child Card */}
-        <Link 
+        <Link
           href="/parent/add-child"
           onClick={handleAddChildClick}
           className="bg-gray-50 border-2 border-dashed border-gray-200 p-6 rounded-3xl flex flex-col items-center justify-center gap-4 text-gray-400 hover:border-brand-purple hover:text-brand-purple hover:bg-brand-purple/5 transition-all group h-full min-h-[240px] cursor-pointer"
@@ -155,7 +198,7 @@ export default function ChildrenList() {
       </div>
 
       {selectedChild && (
-        <AdvancedSetupModal 
+        <AdvancedSetupModal
           isOpen={isAdvancedModalOpen}
           onClose={() => {
             setIsAdvancedModalOpen(false);

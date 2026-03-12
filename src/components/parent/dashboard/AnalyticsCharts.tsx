@@ -15,18 +15,28 @@ interface Child {
   age?: number;
 }
 
-export default function AnalyticsCharts() {
-  const [children, setChildren] = useState<Child[]>([]);
-  const [loading, setLoading] = useState(true);
+interface AnalyticsChartsProps {
+  initialChildren?: Child[];
+}
+
+export default function AnalyticsCharts({
+  initialChildren = [],
+}: AnalyticsChartsProps) {
+  const [children, setChildren] = useState<Child[]>(initialChildren);
+  const [loading, setLoading] = useState(!initialChildren.length);
 
   useEffect(() => {
-    async function fetchChildren() {
-      const result = await getMyChildren();
-      // result is Child[] because getMyChildren returns data || []
-      setChildren(result || []);
+    // Only fetch if we don't have initial data
+    if (!initialChildren.length) {
+      async function fetchChildren() {
+        const result = await getMyChildren();
+        setChildren(result || []);
+        setLoading(false);
+      }
+      fetchChildren();
+    } else {
       setLoading(false);
     }
-    fetchChildren();
   }, []);
 
   if (loading) {
@@ -42,7 +52,11 @@ export default function AnalyticsCharts() {
       {/* Daily Activity Charts for each child */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {children.map((child) => (
-          <DailyActivityChart key={child.child_id} childId={child.child_id} childName={child.name} />
+          <DailyActivityChart
+            key={child.child_id}
+            childId={child.child_id}
+            childName={child.name}
+          />
         ))}
       </div>
     </div>

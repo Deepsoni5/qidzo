@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   if (!apiKey || !apiSecret) {
     return NextResponse.json(
       { error: "Stream Chat environment variables are missing" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   if (!childSession || !childSession.id) {
     return NextResponse.json(
       { error: "Chat is only available for logged in children" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   if (!body || (!body.targetUsername && !body.targetChildId)) {
     return NextResponse.json(
       { error: "targetUsername or targetChildId is required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     if (targetError || !target) {
       return NextResponse.json(
         { error: "Target child not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -58,14 +58,14 @@ export async function POST(req: Request) {
   if (!targetChildId) {
     return NextResponse.json(
       { error: "Unable to resolve target child" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   if (targetChildId === currentChildId) {
     return NextResponse.json(
       { error: "Cannot start a DM with yourself" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
         const channels = await serverClient.queryChannels(
           { type: "messaging", members: { $in: [currentChildId] } },
           { last_message_at: -1 },
-          { limit: 100 }
+          { limit: 100 },
         );
 
         const partners = new Set<string>();
@@ -126,7 +126,7 @@ export async function POST(req: Request) {
               code: "CHAT_LIMIT_REACHED",
               maxPartners: 5,
             },
-            { status: 403 }
+            { status: 403 },
           );
         }
       }
@@ -146,7 +146,7 @@ export async function POST(req: Request) {
   if (childrenError || !children || children.length !== 2) {
     return NextResponse.json(
       { error: "Unable to load chat participants" },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
@@ -160,7 +160,7 @@ export async function POST(req: Request) {
   await serverClient.upsertUsers(usersPayload);
 
   const usernames = Object.fromEntries(
-    children.map((c) => [c.child_id, c.username])
+    children.map((c) => [c.child_id, c.username]),
   );
 
   const channelData: any = {
@@ -172,11 +172,10 @@ export async function POST(req: Request) {
   const channel = serverClient.channel("messaging", channelId, channelData);
 
   const initialMessage =
-    typeof body.initialMessage === "string"
-      ? body.initialMessage.trim()
-      : "";
+    typeof body.initialMessage === "string" ? body.initialMessage.trim() : "";
 
-  await channel.create();
+  // Get or create the channel - this handles existing channels properly
+  await channel.watch();
 
   if (initialMessage) {
     try {

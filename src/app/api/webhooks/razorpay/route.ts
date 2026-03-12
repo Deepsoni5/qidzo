@@ -9,7 +9,10 @@ export async function POST(req: Request) {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
     if (!signature || !webhookSecret) {
-      return NextResponse.json({ error: "Missing signature or secret" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing signature or secret" },
+        { status: 400 },
+      );
     }
 
     // Verify webhook signature
@@ -27,30 +30,41 @@ export async function POST(req: Request) {
 
     console.log("Razorpay Webhook Event:", event);
 
-    if (event === "subscription.activated" || event === "subscription.charged") {
+    if (
+      event === "subscription.activated" ||
+      event === "subscription.charged"
+    ) {
       const subscription = payload.payload.subscription.entity;
       const notes = subscription.notes;
       const parentId = notes.parent_id;
       const planType = notes.plan_type;
 
       if (!parentId) {
-        return NextResponse.json({ error: "Missing parent_id in notes" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Missing parent_id in notes" },
+          { status: 400 },
+        );
       }
 
       const isActivationEvent = event === "subscription.activated";
 
       const { data: parent, error: fetchParentError } = await supabase
         .from("parents")
-        .select("max_children_slots")
+        .select("max_children_slots, subscription_plan, first_paid_plan")
         .eq("parent_id", parentId)
         .single();
 
       if (fetchParentError) {
-        console.error("Error fetching parent for subscription update:", fetchParentError);
+        console.error(
+          "Error fetching parent for subscription update:",
+          fetchParentError,
+        );
       }
 
       const currentSlots = parent?.max_children_slots ?? 0;
       const newSlots = isActivationEvent ? currentSlots + 1 : currentSlots || 1;
+      const currentPlan = parent?.subscription_plan || "FREE";
+      const firstPaidPlan = parent?.first_paid_plan;
 
       const now = new Date();
       const endDate = new Date(now);
@@ -73,59 +87,117 @@ export async function POST(req: Request) {
       let planUpper: "BASIC" | "PRO" | "ELITE" = "BASIC";
       if (planId === envIds.PRO_MONTHLY || planId === envIds.PRO_YEARLY) {
         planUpper = "PRO";
-      } else if (planId === envIds.ELITE_MONTHLY || planId === envIds.ELITE_YEARLY) {
+      } else if (
+        planId === envIds.ELITE_MONTHLY ||
+        planId === envIds.ELITE_YEARLY
+      ) {
         planUpper = "ELITE";
       } else {
         planUpper = "BASIC";
       }
 
+      // Determine if this is the first paid plan purchase
+      // First paid plan is set only if:
+      // 1. first_paid_plan is currently null AND
+      // 2. current plan is FREE or ELITE (trial) AND
+      // 3. new plan is a paid plan (BASIC/PRO/ELITE purchased)
+      const isFirstPurchase =
+        !firstPaidPlan && (currentPlan === "FREE" || currentPlan === "ELITE");
+
+      const updateData: any = {
+        subscription_plan: planUpper,
+        subscription_status: "ACTIVE",
+        max_children_slots: newSlots,
+        razorpay_subscription_id: subscription.id,
+        razorpay_customer_id: subscription.customer_id,
+        subscription_interval: planType,
+        subscription_ends_at: endDate.toISOString(),
+        razorpay_plan_id: subscription.plan_id,
+      };
+
+      // Set first_paid_plan only on first purchase
+      if (isFirstPurchase) {
+        updateData.first_paid_plan = planUpper;
+        console.log(
+          `Setting first_paid_plan to ${planUpper} for parent ${parentId}`,
+        );
+      }
+
       const { error } = await supabase
         .from("parents")
-        .update({
-          subscription_plan: planUpper,
-          subscription_status: "ACTIVE",
-          max_children_slots: newSlots,
-          razorpay_subscription_id: subscription.id,
-          razorpay_customer_id: subscription.customer_id,
-          subscription_interval: planType,
-          subscription_ends_at: endDate.toISOString(),
-          razorpay_plan_id: subscription.plan_id
-        })
+        .update(updateData)
         .eq("parent_id", parentId);
 
       if (error) {
         console.error("Error updating parent subscription:", error);
-        return NextResponse.json({ error: "DB Update Failed" }, { status: 500 });
+        return NextResponse.json(
+          { error: "DB Update Failed" },
+          { status: 500 },
+        );
       }
 
       console.log(`Successfully upgraded parent ${parentId} to ${planUpper}`);
+      if (isFirstPurchase) {
+        console.log(`✅ First purchase recorded: ${planUpper}`);
+      }
+
+      // Invalidate referrer's cache if this parent was referred (only on first purchase)
+      if (isFirstPurchase) {
+        try {
+          const { data: parentData } = await supabase
+            .from("parents")
+            .select("referred_by")
+            .eq("parent_id", parentId)
+            .single();
+
+          if (parentData?.referred_by) {
+            console.log(
+              `Invalidating referrer cache for: ${parentData.referred_by}`,
+            );
+            const { invalidateCache } = await import("@/lib/redis");
+            await invalidateCache(`referral:stats:${parentData.referred_by}`);
+            await invalidateCache(
+              `referral:activity:${parentData.referred_by}`,
+            );
+          }
+        } catch (cacheError) {
+          console.error("Error invalidating referrer cache:", cacheError);
+          // Non-blocking, don't fail the webhook
+        }
+      }
     }
 
     // Handle One-time Payment (Add More Kid)
     if (event === "order.paid" || event === "payment.captured") {
-      const entity = event === "order.paid" ? payload.payload.order.entity : payload.payload.payment.entity;
+      const entity =
+        event === "order.paid"
+          ? payload.payload.order.entity
+          : payload.payload.payment.entity;
       const notes = entity.notes;
 
       console.log("Processing one-time payment for notes:", notes);
 
       if (notes?.type === "add_child_slot") {
         const parentId = notes.parent_id;
-        
+
         if (!parentId) {
           console.error("Missing parent_id in one-time payment notes");
-          return NextResponse.json({ error: "Missing parent_id" }, { status: 400 });
+          return NextResponse.json(
+            { error: "Missing parent_id" },
+            { status: 400 },
+          );
         }
 
         // INCREMENT SLOTS MANUALLY WITHOUT RPC
         console.log(`Incrementing slots for parent: ${parentId}`);
-        
+
         // 1. Fetch current slots
         const { data: parent, error: fetchError } = await supabase
           .from("parents")
           .select("max_children_slots")
           .eq("parent_id", parentId)
           .single();
-        
+
         if (fetchError) {
           console.error("Fetch current slots failed:", fetchError);
           return NextResponse.json({ error: "Fetch failed" }, { status: 500 });
@@ -139,37 +211,52 @@ export async function POST(req: Request) {
           .from("parents")
           .update({ max_children_slots: newSlots })
           .eq("parent_id", parentId);
-        
+
         if (updateError) {
           console.error("Manual update failed:", updateError);
           return NextResponse.json({ error: "Update failed" }, { status: 500 });
         }
 
-        console.log(`Successfully incremented slots: ${currentSlots} -> ${newSlots} for parent ${parentId}`);
+        console.log(
+          `Successfully incremented slots: ${currentSlots} -> ${newSlots} for parent ${parentId}`,
+        );
       }
 
       if (notes?.type === "exam_payment") {
         const examId = notes.exam_id;
         const childId = notes.child_id;
-        const paymentId = event === "payment.captured" ? payload.payload.payment.entity.id : payload.payload.order.entity.id;
-        const orderId = event === "order.paid" ? payload.payload.order.entity.id : payload.payload.payment.entity.order_id;
+        const paymentId =
+          event === "payment.captured"
+            ? payload.payload.payment.entity.id
+            : payload.payload.order.entity.id;
+        const orderId =
+          event === "order.paid"
+            ? payload.payload.order.entity.id
+            : payload.payload.payment.entity.order_id;
 
-        console.log(`Processing exam payment for exam: ${examId}, child: ${childId}`);
+        console.log(
+          `Processing exam payment for exam: ${examId}, child: ${childId}`,
+        );
 
-        const { error: insertError } = await supabase.from("exam_payments").insert({
-          payment_id: paymentId,
-          order_id: orderId,
-          exam_id: examId,
-          child_id: childId,
-          amount: 99,
-          status: "CAPTURED",
-        });
+        const { error: insertError } = await supabase
+          .from("exam_payments")
+          .insert({
+            payment_id: paymentId,
+            order_id: orderId,
+            exam_id: examId,
+            child_id: childId,
+            amount: 99,
+            status: "CAPTURED",
+          });
 
         if (insertError) {
           console.error("Webhook exam payment record failed:", insertError);
           // Don't return 500 if it's a duplicate (already handled by verify action)
           if (insertError.code !== "23505") {
-            return NextResponse.json({ error: "Exam payment record failed" }, { status: 500 });
+            return NextResponse.json(
+              { error: "Exam payment record failed" },
+              { status: 500 },
+            );
           }
         }
       }
@@ -185,7 +272,7 @@ export async function POST(req: Request) {
         .update({
           subscription_plan: "FREE",
           subscription_status: "CANCELLED",
-          max_children_slots: 0 // Revoke slots on cancellation
+          max_children_slots: 0, // Revoke slots on cancellation
         })
         .eq("parent_id", parentId);
     }

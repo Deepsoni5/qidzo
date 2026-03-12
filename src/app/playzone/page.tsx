@@ -2,12 +2,28 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Gamepad2, Trophy, Star, Rocket, Loader2, ArrowLeft, Brain, Swords, Clock3, Zap } from "lucide-react";
+import {
+  Gamepad2,
+  Trophy,
+  Star,
+  Rocket,
+  Loader2,
+  ArrowLeft,
+  Brain,
+  Swords,
+  Clock3,
+  Zap,
+} from "lucide-react";
 import { getCurrentUserRole } from "@/actions/auth";
-import { getPlayzoneOverview, startQuestionSession, completeGameSession } from "@/actions/games";
+import {
+  getPlayzoneOverview,
+  startQuestionSession,
+  completeGameSession,
+} from "@/actions/games";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import MobileNav from "@/components/MobileNav";
+import { usePlayzoneStore } from "@/store/playzoneStore";
 
 type OverlayView = "browse" | "select-level" | "playing";
 type GameFilter = "ALL" | "ARCADE" | "QUESTION";
@@ -49,7 +65,13 @@ interface ReflexTapSessionProps {
   onFinished: (stats: QuestionSessionStats) => void;
 }
 
-function QuestionSession({ gameName, levelName, data, onExit, onFinished }: QuestionSessionProps) {
+function QuestionSession({
+  gameName,
+  levelName,
+  data,
+  onExit,
+  onFinished,
+}: QuestionSessionProps) {
   const questions = data?.questions || [];
   const totalQuestions = questions.length || 0;
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -70,7 +92,10 @@ function QuestionSession({ gameName, levelName, data, onExit, onFinished }: Ques
     if (!currentQuestion || showFeedback) return;
 
     const isCorrect = option === currentQuestion.correctAnswer;
-    answersRef.current = [...answersRef.current, { questionId: currentQuestion.id, isCorrect }];
+    answersRef.current = [
+      ...answersRef.current,
+      { questionId: currentQuestion.id, isCorrect },
+    ];
 
     setSelectedOption(option);
     setShowFeedback(true);
@@ -82,7 +107,9 @@ function QuestionSession({ gameName, levelName, data, onExit, onFinished }: Ques
         setSelectedOption(null);
         setShowFeedback(false);
       } else {
-        const correctCount = answersRef.current.filter(a => a.isCorrect).length;
+        const correctCount = answersRef.current.filter(
+          (a) => a.isCorrect,
+        ).length;
         const durationSec = startedAtRef.current
           ? Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000))
           : 0;
@@ -126,7 +153,9 @@ function QuestionSession({ gameName, levelName, data, onExit, onFinished }: Ques
           <p className="text-sm font-bold text-brand-purple/80 uppercase tracking-[0.15em]">
             {gameName}
           </p>
-          <h2 className="text-2xl md:text-3xl font-black text-gray-900">{levelName}</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-gray-900">
+            {levelName}
+          </h2>
         </div>
         <div className="flex items-center gap-2 bg-sky-50 px-4 py-2 rounded-2xl border border-sky-100">
           <Clock3 className="w-5 h-5 text-sky-500" />
@@ -143,10 +172,14 @@ function QuestionSession({ gameName, levelName, data, onExit, onFinished }: Ques
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-        {options.map(option => {
+        {options.map((option) => {
           const isSelected = selectedOption === option;
-          const isCorrectOption = showFeedback && option === currentQuestion.correctAnswer;
-          const isWrongOption = showFeedback && isSelected && option !== currentQuestion.correctAnswer;
+          const isCorrectOption =
+            showFeedback && option === currentQuestion.correctAnswer;
+          const isWrongOption =
+            showFeedback &&
+            isSelected &&
+            option !== currentQuestion.correctAnswer;
 
           return (
             <button
@@ -161,10 +194,10 @@ function QuestionSession({ gameName, levelName, data, onExit, onFinished }: Ques
                 isCorrectOption
                   ? "border-emerald-400 bg-emerald-50 text-emerald-800"
                   : isWrongOption
-                  ? "border-rose-400 bg-rose-50 text-rose-800"
-                  : isSelected
-                  ? "border-brand-purple bg-brand-purple/5 text-brand-purple"
-                  : "border-gray-100 text-gray-700 hover:border-brand-purple/40",
+                    ? "border-rose-400 bg-rose-50 text-rose-800"
+                    : isSelected
+                      ? "border-brand-purple bg-brand-purple/5 text-brand-purple"
+                      : "border-gray-100 text-gray-700 hover:border-brand-purple/40",
               ].join(" ")}
             >
               <span className="inline-flex items-center gap-3">
@@ -204,16 +237,35 @@ interface MemoryCard {
   state: MemoryCardState;
 }
 
-function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMatchSessionProps) {
-  const pairs = typeof config?.pairs === "number" && config.pairs > 0 ? config.pairs : 6;
-  const emojis = ["🧠", "🚀", "🌟", "🧩", "🎈", "🎨", "📚", "🎵", "🦄", "🦊", "🍕", "⚡️"];
+function MemoryMatchSession({
+  levelName,
+  config,
+  onExit,
+  onFinished,
+}: MemoryMatchSessionProps) {
+  const pairs =
+    typeof config?.pairs === "number" && config.pairs > 0 ? config.pairs : 6;
+  const emojis = [
+    "🧠",
+    "🚀",
+    "🌟",
+    "🧩",
+    "🎈",
+    "🎨",
+    "📚",
+    "🎵",
+    "🦄",
+    "🦊",
+    "🍕",
+    "⚡️",
+  ];
   const usedEmojis = emojis.slice(0, pairs);
   const timeLimit =
     typeof config?.timeLimit === "number"
       ? config.timeLimit
       : typeof config?.maxTimeSec === "number"
-      ? config.maxTimeSec
-      : null;
+        ? config.maxTimeSec
+        : null;
 
   const [cards, setCards] = useState<MemoryCard[]>([]);
   const [firstIndex, setFirstIndex] = useState<number | null>(null);
@@ -253,18 +305,24 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
     if (timeLeft === null || timeLeft <= 0) return;
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev === null) return prev;
         if (prev <= 1) {
           clearInterval(timer);
           if (!finishedRef.current && matches < pairs) {
             const durationSec = startedAtRef.current
-              ? Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000))
+              ? Math.max(
+                  0,
+                  Math.round((Date.now() - startedAtRef.current) / 1000),
+                )
               : timeLimit;
             const efficiency = moves > 0 ? matches / moves : 0;
             const baseScore = pairs * 120;
             const bonus = bestStreak * 40;
-            const score = Math.max(0, Math.round(baseScore * efficiency + bonus));
+            const score = Math.max(
+              0,
+              Math.round(baseScore * efficiency + bonus),
+            );
 
             const result = {
               pairs,
@@ -336,7 +394,7 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
     if (secondIndex === null) {
       setSecondIndex(index);
       setIsBusy(true);
-      setMoves(prev => prev + 1);
+      setMoves((prev) => prev + 1);
 
       setTimeout(() => {
         const firstCard = updated[firstIndex];
@@ -346,10 +404,10 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
           updated[firstIndex] = { ...firstCard, state: "matched" };
           updated[index] = { ...secondCard, state: "matched" };
           setCards(updated);
-          setMatches(prev => prev + 1);
-          setStreak(prev => {
+          setMatches((prev) => prev + 1);
+          setStreak((prev) => {
             const next = prev + 1;
-            setBestStreak(current => (next > current ? next : current));
+            setBestStreak((current) => (next > current ? next : current));
             return next;
           });
         } else {
@@ -373,7 +431,9 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
           <p className="text-sm font-bold text-brand-purple/80 uppercase tracking-[0.15em]">
             Memory Match
           </p>
-          <h2 className="text-2xl md:text-3xl font-black text-gray-900">{levelName}</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-gray-900">
+            {levelName}
+          </h2>
         </div>
         <div className="flex flex-col items-end gap-1">
           {timeLimit && (
@@ -388,12 +448,12 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
               <Clock3
                 className={[
                   "w-5 h-5",
-                  timeLeft !== null && timeLeft <= 10 ? "text-rose-500" : "text-sky-500",
+                  timeLeft !== null && timeLeft <= 10
+                    ? "text-rose-500"
+                    : "text-sky-500",
                 ].join(" ")}
               />
-              <span>
-                Time left: {timeLeft ?? timeLimit}s
-              </span>
+              <span>Time left: {timeLeft ?? timeLimit}s</span>
             </div>
           )}
           <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-2xl border border-emerald-100">
@@ -425,8 +485,8 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
                 card.state === "matched"
                   ? "bg-emerald-100 border-emerald-300 text-emerald-700 shadow-emerald-100"
                   : card.state === "visible"
-                  ? "bg-white border-brand-purple text-brand-purple shadow-brand-purple/20"
-                  : "bg-white border-gray-200 text-gray-300 hover:border-brand-purple/40 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand-purple/10",
+                    ? "bg-white border-brand-purple text-brand-purple shadow-brand-purple/20"
+                    : "bg-white border-gray-200 text-gray-300 hover:border-brand-purple/40 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand-purple/10",
               ].join(" ")}
             >
               {card.state === "hidden" ? "?" : card.value}
@@ -455,9 +515,16 @@ function MemoryMatchSession({ levelName, config, onExit, onFinished }: MemoryMat
 
 type PatternPhase = "preview" | "input" | "finished";
 
-function PatternMasterSession({ levelName, config, onExit, onFinished }: PatternMasterSessionProps) {
+function PatternMasterSession({
+  levelName,
+  config,
+  onExit,
+  onFinished,
+}: PatternMasterSessionProps) {
   const sequenceLength =
-    typeof config?.sequenceLength === "number" && config.sequenceLength > 0 ? config.sequenceLength : 4;
+    typeof config?.sequenceLength === "number" && config.sequenceLength > 0
+      ? config.sequenceLength
+      : 4;
   const symbolKeys: string[] =
     Array.isArray(config?.symbols) && config.symbols.length > 0
       ? (config.symbols as string[])
@@ -557,13 +624,17 @@ function PatternMasterSession({ levelName, config, onExit, onFinished }: Pattern
           <p className="text-sm font-bold text-brand-purple/80 uppercase tracking-[0.15em]">
             Pattern Master
           </p>
-          <h2 className="text-2xl md:text-3xl font-black text-gray-900">{levelName}</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-gray-900">
+            {levelName}
+          </h2>
         </div>
         <div className="flex flex-col items-end gap-1">
           <div className="flex items-center gap-2 bg-sky-50 px-4 py-2 rounded-2xl border border-sky-100">
             <Brain className="w-5 h-5 text-sky-500" />
             <span className="text-sm font-bold text-sky-700">
-              {phase === "preview" ? "Watch the pattern" : `Step ${currentStep} of ${sequenceLength}`}
+              {phase === "preview"
+                ? "Watch the pattern"
+                : `Step ${currentStep} of ${sequenceLength}`}
             </span>
           </div>
           <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-2xl border border-emerald-100">
@@ -591,7 +662,9 @@ function PatternMasterSession({ levelName, config, onExit, onFinished }: Pattern
                 className={[
                   "w-10 h-10 md:w-12 md:h-12 rounded-3xl flex items-center justify-center text-xl md:text-2xl font-black transition-all",
                   info.className,
-                  isActive ? "scale-110 ring-4 ring-brand-purple/40 shadow-lg shadow-brand-purple/20" : "",
+                  isActive
+                    ? "scale-110 ring-4 ring-brand-purple/40 shadow-lg shadow-brand-purple/20"
+                    : "",
                 ].join(" ")}
               >
                 {info.label}
@@ -602,9 +675,11 @@ function PatternMasterSession({ levelName, config, onExit, onFinished }: Pattern
       </div>
 
       <div className="bg-white rounded-[32px] p-4 md:p-5 border border-gray-100 shadow-md shadow-brand-purple/5">
-        <p className="text-xs font-bold text-gray-500 mb-3">Tap to repeat the pattern</p>
+        <p className="text-xs font-bold text-gray-500 mb-3">
+          Tap to repeat the pattern
+        </p>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-          {symbolKeys.map(key => {
+          {symbolKeys.map((key) => {
             const info = symbolDisplay[key] || symbolDisplay.circle;
             return (
               <button
@@ -617,12 +692,15 @@ function PatternMasterSession({ levelName, config, onExit, onFinished }: Pattern
                 <span
                   className={[
                     "w-9 h-9 rounded-3xl flex items-center justify-center text-xl font-black",
-                    symbolDisplay[key]?.className || symbolDisplay.circle.className,
+                    symbolDisplay[key]?.className ||
+                      symbolDisplay.circle.className,
                   ].join(" ")}
                 >
                   {info.label}
                 </span>
-                <span className="text-[11px] font-bold text-gray-500 capitalize">{key}</span>
+                <span className="text-[11px] font-bold text-gray-500 capitalize">
+                  {key}
+                </span>
               </button>
             );
           })}
@@ -647,19 +725,40 @@ function PatternMasterSession({ levelName, config, onExit, onFinished }: Pattern
   );
 }
 
-function ReflexTapSession({ levelName, config, onExit, onFinished }: ReflexTapSessionProps) {
-  const duration = typeof config?.durationSec === "number" && config.durationSec > 0 ? config.durationSec : 30;
-  const colors = Array.isArray(config?.colors) && config.colors.length > 0 ? config.colors : ["red", "blue"];
+function ReflexTapSession({
+  levelName,
+  config,
+  onExit,
+  onFinished,
+}: ReflexTapSessionProps) {
+  const duration =
+    typeof config?.durationSec === "number" && config.durationSec > 0
+      ? config.durationSec
+      : 30;
+  const colors =
+    Array.isArray(config?.colors) && config.colors.length > 0
+      ? config.colors
+      : ["red", "blue"];
   const spawnRate = config?.spawnRate as string | undefined;
-  const spawnMs = spawnRate === "fast" ? 450 : spawnRate === "medium" ? 650 : 900;
+  const spawnMs =
+    spawnRate === "fast" ? 450 : spawnRate === "medium" ? 650 : 900;
   const sizeKey = config?.targetSize as string | undefined;
   const sizeClass =
-    sizeKey === "small" ? "w-10 h-10" : sizeKey === "medium" ? "w-14 h-14" : "w-16 h-16";
+    sizeKey === "small"
+      ? "w-10 h-10"
+      : sizeKey === "medium"
+        ? "w-14 h-14"
+        : "w-16 h-16";
 
   const [timeLeft, setTimeLeft] = useState(duration);
   const [hits, setHits] = useState(0);
   const [taps, setTaps] = useState(0);
-  const [target, setTarget] = useState<{ id: number; color: string; top: number; left: number } | null>(null);
+  const [target, setTarget] = useState<{
+    id: number;
+    color: string;
+    top: number;
+    left: number;
+  } | null>(null);
   const startedAtRef = useRef<number | null>(null);
   const finishedRef = useRef(false);
 
@@ -717,8 +816,8 @@ function ReflexTapSession({ levelName, config, onExit, onFinished }: ReflexTapSe
 
   const handleHit = () => {
     if (!target || finishedRef.current) return;
-    setHits(prev => prev + 1);
-    setTaps(prev => prev + 1);
+    setHits((prev) => prev + 1);
+    setTaps((prev) => prev + 1);
     setTarget(createTarget());
   };
 
@@ -729,7 +828,9 @@ function ReflexTapSession({ levelName, config, onExit, onFinished }: ReflexTapSe
           <p className="text-sm font-bold text-brand-purple/80 uppercase tracking-[0.15em]">
             Reflex Tap
           </p>
-          <h2 className="text-2xl md:text-3xl font-black text-gray-900">{levelName}</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-gray-900">
+            {levelName}
+          </h2>
         </div>
         <div className="flex flex-col items-end gap-1">
           <div className="flex items-center gap-2 bg-rose-50 px-4 py-2 rounded-2xl border border-rose-100">
@@ -766,18 +867,18 @@ function ReflexTapSession({ levelName, config, onExit, onFinished }: ReflexTapSe
                   target.color === "red"
                     ? "#fee2e2"
                     : target.color === "blue"
-                    ? "#dbeafe"
-                    : target.color === "green"
-                    ? "#dcfce7"
-                    : "#fef9c3",
+                      ? "#dbeafe"
+                      : target.color === "green"
+                        ? "#dcfce7"
+                        : "#fef9c3",
                 borderColor:
                   target.color === "red"
                     ? "#f97373"
                     : target.color === "blue"
-                    ? "#3b82f6"
-                    : target.color === "green"
-                    ? "#22c55e"
-                    : "#eab308",
+                      ? "#3b82f6"
+                      : target.color === "green"
+                        ? "#22c55e"
+                        : "#eab308",
               }}
             />
           )}
@@ -804,9 +905,15 @@ function ReflexTapSession({ levelName, config, onExit, onFinished }: ReflexTapSe
 
 export default function PlayzonePage() {
   const router = useRouter();
+  const {
+    overview,
+    setOverview,
+    shouldRefresh,
+    setLoading: setStoreLoading,
+  } = usePlayzoneStore();
+
   const [isLoading, setIsLoading] = useState(true);
   const [roleData, setRoleData] = useState<any>(null);
-  const [overview, setOverview] = useState<any | null>(null);
   const [filter, setFilter] = useState<GameFilter>("ALL");
   const [overlayView, setOverlayView] = useState<OverlayView>("browse");
   const [activeGame, setActiveGame] = useState<any | null>(null);
@@ -822,7 +929,8 @@ export default function PlayzonePage() {
 
       if (data?.isChild && data.child?.focus_mode) {
         toast("Exam Mode is Enabled! 🎓", {
-          description: "Focus on your studies and earn rewards! Play Zone is temporarily locked. ✨",
+          description:
+            "Focus on your studies and earn rewards! Play Zone is temporarily locked. ✨",
           duration: 6000,
           style: {
             background: "#F0F9FF",
@@ -841,6 +949,14 @@ export default function PlayzonePage() {
       setRoleData(data);
 
       if (data?.isChild) {
+        // Use Zustand store if data is fresh (< 5 minutes old)
+        if (overview && !shouldRefresh()) {
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch fresh data
+        setStoreLoading(true);
         const nextOverview = await getPlayzoneOverview();
         setOverview(nextOverview);
       }
@@ -849,7 +965,7 @@ export default function PlayzonePage() {
     };
 
     init();
-  }, [router]);
+  }, [router, overview, shouldRefresh, setOverview, setStoreLoading]);
 
   const handleOpenGame = (game: any) => {
     setActiveGame(game);
@@ -973,7 +1089,9 @@ export default function PlayzonePage() {
     setOverview(nextOverview);
 
     if (nextOverview && (nextOverview as any).games) {
-      const updatedGame = (nextOverview as any).games.find((g: any) => g.id === activeGame.id);
+      const updatedGame = (nextOverview as any).games.find(
+        (g: any) => g.id === activeGame.id,
+      );
       if (updatedGame) {
         setActiveGame(updatedGame);
       }
@@ -998,7 +1116,7 @@ export default function PlayzonePage() {
   const child = overview?.child;
   const games = (overview?.games || []) as any[];
 
-  const filteredGames = games.filter(game => {
+  const filteredGames = games.filter((game) => {
     if (filter === "ALL") return true;
     if (filter === "ARCADE") return game.type === "ARCADE";
     if (filter === "QUESTION") return game.type === "QUESTION";
@@ -1044,7 +1162,8 @@ export default function PlayzonePage() {
                 <span className="inline-block ml-3">🎮</span>
               </h1>
               <p className="text-base md:text-lg text-gray-500 font-bold max-w-xl">
-                Choose a game, beat fun challenges, and collect shiny XP and stars as you go.
+                Choose a game, beat fun challenges, and collect shiny XP and
+                stars as you go.
               </p>
             </div>
 
@@ -1085,7 +1204,9 @@ export default function PlayzonePage() {
                   </div>
                   <div className="hidden sm:flex flex-col items-end text-xs font-bold text-brand-purple/80">
                     <span>{child.name}</span>
-                    <span className="text-xs text-brand-purple/60">@{child.username}</span>
+                    <span className="text-xs text-brand-purple/60">
+                      @{child.username}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1099,10 +1220,12 @@ export default function PlayzonePage() {
               <span className="text-3xl">🧒</span>
             </div>
             <div className="flex-1 text-center md:text-left">
-              <h2 className="text-2xl font-black text-sky-900 mb-1">For kids only</h2>
+              <h2 className="text-2xl font-black text-sky-900 mb-1">
+                For kids only
+              </h2>
               <p className="text-sky-700 font-bold">
-                Play Zone is built for child accounts. Ask your parent to switch to your kid profile
-                so you can jump into the games.
+                Play Zone is built for child accounts. Ask your parent to switch
+                to your kid profile so you can jump into the games.
               </p>
             </div>
           </div>
@@ -1120,11 +1243,13 @@ export default function PlayzonePage() {
                 </p>
               </div>
               <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur rounded-[999px] p-1 border-2 border-gray-100 shadow-md shadow-brand-purple/10">
-                {([
-                  { key: "ALL", label: "All" },
-                  { key: "ARCADE", label: "Arcade" },
-                  { key: "QUESTION", label: "Brainy" },
-                ] as { key: GameFilter; label: string }[]).map(item => (
+                {(
+                  [
+                    { key: "ALL", label: "All" },
+                    { key: "ARCADE", label: "Arcade" },
+                    { key: "QUESTION", label: "Brainy" },
+                  ] as { key: GameFilter; label: string }[]
+                ).map((item) => (
                   <button
                     key={item.key}
                     type="button"
@@ -1144,7 +1269,9 @@ export default function PlayzonePage() {
 
             {games.length === 0 && (
               <div className="bg-white rounded-[32px] border-4 border-dashed border-gray-200 p-8 text-center">
-                <p className="text-lg font-black text-gray-700 mb-1">Games are warming up</p>
+                <p className="text-lg font-black text-gray-700 mb-1">
+                  Games are warming up
+                </p>
                 <p className="text-sm font-bold text-gray-500">
                   Come back soon to see all your learning mini-games.
                 </p>
@@ -1153,7 +1280,7 @@ export default function PlayzonePage() {
 
             {games.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
-                {filteredGames.map(game => {
+                {filteredGames.map((game) => {
                   const totalLevels = game.totalLevels || 0;
                   const unlockedLevels = game.unlockedLevels || 0;
                   const totalStars = game.totalStars || 0;
@@ -1162,7 +1289,8 @@ export default function PlayzonePage() {
                     game.type === "ARCADE"
                       ? {
                           label: "Arcade",
-                          color: "bg-emerald-50 text-emerald-700 border-emerald-100",
+                          color:
+                            "bg-emerald-50 text-emerald-700 border-emerald-100",
                           icon: <Rocket className="w-3.5 h-3.5" />,
                         }
                       : {
@@ -1233,14 +1361,20 @@ export default function PlayzonePage() {
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={overlayView === "playing" ? () => setOverlayView("select-level") : handleExitOverlay}
+                  onClick={
+                    overlayView === "playing"
+                      ? () => setOverlayView("select-level")
+                      : handleExitOverlay
+                  }
                   className="w-9 h-9 rounded-2xl bg-white border-2 border-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-50 active:scale-95 transition-all cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
                 <div>
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.18em]">
-                    {overlayView === "select-level" ? "Game levels" : "Now playing"}
+                    {overlayView === "select-level"
+                      ? "Game levels"
+                      : "Now playing"}
                   </p>
                   <h2 className="text-xl md:text-2xl font-black text-gray-900 flex items-center gap-2">
                     <span className="inline-flex items-center justify-center w-8 h-8 rounded-2xl bg-brand-purple/10 text-lg">
@@ -1263,7 +1397,8 @@ export default function PlayzonePage() {
             {overlayView === "select-level" && (
               <div className="space-y-4 md:space-y-5">
                 <p className="text-sm font-bold text-gray-500">
-                  Pick a level to start playing. Higher levels mean trickier questions and bigger rewards.
+                  Pick a level to start playing. Higher levels mean trickier
+                  questions and bigger rewards.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                   {activeGame.levels.map((level: any) => {
@@ -1289,12 +1424,16 @@ export default function PlayzonePage() {
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.18em]">
                               Level {level.levelNumber}
                             </p>
-                            <p className="text-base font-black text-gray-900">{level.name}</p>
+                            <p className="text-base font-black text-gray-900">
+                              {level.name}
+                            </p>
                           </div>
                           <div className="flex flex-col items-end gap-1">
                             <div className="inline-flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-2xl border border-amber-100">
                               <Star className="w-3.5 h-3.5 text-sunshine-yellow fill-sunshine-yellow" />
-                              <span className="text-xs font-bold text-amber-700">{stars}</span>
+                              <span className="text-xs font-bold text-amber-700">
+                                {stars}
+                              </span>
                             </div>
                             <span className="text-[11px] font-bold text-gray-400">
                               {attempts === 0 ? "New" : `${attempts} tries`}
@@ -1338,30 +1477,33 @@ export default function PlayzonePage() {
                     onFinished={handleSessionFinished}
                   />
                 )}
-                {activeGame.type === "ARCADE" && sessionData.mode === "memory-match" && (
-                  <MemoryMatchSession
-                    levelName={activeLevel?.name || ""}
-                    config={sessionData.config}
-                    onExit={handleExitOverlay}
-                    onFinished={handleSessionFinished}
-                  />
-                )}
-                {activeGame.type === "ARCADE" && sessionData.mode === "pattern-master" && (
-                  <PatternMasterSession
-                    levelName={activeLevel?.name || ""}
-                    config={sessionData.config}
-                    onExit={handleExitOverlay}
-                    onFinished={handleSessionFinished}
-                  />
-                )}
-                {activeGame.type === "ARCADE" && sessionData.mode === "reflex-tap" && (
-                  <ReflexTapSession
-                    levelName={activeLevel?.name || ""}
-                    config={sessionData.config}
-                    onExit={handleExitOverlay}
-                    onFinished={handleSessionFinished}
-                  />
-                )}
+                {activeGame.type === "ARCADE" &&
+                  sessionData.mode === "memory-match" && (
+                    <MemoryMatchSession
+                      levelName={activeLevel?.name || ""}
+                      config={sessionData.config}
+                      onExit={handleExitOverlay}
+                      onFinished={handleSessionFinished}
+                    />
+                  )}
+                {activeGame.type === "ARCADE" &&
+                  sessionData.mode === "pattern-master" && (
+                    <PatternMasterSession
+                      levelName={activeLevel?.name || ""}
+                      config={sessionData.config}
+                      onExit={handleExitOverlay}
+                      onFinished={handleSessionFinished}
+                    />
+                  )}
+                {activeGame.type === "ARCADE" &&
+                  sessionData.mode === "reflex-tap" && (
+                    <ReflexTapSession
+                      levelName={activeLevel?.name || ""}
+                      config={sessionData.config}
+                      onExit={handleExitOverlay}
+                      onFinished={handleSessionFinished}
+                    />
+                  )}
 
                 {isCompletingSession && (
                   <div className="flex items-center justify-center gap-3 text-sm font-bold text-gray-500">
@@ -1378,10 +1520,13 @@ export default function PlayzonePage() {
                       </div>
                       <div>
                         <p className="text-sm font-black text-gray-900">
-                          {sessionSummary.passed ? "Level cleared!" : "Game over, try again!"}
+                          {sessionSummary.passed
+                            ? "Level cleared!"
+                            : "Game over, try again!"}
                         </p>
                         <p className="text-xs font-bold text-gray-500">
-                          Score {sessionSummary.score} • {sessionSummary.correctCount}/
+                          Score {sessionSummary.score} •{" "}
+                          {sessionSummary.correctCount}/
                           {sessionSummary.totalQuestions} correct
                         </p>
                       </div>

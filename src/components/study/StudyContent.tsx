@@ -4,7 +4,11 @@ import { useState } from "react";
 import { BookOpen, GraduationCap } from "lucide-react";
 import ExamsTab from "./ExamsTab";
 
-export default function StudyContent() {
+interface StudyContentProps {
+  initialExams?: any[];
+}
+
+export default function StudyContent({ initialExams = [] }: StudyContentProps) {
   const [activeTab, setActiveTab] = useState<"exams" | "tutorials">("exams");
 
   return (
@@ -53,7 +57,7 @@ export default function StudyContent() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === "exams" && <ExamsTab />}
+        {activeTab === "exams" && <ExamsTab initialExams={initialExams} />}
         {activeTab === "tutorials" && (
           <div className="bg-white rounded-2xl p-12 border border-gray-200 text-center">
             <div className="w-16 h-16 rounded-2xl bg-brand-purple/10 flex items-center justify-center mx-auto mb-4">

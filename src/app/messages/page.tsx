@@ -166,6 +166,18 @@ export default function MessagesPage() {
     };
   }, [targetUsername, initialChannelFromQuery]);
 
+  // Separate effect to handle channel changes from URL after initial load
+  useEffect(() => {
+    if (!client || initializing) return;
+
+    if (
+      initialChannelFromQuery &&
+      initialChannelFromQuery !== initialChannelId
+    ) {
+      setInitialChannelId(initialChannelFromQuery);
+    }
+  }, [initialChannelFromQuery, client, initializing, initialChannelId]);
+
   if (initializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -209,9 +221,8 @@ export default function MessagesPage() {
       async function setChan() {
         if (!channelId || !client) return;
 
-        if (userSelectedChannelRef.current) {
-          return;
-        }
+        // Reset the user selection flag when channelId changes from URL
+        userSelectedChannelRef.current = false;
 
         const chan = client.channel("messaging", channelId);
         await chan.watch();
@@ -625,9 +636,10 @@ export default function MessagesPage() {
                   <ChannelList
                     filters={filters}
                     sort={sort}
-                    options={{}}
+                    options={{ limit: 30 }}
                     showChannelSearch
                     Preview={ChannelPreview}
+                    setActiveChannelOnMount={!initialChannelId}
                     Paginator={(props) => (
                       <InfiniteScroll {...props} threshold={150} />
                     )}
@@ -655,9 +667,10 @@ export default function MessagesPage() {
                 <ChannelList
                   filters={filters}
                   sort={sort}
-                  options={{}}
+                  options={{ limit: 30 }}
                   showChannelSearch
                   Preview={ChannelPreview}
+                  setActiveChannelOnMount={!initialChannelId}
                   Paginator={(props) => (
                     <InfiniteScroll {...props} threshold={150} />
                   )}

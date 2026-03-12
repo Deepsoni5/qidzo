@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getAvailableExams } from "@/actions/exams";
+import { useExamStore } from "@/store/examStore";
 
 interface Exam {
   exam_id: string;
@@ -36,29 +37,38 @@ interface Exam {
   };
 }
 
-export default function ExamsTab() {
+interface ExamsTabProps {
+  initialExams?: any[];
+}
+
+export default function ExamsTab({ initialExams = [] }: ExamsTabProps) {
   const router = useRouter();
-  const [exams, setExams] = useState<Exam[]>([]);
-  const [filteredExams, setFilteredExams] = useState<Exam[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { exams, isLoading, lastFetched, setExams, setLoading } =
+    useExamStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
 
   useEffect(() => {
-    loadExams();
-  }, []);
-
-  useEffect(() => {
-    filterExams();
-  }, [searchQuery, selectedSubject, exams]);
+    // If we have initial data from server and store is empty, use it
+    if (initialExams.length > 0 && exams.length === 0) {
+      setExams(initialExams);
+    }
+    // If store is empty and no initial data, fetch
+    else if (exams.length === 0 && !lastFetched) {
+      loadExams();
+    }
+    // If data is older than 5 minutes, refresh in background
+    else if (lastFetched && Date.now() - lastFetched > 300000) {
+      loadExams();
+    }
+  }, [initialExams]);
 
   const loadExams = async () => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       const result = await getAvailableExams();
       if (result.success) {
         setExams(result.data as any);
-        setFilteredExams(result.data as any);
       } else {
         toast.error("Failed to load exams");
       }
@@ -66,11 +76,12 @@ export default function ExamsTab() {
       console.error("Error loading exams:", error);
       toast.error("Something went wrong");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const filterExams = () => {
+  // Memoized filtering for better performance
+  const filteredExams = useMemo(() => {
     let filtered = [...exams];
 
     // Search filter
@@ -89,8 +100,8 @@ export default function ExamsTab() {
       filtered = filtered.filter((exam) => exam.subject === selectedSubject);
     }
 
-    setFilteredExams(filtered);
-  };
+    return filtered;
+  }, [exams, searchQuery, selectedSubject]);
 
   const subjects = Array.from(
     new Set(exams.map((e) => e.subject).filter(Boolean)),

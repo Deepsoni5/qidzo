@@ -1,6 +1,14 @@
 "use client";
 
-import { LayoutDashboard, Users, Settings, Zap, ArrowLeft, Award } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Settings,
+  Zap,
+  ArrowLeft,
+  Award,
+  Gift,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,11 +16,36 @@ export default function ParentMobileNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { label: "Dashboard", icon: LayoutDashboard, href: "/parent/dashboard", color: "text-brand-purple" },
-    { label: "Results", icon: Award, href: "/parent/results", color: "text-hot-pink" },
-    { label: "Children", icon: Users, href: "/parent/children", color: "text-sky-blue" },
-    { label: "Settings", icon: Settings, href: "/parent/settings", color: "text-gray-500" },
-    { label: "Upgrade", icon: Zap, href: "/parent/upgrade", color: "text-sunshine-yellow" },
+    {
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      href: "/parent/dashboard",
+      color: "text-brand-purple",
+    },
+    {
+      label: "Results",
+      icon: Award,
+      href: "/parent/results",
+      color: "text-hot-pink",
+    },
+    {
+      label: "Referrals",
+      icon: Gift,
+      href: "/parent/referrals",
+      color: "text-grass-green",
+    },
+    {
+      label: "Children",
+      icon: Users,
+      href: "/parent/children",
+      color: "text-sky-blue",
+    },
+    {
+      label: "Upgrade",
+      icon: Zap,
+      href: "/parent/upgrade",
+      color: "text-sunshine-yellow",
+    },
   ];
 
   return (
@@ -21,13 +54,17 @@ export default function ParentMobileNav() {
         {navItems.map((item, i) => {
           const isActive = pathname === item.href;
           return (
-            <Link 
-                key={i} 
-                href={item.href}
-                className={`flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-brand-purple' : 'text-gray-400 hover:text-gray-600'}`}
+            <Link
+              key={i}
+              href={item.href}
+              className={`flex flex-col items-center gap-1 transition-colors ${isActive ? "text-brand-purple" : "text-gray-400 hover:text-gray-600"}`}
             >
-              <item.icon className={`w-6 h-6 ${isActive ? 'fill-current' : ''} ${isActive ? item.color : ''}`} />
-              <span className="text-[10px] font-bold font-nunito">{item.label}</span>
+              <item.icon
+                className={`w-6 h-6 ${isActive ? "fill-current" : ""} ${isActive ? item.color : ""}`}
+              />
+              <span className="text-[10px] font-bold font-nunito">
+                {item.label}
+              </span>
             </Link>
           );
         })}

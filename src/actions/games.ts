@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabaseClient";
 import { getChildSession } from "./auth";
+import { getOrSetCache, invalidateCache } from "@/lib/redis";
 
 type GameType = "ARCADE" | "QUESTION";
 
@@ -105,165 +106,182 @@ export async function getPlayzoneOverview(): Promise<PlayzoneOverview | null> {
       return null;
     }
 
-    const { data: childRow, error: childError } = await supabase
-      .from("children")
-      .select("id, child_id, name, username, avatar, age, level, xp_points")
-      .eq("child_id", session.id as string)
-      .single();
+    // Redis cache with 5-minute TTL
+    return getOrSetCache(
+      `playzone:overview:${session.id}`,
+      async () => {
+        const { data: childRow, error: childError } = await supabase
+          .from("children")
+          .select("id, child_id, name, username, avatar, age, level, xp_points")
+          .eq("child_id", session.id as string)
+          .single();
 
-    if (childError || !childRow) {
-      return null;
-    }
-
-    const childIdUuid = childRow.id as string;
-    const childAge = (childRow.age as number | null) ?? null;
-
-    const { data: gamesData, error: gamesError } = await supabase
-      .from("games")
-      .select("*")
-      .eq("is_active", true)
-      .order("min_age", { ascending: true });
-
-    if (gamesError || !gamesData || gamesData.length === 0) {
-      return {
-        child: {
-          id: childIdUuid,
-          childId: childRow.child_id,
-          name: childRow.name,
-          username: childRow.username,
-          avatar: childRow.avatar,
-          age: childAge,
-          level: childRow.level,
-          xpPoints: childRow.xp_points,
-        },
-        games: [],
-      };
-    }
-
-    const gameIds = (gamesData as RawGame[]).map(g => g.id);
-
-    const { data: levelsData, error: levelsError } = await supabase
-      .from("game_levels")
-      .select("*")
-      .in("game_id", gameIds)
-      .eq("is_active", true)
-      .order("level_number", { ascending: true });
-
-    if (levelsError || !levelsData) {
-      return null;
-    }
-
-    const { data: progressData } = await supabase
-      .from("child_game_progress")
-      .select("*")
-      .eq("child_id", childIdUuid);
-
-    const progressList = (progressData || []) as RawProgress[];
-    const progressByLevel = new Map<string, RawProgress>();
-    for (const p of progressList) {
-      progressByLevel.set(p.level_id, p);
-    }
-
-    const levelsByGame = new Map<string, RawLevel[]>();
-    for (const level of levelsData as RawLevel[]) {
-      const byGame = levelsByGame.get(level.game_id) || [];
-      byGame.push(level);
-      levelsByGame.set(level.game_id, byGame);
-    }
-
-    const games: PlayzoneOverview["games"] = [];
-
-    for (const rawGame of gamesData as RawGame[]) {
-      const allLevels = (levelsByGame.get(rawGame.id) || []).filter(level => {
-        if (childAge === null) return true;
-        const minOk = level.min_age == null || level.min_age <= childAge;
-        const maxOk = level.max_age == null || level.max_age >= childAge;
-        return minOk && maxOk;
-      }).sort((a, b) => a.level_number - b.level_number);
-
-      if (allLevels.length === 0) continue;
-
-      let unlockedLevels = 0;
-      let totalStars = 0;
-
-      const gameLevels = allLevels.map((level, index) => {
-        const progress = progressByLevel.get(level.id);
-        const isPlaceholder =
-          progress &&
-          (progress.attempts_count ?? 0) === 0 &&
-          (progress.stars_earned ?? 0) === 0;
-
-        const bestScore = progress?.best_score ?? 0;
-        const starsEarned = isPlaceholder ? 0 : progress?.stars_earned ?? 0;
-        const attemptsCount = isPlaceholder ? 0 : progress?.attempts_count ?? 0;
-        const unlockedFlag = isPlaceholder ? false : progress?.unlocked ?? false;
-
-        const previousLevel = index > 0 ? allLevels[index - 1] : null;
-        const previousProgress = previousLevel
-          ? progressByLevel.get(previousLevel.id)
-          : undefined;
-        const prevIsPlaceholder =
-          previousProgress &&
-          (previousProgress.attempts_count ?? 0) === 0 &&
-          (previousProgress.stars_earned ?? 0) === 0;
-        const prevUnlocked =
-          previousProgress && !prevIsPlaceholder && previousProgress.unlocked;
-
-        const canPlay = index === 0 || Boolean(prevUnlocked);
-
-        if (unlockedFlag) {
-          unlockedLevels += 1;
+        if (childError || !childRow) {
+          return null;
         }
-        totalStars += starsEarned;
+
+        const childIdUuid = childRow.id as string;
+        const childAge = (childRow.age as number | null) ?? null;
+
+        const { data: gamesData, error: gamesError } = await supabase
+          .from("games")
+          .select("*")
+          .eq("is_active", true)
+          .order("min_age", { ascending: true });
+
+        if (gamesError || !gamesData || gamesData.length === 0) {
+          return {
+            child: {
+              id: childIdUuid,
+              childId: childRow.child_id,
+              name: childRow.name,
+              username: childRow.username,
+              avatar: childRow.avatar,
+              age: childAge,
+              level: childRow.level,
+              xpPoints: childRow.xp_points,
+            },
+            games: [],
+          };
+        }
+
+        const gameIds = (gamesData as RawGame[]).map((g) => g.id);
+
+        const { data: levelsData, error: levelsError } = await supabase
+          .from("game_levels")
+          .select("*")
+          .in("game_id", gameIds)
+          .eq("is_active", true)
+          .order("level_number", { ascending: true });
+
+        if (levelsError || !levelsData) {
+          return null;
+        }
+
+        const { data: progressData } = await supabase
+          .from("child_game_progress")
+          .select("*")
+          .eq("child_id", childIdUuid);
+
+        const progressList = (progressData || []) as RawProgress[];
+        const progressByLevel = new Map<string, RawProgress>();
+        for (const p of progressList) {
+          progressByLevel.set(p.level_id, p);
+        }
+
+        const levelsByGame = new Map<string, RawLevel[]>();
+        for (const level of levelsData as RawLevel[]) {
+          const byGame = levelsByGame.get(level.game_id) || [];
+          byGame.push(level);
+          levelsByGame.set(level.game_id, byGame);
+        }
+
+        const games: PlayzoneOverview["games"] = [];
+
+        for (const rawGame of gamesData as RawGame[]) {
+          const allLevels = (levelsByGame.get(rawGame.id) || [])
+            .filter((level) => {
+              if (childAge === null) return true;
+              const minOk = level.min_age == null || level.min_age <= childAge;
+              const maxOk = level.max_age == null || level.max_age >= childAge;
+              return minOk && maxOk;
+            })
+            .sort((a, b) => a.level_number - b.level_number);
+
+          if (allLevels.length === 0) continue;
+
+          let unlockedLevels = 0;
+          let totalStars = 0;
+
+          const gameLevels = allLevels.map((level, index) => {
+            const progress = progressByLevel.get(level.id);
+            const isPlaceholder =
+              progress &&
+              (progress.attempts_count ?? 0) === 0 &&
+              (progress.stars_earned ?? 0) === 0;
+
+            const bestScore = progress?.best_score ?? 0;
+            const starsEarned = isPlaceholder
+              ? 0
+              : (progress?.stars_earned ?? 0);
+            const attemptsCount = isPlaceholder
+              ? 0
+              : (progress?.attempts_count ?? 0);
+            const unlockedFlag = isPlaceholder
+              ? false
+              : (progress?.unlocked ?? false);
+
+            const previousLevel = index > 0 ? allLevels[index - 1] : null;
+            const previousProgress = previousLevel
+              ? progressByLevel.get(previousLevel.id)
+              : undefined;
+            const prevIsPlaceholder =
+              previousProgress &&
+              (previousProgress.attempts_count ?? 0) === 0 &&
+              (previousProgress.stars_earned ?? 0) === 0;
+            const prevUnlocked =
+              previousProgress &&
+              !prevIsPlaceholder &&
+              previousProgress.unlocked;
+
+            const canPlay = index === 0 || Boolean(prevUnlocked);
+
+            if (unlockedFlag) {
+              unlockedLevels += 1;
+            }
+            totalStars += starsEarned;
+
+            return {
+              id: level.id,
+              levelNumber: level.level_number,
+              name: level.name,
+              description: level.description,
+              targetScore: level.target_score,
+              maxTimeSec: level.max_time_sec,
+              config: level.config,
+              progress: {
+                bestScore,
+                starsEarned,
+                attemptsCount,
+                unlocked: unlockedFlag,
+                lastPlayedAt: progress?.last_played_at ?? null,
+              },
+              canPlay,
+            };
+          });
+
+          games.push({
+            id: rawGame.id,
+            slug: rawGame.slug,
+            name: rawGame.name,
+            description: rawGame.description,
+            type: rawGame.type,
+            minAge: rawGame.min_age,
+            maxAge: rawGame.max_age,
+            icon: rawGame.icon,
+            totalLevels: gameLevels.length,
+            unlockedLevels,
+            totalStars,
+            levels: gameLevels,
+          });
+        }
 
         return {
-          id: level.id,
-          levelNumber: level.level_number,
-          name: level.name,
-          description: level.description,
-          targetScore: level.target_score,
-          maxTimeSec: level.max_time_sec,
-          config: level.config,
-          progress: {
-            bestScore,
-            starsEarned,
-            attemptsCount,
-            unlocked: unlockedFlag,
-            lastPlayedAt: progress?.last_played_at ?? null,
+          child: {
+            id: childIdUuid,
+            childId: childRow.child_id,
+            name: childRow.name,
+            username: childRow.username,
+            avatar: childRow.avatar,
+            age: childAge,
+            level: childRow.level,
+            xpPoints: childRow.xp_points,
           },
-          canPlay,
+          games,
         };
-      });
-
-      games.push({
-        id: rawGame.id,
-        slug: rawGame.slug,
-        name: rawGame.name,
-        description: rawGame.description,
-        type: rawGame.type,
-        minAge: rawGame.min_age,
-        maxAge: rawGame.max_age,
-        icon: rawGame.icon,
-        totalLevels: gameLevels.length,
-        unlockedLevels,
-        totalStars,
-        levels: gameLevels,
-      });
-    }
-
-    return {
-      child: {
-        id: childIdUuid,
-        childId: childRow.child_id,
-        name: childRow.name,
-        username: childRow.username,
-        avatar: childRow.avatar,
-        age: childAge,
-        level: childRow.level,
-        xpPoints: childRow.xp_points,
       },
-      games,
-    };
+      300, // 5 minutes cache
+    );
   } catch (error) {
     console.error("Error in getPlayzoneOverview:", error);
     return null;
@@ -293,7 +311,9 @@ export async function startQuestionSession(gameId: string, levelId: string) {
 
     const { data: levelRow, error: levelError } = await supabase
       .from("game_levels")
-      .select("id, game_id, level_number, target_score, max_time_sec, xp_base, xp_per_correct, config")
+      .select(
+        "id, game_id, level_number, target_score, max_time_sec, xp_base, xp_per_correct, config",
+      )
       .eq("id", levelId)
       .single();
 
@@ -309,13 +329,19 @@ export async function startQuestionSession(gameId: string, levelId: string) {
       .eq("is_active", true);
 
     if (questionsError || !questionsData || questionsData.length === 0) {
-      return { success: false, error: "No questions available for this level yet" };
+      return {
+        success: false,
+        error: "No questions available for this level yet",
+      };
     }
 
     const questions = questionsData as RawQuestion[];
 
     const config = (levelRow.config as any) || {};
-    const numConfigured = typeof config.numQuestions === "number" ? config.numQuestions : questions.length;
+    const numConfigured =
+      typeof config.numQuestions === "number"
+        ? config.numQuestions
+        : questions.length;
     const numQuestions = Math.max(1, Math.min(numConfigured, questions.length));
 
     const shuffled = [...questions];
@@ -326,7 +352,7 @@ export async function startQuestionSession(gameId: string, levelId: string) {
       shuffled[j] = temp;
     }
 
-    const selected = shuffled.slice(0, numQuestions).map(q => ({
+    const selected = shuffled.slice(0, numQuestions).map((q) => ({
       id: q.id,
       type: q.type,
       prompt: q.prompt,
@@ -334,13 +360,14 @@ export async function startQuestionSession(gameId: string, levelId: string) {
       correctAnswer: q.correct_answer,
     }));
 
-    const timePerQuestion = typeof config.timePerQuestion === "number" ? config.timePerQuestion : 0;
+    const timePerQuestion =
+      typeof config.timePerQuestion === "number" ? config.timePerQuestion : 0;
     const totalTime =
       typeof levelRow.max_time_sec === "number"
         ? levelRow.max_time_sec
         : timePerQuestion > 0
-        ? timePerQuestion * numQuestions
-        : null;
+          ? timePerQuestion * numQuestions
+          : null;
 
     return {
       success: true,
@@ -400,7 +427,9 @@ export async function completeGameSession(payload: CompleteSessionPayload) {
 
     const { data: levelRow, error: levelError } = await supabase
       .from("game_levels")
-      .select("id, game_id, level_number, target_score, xp_base, xp_per_correct")
+      .select(
+        "id, game_id, level_number, target_score, xp_base, xp_per_correct",
+      )
       .eq("id", payload.levelId)
       .single();
 
@@ -418,25 +447,30 @@ export async function completeGameSession(payload: CompleteSessionPayload) {
       else if (ratio >= 0.6) stars = 1;
     }
 
-    const xpAwardedRaw = levelRow.xp_base + payload.correctCount * levelRow.xp_per_correct;
+    const xpAwardedRaw =
+      levelRow.xp_base + payload.correctCount * levelRow.xp_per_correct;
     const xpAwarded = xpAwardedRaw > 0 ? xpAwardedRaw : 0;
 
     const now = new Date();
-    const startedAt = new Date(now.getTime() - Math.max(0, payload.durationSec) * 1000);
+    const startedAt = new Date(
+      now.getTime() - Math.max(0, payload.durationSec) * 1000,
+    );
 
-    const { error: attemptError } = await supabase.from("game_attempts").insert({
-      child_id: childIdUuid,
-      game_id: payload.gameId,
-      level_id: payload.levelId,
-      started_at: startedAt.toISOString(),
-      finished_at: now.toISOString(),
-      duration_sec: Math.max(0, Math.round(payload.durationSec)),
-      score: payload.score,
-      correct_count: payload.correctCount,
-      total_questions: payload.totalQuestions,
-      result: payload.result,
-      xp_awarded: xpAwarded,
-    });
+    const { error: attemptError } = await supabase
+      .from("game_attempts")
+      .insert({
+        child_id: childIdUuid,
+        game_id: payload.gameId,
+        level_id: payload.levelId,
+        started_at: startedAt.toISOString(),
+        finished_at: now.toISOString(),
+        duration_sec: Math.max(0, Math.round(payload.durationSec)),
+        score: payload.score,
+        correct_count: payload.correctCount,
+        total_questions: payload.totalQuestions,
+        result: payload.result,
+        xp_awarded: xpAwarded,
+      });
 
     if (attemptError) {
       console.error("Error inserting game_attempt:", attemptError);
@@ -505,6 +539,9 @@ export async function completeGameSession(payload: CompleteSessionPayload) {
         console.error("Error updating child XP:", xpError);
       }
     }
+
+    // Invalidate playzone cache after completing session
+    await invalidateCache(`playzone:overview:${session.id}`);
 
     return {
       success: true,
