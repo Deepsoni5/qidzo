@@ -124,7 +124,7 @@ export async function getReferralStats(): Promise<ReferralStats | null> {
             return sum;
           }, 0) || 0;
 
-        const referralLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://qidzo.com"}/signup?ref=${parentData.referral_code}`;
+        const referralLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://qidzo.com"}/sign-up?ref=${parentData.referral_code}`;
 
         return {
           totalSignups,
