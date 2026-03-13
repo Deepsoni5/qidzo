@@ -2,16 +2,9 @@
 
 import {
   Search,
-  Bell,
-  User,
   ArrowRight,
   LayoutDashboard,
   LogOut,
-  Trophy,
-  Flame,
-  Wand2,
-  Star,
-  Badge,
   Users,
   UserCheck,
   Heart,
@@ -24,13 +17,7 @@ import {
   ChevronDown,
   School,
 } from "lucide-react";
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  UserButton,
-  useUser,
-} from "@clerk/nextjs";
+import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
@@ -87,6 +74,7 @@ export default function Navbar({
   const [kidProfile, setKidProfile] = useState<ChildProfile | null>(
     initialKidProfile,
   );
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<GlobalSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -108,7 +96,14 @@ export default function Navbar({
       // Use cached session if available and fresh
       if (childSession && !shouldRefresh()) {
         setKid(childSession);
-        // No need to fetch profile - data is in JWT now
+        // Fetch profile for social stats if we have a username
+        if (
+          childSession.username &&
+          typeof childSession.username === "string" &&
+          !kidProfile
+        ) {
+          fetchKidProfile(childSession.username);
+        }
         return;
       }
 
@@ -120,13 +115,37 @@ export default function Navbar({
         // Session now contains all data from JWT (name, avatar, level, xp_points)
         setSession(session as any);
         setKid(session);
+        // Fetch profile for social stats
+        if (session.username && typeof session.username === "string") {
+          fetchKidProfile(session.username);
+        }
       } else {
         setSession(null);
         setKid(null);
+        setKidProfile(null);
       }
     };
     checkKid();
   }, [user, userRole, childSession, shouldRefresh, setSession, setLoading]);
+
+  // Function to fetch kid profile for social stats
+  const fetchKidProfile = async (username: string) => {
+    setIsLoadingProfile(true);
+    try {
+      const profile = await getChildProfile(username);
+      setKidProfile(profile);
+    } catch (error) {
+      console.error("Failed to fetch kid profile:", error);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  // Function to refresh stats
+  const handleRefreshStats = async () => {
+    if (!kid?.username) return;
+    await fetchKidProfile(kid.username);
+  };
 
   useEffect(() => {
     const q = searchTerm.trim();
@@ -158,8 +177,6 @@ export default function Navbar({
   const currentXP = kid?.xp_points || 0;
   const nextLevelXP = currentLevel * 1000;
   const progress = Math.min((currentXP / nextLevelXP) * 100, 100);
-  const streak = 7; // Mock streak for now
-  const magics = kidProfile?.total_posts || 0;
 
   // Don't display navbar on admin routes
   if (pathname.startsWith("/admin")) {
@@ -433,52 +450,83 @@ export default function Navbar({
                         </div>
                       </div>
 
-                      {/* Grid */}
-                      <div className="grid grid-cols-2 gap-3">
-                        {/* Followers */}
-                        <div className="bg-brand-purple/5 rounded-2xl p-3 border border-brand-purple/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
-                          <Users className="w-6 h-6 text-brand-purple" />
-                          <span className="font-black text-xl text-gray-800">
-                            {kidProfile?.followers_count || 0}
-                          </span>
-                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                            Followers
-                          </span>
-                        </div>
-
-                        {/* Following */}
-                        <div className="bg-hot-pink/5 rounded-2xl p-3 border border-hot-pink/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
-                          <UserCheck className="w-6 h-6 text-hot-pink" />
-                          <span className="font-black text-xl text-gray-800">
-                            {kidProfile?.following_count || 0}
-                          </span>
-                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                            Following
-                          </span>
-                        </div>
-
-                        {/* Total Likes */}
-                        <div className="bg-pink-50 rounded-2xl p-3 border border-pink-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
-                          <Heart className="w-6 h-6 text-hot-pink fill-hot-pink/20" />
-                          <span className="font-black text-xl text-gray-800">
-                            {kidProfile?.total_likes_received || 0}
-                          </span>
-                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                            Likes Get
-                          </span>
-                        </div>
-
-                        {/* Total Comments */}
-                        <div className="bg-sky-50 rounded-2xl p-3 border border-sky-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
-                          <MessageCircle className="w-6 h-6 text-sky-blue fill-sky-blue/20" />
-                          <span className="font-black text-xl text-gray-800">
-                            {kidProfile?.total_comments_made || 0}
-                          </span>
-                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                            Comments
-                          </span>
-                        </div>
+                      {/* Stats Header with Refresh Button */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                          Social Stats
+                        </span>
+                        <button
+                          onClick={handleRefreshStats}
+                          disabled={isLoadingProfile}
+                          className={`p-1.5 rounded-lg bg-gray-50 text-gray-400 hover:text-brand-purple hover:bg-brand-purple/10 transition-all cursor-pointer ${isLoadingProfile ? "animate-spin text-brand-purple" : ""}`}
+                          title="Refresh Stats"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </button>
                       </div>
+
+                      {/* Grid */}
+                      {isLoadingProfile ? (
+                        // Skeleton Loading
+                        <div className="grid grid-cols-2 gap-3">
+                          {[1, 2, 3, 4].map((i) => (
+                            <div
+                              key={i}
+                              className="bg-gray-50 rounded-2xl p-3 border border-gray-100 flex flex-col items-center justify-center gap-1 animate-pulse"
+                            >
+                              <div className="w-6 h-6 bg-gray-200 rounded-lg"></div>
+                              <div className="w-12 h-6 bg-gray-200 rounded mt-1"></div>
+                              <div className="w-16 h-3 bg-gray-200 rounded mt-1"></div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* Followers */}
+                          <div className="bg-brand-purple/5 rounded-2xl p-3 border border-brand-purple/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                            <Users className="w-6 h-6 text-brand-purple" />
+                            <span className="font-black text-xl text-gray-800">
+                              {kidProfile?.followers_count || 0}
+                            </span>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                              Followers
+                            </span>
+                          </div>
+
+                          {/* Following */}
+                          <div className="bg-hot-pink/5 rounded-2xl p-3 border border-hot-pink/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                            <UserCheck className="w-6 h-6 text-hot-pink" />
+                            <span className="font-black text-xl text-gray-800">
+                              {kidProfile?.following_count || 0}
+                            </span>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                              Following
+                            </span>
+                          </div>
+
+                          {/* Total Likes */}
+                          <div className="bg-pink-50 rounded-2xl p-3 border border-pink-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                            <Heart className="w-6 h-6 text-hot-pink fill-hot-pink/20" />
+                            <span className="font-black text-xl text-gray-800">
+                              {kidProfile?.total_likes_received || 0}
+                            </span>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                              Likes Get
+                            </span>
+                          </div>
+
+                          {/* Total Comments */}
+                          <div className="bg-sky-50 rounded-2xl p-3 border border-sky-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                            <MessageCircle className="w-6 h-6 text-sky-blue fill-sky-blue/20" />
+                            <span className="font-black text-xl text-gray-800">
+                              {kidProfile?.total_comments_made || 0}
+                            </span>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                              Comments
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Footer */}
