@@ -187,18 +187,20 @@ export default function KidsLoginPage() {
 
           <div className="mt-8 pt-6 border-t border-gray-100">
             <div className="flex flex-col items-center gap-3 text-center">
-              <p className="text-gray-400 font-medium text-sm">Login Below</p>
+              <p className="text-gray-400 font-medium text-sm">
+                Other Login's Here
+              </p>
               <div className="w-full flex flex-col sm:flex-row gap-3">
                 <Link href="/sign-in" className="w-full">
                   <button className="w-full py-3 px-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 hover:text-brand-purple hover:border-brand-purple hover:bg-purple-50 font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
                     <User className="w-4 h-4" />
-                    Parents/Ambassador Login Here
+                    Parents / Ambassador Login Here
                   </button>
                 </Link>
                 <Link href="/school/sign-in" className="w-full">
                   <button className="w-full py-3 px-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 hover:text-brand-purple hover:border-brand-purple hover:bg-purple-50 font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
                     <School className="w-4 h-4" />
-                    School/College Login
+                    School / College Login
                   </button>
                 </Link>
               </div>
