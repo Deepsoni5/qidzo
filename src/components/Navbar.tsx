@@ -44,6 +44,7 @@ import { getChildProfile, ChildProfile } from "@/actions/profile";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import Image from "next/image";
 import type { GlobalSearchResult } from "@/actions/search";
+import { useChildAuthStore } from "@/store/childAuthStore";
 
 type UserRoleState = {
   role: string;
@@ -70,12 +71,22 @@ export default function Navbar({
 }: NavbarProps) {
   const { user } = useUser();
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Zustand store for child auth
+  const {
+    session: childSession,
+    setSession,
+    shouldRefresh,
+    setLoading,
+    clearSession,
+  } = useChildAuthStore();
+
   const [userRole, setUserRole] = useState<UserRoleState>(initialUserRole);
   const [kid, setKid] = useState<any>(initialKid);
   const [kidProfile, setKidProfile] = useState<ChildProfile | null>(
     initialKidProfile,
   );
-  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<GlobalSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -92,22 +103,30 @@ export default function Navbar({
     };
     init();
 
-    // Check for kid session
+    // Check for kid session with Zustand caching
     const checkKid = async () => {
-      if (kid && kidProfile) return;
+      // Use cached session if available and fresh
+      if (childSession && !shouldRefresh()) {
+        setKid(childSession);
+        // No need to fetch profile - data is in JWT now
+        return;
+      }
 
+      // Fetch fresh session
+      setLoading(true);
       const session = await getChildSession();
-      if (session) {
-        setKid(session);
 
-        if (!kidProfile && session.username) {
-          const profile = await getChildProfile(session.username as string);
-          setKidProfile(profile);
-        }
+      if (session) {
+        // Session now contains all data from JWT (name, avatar, level, xp_points)
+        setSession(session as any);
+        setKid(session);
+      } else {
+        setSession(null);
+        setKid(null);
       }
     };
     checkKid();
-  }, [user, userRole, kid, kidProfile]);
+  }, [user, userRole, childSession, shouldRefresh, setSession, setLoading]);
 
   useEffect(() => {
     const q = searchTerm.trim();
@@ -134,9 +153,9 @@ export default function Navbar({
     return () => clearTimeout(timeout);
   }, [searchTerm]);
 
-  // Derived stats
-  const currentLevel = kidProfile?.level || 1;
-  const currentXP = kidProfile?.xp_points || 0;
+  // Derived stats - use JWT data for level/XP, kidProfile for social stats
+  const currentLevel = kid?.level || 1;
+  const currentXP = kid?.xp_points || 0;
   const nextLevelXP = currentLevel * 1000;
   const progress = Math.min((currentXP / nextLevelXP) * 100, 100);
   const streak = 7; // Mock streak for now
@@ -346,9 +365,9 @@ export default function Navbar({
                         </span>
                       </div>
                       <div className="w-10 h-10 bg-sky-400 rounded-full flex items-center justify-center text-white font-black text-lg border-2 border-white shadow-md ring-2 ring-sky-100 group-hover:ring-brand-purple/20 transition-all overflow-hidden relative">
-                        {kidProfile?.avatar ? (
+                        {kid.avatar ? (
                           <Image
-                            src={kidProfile.avatar}
+                            src={kid.avatar}
                             alt={kid.username}
                             fill
                             className="object-cover"
@@ -369,9 +388,9 @@ export default function Navbar({
                       <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
                       <div className="flex items-center gap-4 relative z-10">
                         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-sky-500 font-black text-3xl border-4 border-white/20 shadow-lg overflow-hidden relative">
-                          {kidProfile?.avatar ? (
+                          {kid.avatar ? (
                             <Image
-                              src={kidProfile.avatar}
+                              src={kid.avatar}
                               alt={kid.username}
                               fill
                               className="object-cover"
@@ -383,7 +402,7 @@ export default function Navbar({
                         </div>
                         <div>
                           <h4 className="font-black text-xl leading-none mb-1">
-                            {kidProfile?.name || kid.username}
+                            {kid.name || kid.username}
                           </h4>
                           <p className="text-sky-100 font-bold text-sm">
                             @{kid.username}
@@ -466,6 +485,7 @@ export default function Navbar({
                     <div className="p-2 bg-gray-50 border-t border-gray-100">
                       <button
                         onClick={async () => {
+                          clearSession(); // Clear Zustand store
                           await logoutChild();
                           window.location.reload();
                         }}
