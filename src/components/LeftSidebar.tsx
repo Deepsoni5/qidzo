@@ -1,65 +1,109 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Plus, Sparkles } from "lucide-react";
-import { useUser } from "@clerk/nextjs";
+import {
+  Sparkles,
+  Home,
+  BookOpen,
+  Gamepad2,
+  MessageCircle,
+  LayoutDashboard,
+  School,
+} from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabaseClient";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-
 import { Skeleton } from "@/components/ui/skeleton";
-import { checkIsParent } from "@/actions/parent";
 import { getCurrentUserRole } from "@/actions/auth";
 import { CreatePostModal } from "./CreatePostModal";
 import SchoolCreatePostModal from "./school/SchoolCreatePostModal";
+import { useUserRoleStore } from "@/store/userRoleStore";
+import { useUser } from "@clerk/nextjs";
 
-export default function LeftSidebar() {
+interface UserRoleData {
+  role: string;
+  isParent: boolean;
+  isSchool?: boolean;
+  isChild: boolean;
+  child?: any;
+}
+
+interface LeftSidebarProps {
+  initialUserRole?: UserRoleData | null;
+}
+
+export default function LeftSidebar({
+  initialUserRole = null,
+}: LeftSidebarProps) {
   const router = useRouter();
-  const { user } = useUser(); // Still useful for immediate client-side Clerk state
-  const [userRole, setUserRole] = useState<{
-    role: string;
-    isParent: boolean;
-    isSchool?: boolean;
-    isChild: boolean;
-    child?: any;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { roleData, isLoading, setRoleData, setLoading, shouldRefresh } =
+    useUserRoleStore();
+
+  const { isSignedIn, isLoaded: clerkLoaded } = useUser();
 
   useEffect(() => {
-    const init = async () => {
-      setIsLoading(true);
-      const roleData = await getCurrentUserRole();
-      setUserRole(roleData);
-      setIsLoading(false);
-    };
-    init();
-  }, [user]); // Re-run if Clerk user changes
+    // Wait for Clerk to finish loading
+    if (!clerkLoaded) return;
 
-  // Prefetch pages on hover
-  const handlePrefetch = (path: string) => {
-    router.prefetch(path);
-  };
-
-  const handleCreatePost = async () => {
-    // Refresh role check to be sure
-    const currentRole = await getCurrentUserRole();
-
-    if (currentRole.role === "guest") {
-      toast.error("Please log in to create a post!");
+    // Clerk says not signed in — set guest role immediately, no skeleton
+    if (isSignedIn === false) {
+      setRoleData({
+        role: "guest",
+        isParent: false,
+        isSchool: false,
+        isChild: false,
+      });
       return;
     }
 
-    if (currentRole.isParent) {
+    // Store has fresh data — skip fetch
+    if (roleData && !shouldRefresh()) return;
+
+    // Server passed initial role — seed store, skip fetch
+    if (initialUserRole && !roleData) {
+      setRoleData({
+        ...initialUserRole,
+        isSchool: initialUserRole.isSchool ?? false,
+      });
+      return;
+    }
+
+    // Fetch fresh role from server
+    const fetchRole = async () => {
+      setLoading(true);
+      try {
+        const data = await getCurrentUserRole();
+        setRoleData({ ...data, isSchool: data.isSchool ?? false });
+      } catch {
+        setRoleData({
+          role: "guest",
+          isParent: false,
+          isSchool: false,
+          isChild: false,
+        });
+      }
+    };
+    fetchRole();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSignedIn, clerkLoaded]);
+
+  const handlePrefetch = (path: string) => router.prefetch(path);
+
+  const handleCreatePost = () => {
+    if (!roleData || roleData.role === "guest") {
+      toast.error("Please log in to create a post!");
+      return;
+    }
+    if (roleData.isParent) {
       toast("Parents Mode! 🛡️", {
         description:
           "Parents can only view and react. Let the kids be the creators! 🎨",
         duration: 4000,
         style: {
-          background: "#FDF2F8", // pink-50
-          border: "2px solid #EC4899", // hot-pink
-          color: "#831843", // pink-900
+          background: "#FDF2F8",
+          border: "2px solid #EC4899",
+          color: "#831843",
           fontSize: "16px",
           fontFamily: "Nunito, sans-serif",
           fontWeight: "bold",
@@ -68,25 +112,21 @@ export default function LeftSidebar() {
       });
       return;
     }
-
-    if (currentRole.isChild || currentRole.isSchool) {
+    if (roleData.isChild || roleData.isSchool) {
       setIsCreateModalOpen(true);
-      return;
     }
   };
 
-  const handlePlayZone = async () => {
-    const currentRole = await getCurrentUserRole();
-
-    if (currentRole?.isChild && currentRole.child?.focus_mode) {
+  const handlePlayZone = () => {
+    if (roleData?.isChild && roleData.child?.focus_mode) {
       toast("Exam Mode is Enabled! 🎓", {
         description:
           "Focus on your studies and earn rewards! Play Zone is temporarily locked. ✨",
         duration: 6000,
         style: {
-          background: "#F0F9FF", // sky-50
-          border: "3px solid #0EA5E9", // sky-blue
-          color: "#075985", // sky-900
+          background: "#F0F9FF",
+          border: "3px solid #0EA5E9",
+          color: "#075985",
           fontSize: "16px",
           fontFamily: "Nunito, sans-serif",
           fontWeight: "bold",
@@ -95,22 +135,19 @@ export default function LeftSidebar() {
       });
       return;
     }
-
     router.push("/playzone");
   };
 
-  const handleStudyHub = async () => {
-    const currentRole = await getCurrentUserRole();
-
-    if (!currentRole.isChild) {
+  const handleStudyHub = () => {
+    if (!roleData?.isChild) {
       toast("Kid Account Required! 🎓", {
         description:
           "Please log in with a children account to view the Study Hub. ✨",
         duration: 5000,
         style: {
-          background: "#F0F9FF", // sky-50
-          border: "3px solid #0EA5E9", // sky-blue
-          color: "#075985", // sky-900
+          background: "#F0F9FF",
+          border: "3px solid #0EA5E9",
+          color: "#075985",
           fontSize: "16px",
           fontFamily: "Nunito, sans-serif",
           fontWeight: "bold",
@@ -119,32 +156,86 @@ export default function LeftSidebar() {
       });
       return;
     }
-
     router.push("/study");
   };
 
-  const handleComingSoon = (feature: string) => {
-    toast.info(`${feature} is Coming Soon! 🚧`, {
-      description: "We're building something awesome for you! Stay tuned.",
-      style: {
-        background: "#F0F9FF", // sky-50
-        border: "2px solid #0EA5E9", // sky-blue
-        color: "#075985", // sky-900
-        fontSize: "16px",
-        fontFamily: "Nunito, sans-serif",
-        fontWeight: "bold",
-      },
-      className: "rounded-2xl shadow-xl",
-    });
+  const handleMessages = () => {
+    if (!roleData || roleData.role === "guest") {
+      toast.error("Please log in to chat!", {
+        description: "Messages are available only for kid profiles.",
+      });
+      return;
+    }
+    if (roleData.isParent) {
+      toast.error("Parents cannot chat with children.", {
+        description: "Switch to a kid account to use messages.",
+      });
+      return;
+    }
+    router.push("/messages");
   };
+
+  const navItems = [
+    {
+      label: "Home",
+      icon: Home,
+      color: "text-brand-purple",
+      bg: "bg-brand-purple/10",
+      href: "/",
+    },
+    {
+      label: "Study Hub",
+      icon: BookOpen,
+      color: "text-sky-blue",
+      bg: "bg-sky-blue/10",
+      action: handleStudyHub,
+      prefetch: "/study",
+    },
+    {
+      label: "Play Zone",
+      icon: Gamepad2,
+      color: "text-hot-pink",
+      bg: "bg-hot-pink/10",
+      action: handlePlayZone,
+      prefetch: "/playzone",
+    },
+    {
+      label: "Messages",
+      icon: MessageCircle,
+      color: "text-grass-green",
+      bg: "bg-grass-green/10",
+      action: handleMessages,
+      prefetch: "/messages",
+    },
+    ...(roleData?.isParent
+      ? [
+          {
+            label: "Parent Dashboard",
+            icon: LayoutDashboard,
+            color: "text-orange-500",
+            bg: "bg-orange-500/10",
+            href: "/parent/dashboard",
+          },
+        ]
+      : []),
+    ...(roleData?.isSchool
+      ? [
+          {
+            label: "School Dashboard",
+            icon: School,
+            color: "text-sky-blue",
+            bg: "bg-sky-blue/10",
+            href: "/school/dashboard",
+          },
+        ]
+      : []),
+  ];
 
   return (
     <>
       <div className="hidden xl:block w-68 shrink-0">
         <div className="sticky top-24 p-2">
-          {/* Main Card */}
           <div className="bg-white/90 backdrop-blur-xl p-5 rounded-[32px] border-[3px] border-white ring-4 ring-gray-50 shadow-2xl shadow-brand-purple/5 relative overflow-hidden">
-            {/* Decorative Background Elements */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-brand-purple/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-hot-pink/5 rounded-full blur-2xl translate-y-1/3 -translate-x-1/3 pointer-events-none" />
 
@@ -164,114 +255,35 @@ export default function LeftSidebar() {
                       <Skeleton className="h-5 w-24 rounded-lg" />
                     </div>
                   ))
-                : [
-                    {
-                      label: "Home",
-                      icon: "🏠",
-                      color: "text-brand-purple",
-                      bg: "bg-brand-purple/10",
-                      active: true,
-                      href: "/",
-                    },
-                    {
-                      label: "Study Hub",
-                      icon: "📚",
-                      color: "text-sky-blue",
-                      bg: "bg-sky-blue/10",
-                      active: false,
-                      action: handleStudyHub,
-                    },
-                    {
-                      label: "Play Zone",
-                      icon: "🎮",
-                      color: "text-hot-pink",
-                      bg: "bg-hot-pink/10",
-                      active: false,
-                      action: handlePlayZone,
-                    },
-                    {
-                      label: "Messages",
-                      icon: "💬",
-                      color: "text-grass-green",
-                      bg: "bg-grass-green/10",
-                      active: false,
-                      action: async () => {
-                        const currentRole = await getCurrentUserRole();
-                        if (currentRole.role === "guest") {
-                          toast.error("Please log in to chat!", {
-                            description:
-                              "Messages are available only for kid profiles.",
-                          });
-                          return;
-                        }
-                        if (currentRole.isParent) {
-                          toast.error("Parents cannot chat with children.", {
-                            description:
-                              "Switch to a kid account to use messages.",
-                          });
-                          return;
-                        }
-                        router.push("/messages");
-                      },
-                    },
-                    ...(userRole?.isParent
-                      ? [
-                          {
-                            label: "Parent Dashboard",
-                            icon: "👨‍👩‍👧‍👦",
-                            color: "text-orange-500",
-                            bg: "bg-orange-500/10",
-                            active: false,
-                            href: "/parent/dashboard",
-                          },
-                        ]
-                      : []),
-                    ...(userRole?.isSchool
-                      ? [
-                          {
-                            label: "School Dashboard",
-                            icon: "🏫",
-                            color: "text-sky-blue",
-                            bg: "bg-sky-blue/10",
-                            active: false,
-                            href: "/school/dashboard",
-                          },
-                        ]
-                      : []),
-                  ].map((item, i) => {
+                : navItems.map((item, i) => {
+                    const isHome = item.href === "/";
                     const Component = item.href ? Link : "button";
                     return (
                       <Component
-                        href={item.href as string}
-                        onClick={item.action}
-                        onMouseEnter={() => {
-                          // Prefetch on hover for better navigation speed
-                          if (item.href) {
-                            handlePrefetch(item.href);
-                          } else if (item.label === "Study Hub") {
-                            handlePrefetch("/study");
-                          } else if (item.label === "Play Zone") {
-                            handlePrefetch("/playzone");
-                          } else if (item.label === "Messages") {
-                            handlePrefetch("/messages");
-                          }
-                        }}
                         key={i}
-                        className={`w-full group flex items-center gap-3 p-2.5 rounded-2xl font-nunito font-bold cursor-pointer transition-all duration-300 text-left border-2 border-transparent hover:border-gray-100 hover:bg-white hover:shadow-lg hover:shadow-gray-200/40 ${item.active ? "bg-white shadow-lg shadow-gray-200/40 border-gray-100 scale-105" : "hover:scale-[1.02]"}`}
+                        href={item.href as string}
+                        onClick={(item as any).action}
+                        onMouseEnter={() => {
+                          const path = item.href || (item as any).prefetch;
+                          if (path) handlePrefetch(path);
+                        }}
+                        className={`w-full group flex items-center gap-3 p-2.5 rounded-2xl font-nunito font-bold cursor-pointer transition-all duration-300 text-left border-2 border-transparent hover:border-gray-100 hover:bg-white hover:shadow-lg hover:shadow-gray-200/40 ${
+                          isHome
+                            ? "bg-white shadow-lg shadow-gray-200/40 border-gray-100 scale-105"
+                            : "hover:scale-[1.02]"
+                        }`}
                       >
                         <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110 ${item.bg} ${item.color}`}
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110 ${item.bg} ${item.color}`}
                         >
-                          {item.icon}
+                          <item.icon className="w-5 h-5" strokeWidth={2.5} />
                         </div>
                         <span
-                          className={`text-base tracking-tight text-gray-600 group-hover:text-gray-900 ${item.active ? "text-gray-900" : ""}`}
+                          className={`text-base tracking-tight text-gray-600 group-hover:text-gray-900 ${isHome ? "text-gray-900" : ""}`}
                         >
                           {item.label}
                         </span>
-
-                        {/* Active Indicator Dot */}
-                        {item.active && (
+                        {isHome && (
                           <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-purple" />
                         )}
                       </Component>
@@ -292,15 +304,15 @@ export default function LeftSidebar() {
         </div>
       </div>
 
-      {userRole?.isChild && userRole.child?.id && (
+      {roleData?.isChild && roleData.child?.id && (
         <CreatePostModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          childId={userRole.child.id}
+          childId={roleData.child.id}
         />
       )}
 
-      {userRole?.isSchool && (
+      {roleData?.isSchool && (
         <SchoolCreatePostModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
