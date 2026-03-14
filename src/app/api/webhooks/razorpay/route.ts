@@ -96,6 +96,10 @@ export async function POST(req: Request) {
         planUpper = "BASIC";
       }
 
+      // Determine currency from notes (set during subscription creation)
+      const subscriptionCurrency: "INR" | "USD" =
+        notes.currency === "USD" ? "USD" : "INR";
+
       // Determine if this is the first paid plan purchase
       // First paid plan is set only if:
       // 1. first_paid_plan is currently null AND
@@ -113,6 +117,7 @@ export async function POST(req: Request) {
         subscription_interval: planType,
         subscription_ends_at: endDate.toISOString(),
         razorpay_plan_id: subscription.plan_id,
+        subscription_currency: subscriptionCurrency,
       };
 
       // Set first_paid_plan only on first purchase

@@ -3,15 +3,15 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
-  Settings, 
-  LogOut, 
-  Menu, 
-  X, 
-  ChevronLeft, 
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  ChevronLeft,
   ChevronRight,
   ShieldCheck,
   BarChart3,
@@ -19,6 +19,7 @@ import {
   MessageSquare,
   TicketPercent,
   Mail,
+  Gift,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { logoutAdmin } from "@/actions/auth";
@@ -29,7 +30,11 @@ interface SidebarProps {
   setIsCollapsed: (value: boolean) => void;
 }
 
-export default function AdminSidebar({ adminEmail, isCollapsed, setIsCollapsed }: SidebarProps) {
+export default function AdminSidebar({
+  adminEmail,
+  isCollapsed,
+  setIsCollapsed,
+}: SidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
@@ -41,6 +46,7 @@ export default function AdminSidebar({ adminEmail, isCollapsed, setIsCollapsed }
     { label: "Comments", icon: MessageSquare, href: "/admin/comments" },
     { label: "Analytics", icon: BarChart3, href: "/admin/analytics" },
     { label: "Coupons", icon: TicketPercent, href: "/admin/coupons" },
+    { label: "Referrals", icon: Gift, href: "/admin/referrals" },
     { label: "Contact", icon: Mail, href: "/admin/contact" },
   ];
 
@@ -57,7 +63,7 @@ export default function AdminSidebar({ adminEmail, isCollapsed, setIsCollapsed }
           <ShieldCheck className="w-8 h-8 text-brand-purple" />
           <span className="font-black text-white text-xl">Admin</span>
         </div>
-        <button 
+        <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 text-white hover:bg-white/10 rounded-xl transition-colors"
         >
@@ -78,7 +84,7 @@ export default function AdminSidebar({ adminEmail, isCollapsed, setIsCollapsed }
               <ShieldCheck className="w-6 h-6 text-white" />
             </div>
             {!isCollapsed && (
-              <motion.span 
+              <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="font-black text-xl text-white tracking-tight"
@@ -98,14 +104,16 @@ export default function AdminSidebar({ adminEmail, isCollapsed, setIsCollapsed }
                 key={item.label}
                 href={item.href}
                 className={`flex items-center gap-3 p-3.5 rounded-2xl transition-all group relative ${
-                  isActive 
-                    ? "bg-brand-purple text-white shadow-lg shadow-brand-purple/20" 
+                  isActive
+                    ? "bg-brand-purple text-white shadow-lg shadow-brand-purple/20"
                     : "text-gray-400 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <item.icon className={`w-5 h-5 shrink-0 ${isActive ? "text-white" : "group-hover:scale-110 transition-transform"}`} />
+                <item.icon
+                  className={`w-5 h-5 shrink-0 ${isActive ? "text-white" : "group-hover:scale-110 transition-transform"}`}
+                />
                 {!isCollapsed && (
-                  <motion.span 
+                  <motion.span
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="font-bold text-sm whitespace-nowrap"
@@ -127,11 +135,15 @@ export default function AdminSidebar({ adminEmail, isCollapsed, setIsCollapsed }
         <div className="p-3 border-t border-white/5 space-y-2 shrink-0">
           {!isCollapsed && adminEmail && (
             <div className="px-3 py-4 mb-2 bg-white/5 rounded-2xl overflow-hidden">
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Signed in as</p>
-              <p className="text-xs font-bold text-gray-300 truncate">{adminEmail}</p>
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">
+                Signed in as
+              </p>
+              <p className="text-xs font-bold text-gray-300 truncate">
+                {adminEmail}
+              </p>
             </div>
           )}
-          
+
           <button
             onClick={handleLogout}
             className={`w-full flex items-center gap-3 p-3.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-2xl font-bold text-sm transition-all group overflow-hidden`}
@@ -172,9 +184,11 @@ export default function AdminSidebar({ adminEmail, isCollapsed, setIsCollapsed }
                   <div className="w-10 h-10 bg-brand-purple rounded-xl flex items-center justify-center">
                     <ShieldCheck className="w-6 h-6 text-white" />
                   </div>
-                  <span className="font-black text-xl text-white">Admin CP</span>
+                  <span className="font-black text-xl text-white">
+                    Admin CP
+                  </span>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="p-2 text-gray-400 hover:text-white"
                 >
@@ -191,8 +205,8 @@ export default function AdminSidebar({ adminEmail, isCollapsed, setIsCollapsed }
                       href={item.href}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={`flex items-center gap-3 p-4 rounded-2xl font-bold text-base transition-all ${
-                        isActive 
-                          ? "bg-brand-purple text-white shadow-lg shadow-brand-purple/20" 
+                        isActive
+                          ? "bg-brand-purple text-white shadow-lg shadow-brand-purple/20"
                           : "text-gray-400 hover:text-white hover:bg-white/5"
                       }`}
                     >

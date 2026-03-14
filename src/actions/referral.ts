@@ -21,6 +21,29 @@ interface ReferralActivity {
   earnings: number;
 }
 
+// Commission map: 50% of plan price per interval and currency
+const COMMISSION_MAP: Record<string, Record<string, Record<string, number>>> = {
+  INR: {
+    monthly: { BASIC: 49.5, PRO: 149.5, ELITE: 199.5 },
+    yearly: { BASIC: 499.5, PRO: 1499.5, ELITE: 1999.5 },
+  },
+  USD: {
+    monthly: { BASIC: 1.5, PRO: 2.5, ELITE: 3.5 },
+    yearly: { BASIC: 7, PRO: 20, ELITE: 27.5 },
+  },
+};
+
+function getCommission(
+  plan: string | null,
+  interval: string | null,
+  currency: string | null,
+): number {
+  if (!plan) return 0;
+  const cur = currency === "USD" ? "USD" : "INR";
+  const intv = interval === "yearly" ? "yearly" : "monthly";
+  return COMMISSION_MAP[cur]?.[intv]?.[plan] ?? 0;
+}
+
 // Generate or get referral code for parent
 export async function getOrCreateReferralCode() {
   try {
@@ -103,7 +126,9 @@ export async function getReferralStats(): Promise<ReferralStats | null> {
         // Get all referrals
         const { data: referrals } = await supabase
           .from("parents")
-          .select("id, subscription_plan, first_paid_plan")
+          .select(
+            "id, subscription_plan, subscription_interval, subscription_currency, first_paid_plan",
+          )
           .eq("referred_by", parentData.parent_id);
 
         const totalSignups = referrals?.length || 0;
@@ -112,16 +137,18 @@ export async function getReferralStats(): Promise<ReferralStats | null> {
         const purchasedPlans =
           referrals?.filter((r) => r.first_paid_plan !== null).length || 0;
 
-        // Calculate earnings based on FIRST paid plan (one-time commission)
+        // Calculate earnings based on FIRST paid plan + interval + currency (one-time commission)
         const estimatedEarnings =
           referrals?.reduce((sum, r) => {
-            // Only count if they have made a first purchase
             if (!r.first_paid_plan) return sum;
-
-            if (r.first_paid_plan === "BASIC") return sum + 49.5; // 50% of ₹99
-            if (r.first_paid_plan === "PRO") return sum + 149.5; // 50% of ₹299
-            if (r.first_paid_plan === "ELITE") return sum + 199.5; // 50% of ₹399
-            return sum;
+            return (
+              sum +
+              getCommission(
+                r.first_paid_plan,
+                r.subscription_interval,
+                r.subscription_currency,
+              )
+            );
           }, 0) || 0;
 
         const referralLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://qidzo.com"}/sign-up?ref=${parentData.referral_code}`;
@@ -167,7 +194,7 @@ export async function getReferralActivity(): Promise<ReferralActivity[]> {
         const { data: referrals } = await supabase
           .from("parents")
           .select(
-            "id, name, email, subscription_plan, first_paid_plan, created_at",
+            "id, name, email, subscription_plan, subscription_interval, subscription_currency, first_paid_plan, created_at",
           )
           .eq("referred_by", parentData.parent_id)
           .order("created_at", { ascending: false })
@@ -176,17 +203,17 @@ export async function getReferralActivity(): Promise<ReferralActivity[]> {
         if (!referrals) return [];
 
         return referrals.map((r) => {
-          let earnings = 0;
-          // Calculate earnings based on first_paid_plan (one-time commission)
-          if (r.first_paid_plan === "BASIC") earnings = 49.5;
-          if (r.first_paid_plan === "PRO") earnings = 149.5;
-          if (r.first_paid_plan === "ELITE") earnings = 199.5;
+          const earnings = getCommission(
+            r.first_paid_plan || null,
+            r.subscription_interval || null,
+            r.subscription_currency || null,
+          );
 
           return {
             id: r.id,
             name: r.name,
             email: r.email,
-            subscriptionPlan: r.first_paid_plan || "FREE", // Show first purchase or FREE
+            subscriptionPlan: r.first_paid_plan || "FREE",
             createdAt: r.created_at,
             earnings,
           };
