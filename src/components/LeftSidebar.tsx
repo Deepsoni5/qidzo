@@ -44,7 +44,22 @@ export default function LeftSidebar({
   useEffect(() => {
     if (!clerkLoaded) return;
 
-    // Already have fresh data — skip
+    // Parent or school just logged out — must run BEFORE the fresh-data guard
+    if (
+      isSignedIn === false &&
+      roleData &&
+      (roleData.isParent || roleData.isSchool)
+    ) {
+      setRoleData({
+        role: "guest",
+        isParent: false,
+        isSchool: false,
+        isChild: false,
+      });
+      return;
+    }
+
+    // Already have fresh data — skip fetch
     if (roleData && !shouldRefresh()) return;
 
     // Seed from SSR prop if available
@@ -52,17 +67,6 @@ export default function LeftSidebar({
       setRoleData({
         ...initialUserRole,
         isSchool: initialUserRole.isSchool ?? false,
-      });
-      return;
-    }
-
-    // Parent or school just logged out — set guest immediately, no fetch needed
-    if (isSignedIn === false && (roleData?.isParent || roleData?.isSchool)) {
-      setRoleData({
-        role: "guest",
-        isParent: false,
-        isSchool: false,
-        isChild: false,
       });
       return;
     }
