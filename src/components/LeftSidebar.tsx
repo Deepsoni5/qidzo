@@ -39,15 +39,25 @@ export default function LeftSidebar({
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { roleData, isLoading, setRoleData, setLoading, shouldRefresh } =
     useUserRoleStore();
-
   const { isSignedIn, isLoaded: clerkLoaded } = useUser();
 
   useEffect(() => {
-    // Wait for Clerk to finish loading
     if (!clerkLoaded) return;
 
-    // Clerk says not signed in — set guest role immediately, no skeleton
-    if (isSignedIn === false) {
+    // Already have fresh data — skip
+    if (roleData && !shouldRefresh()) return;
+
+    // Seed from SSR prop if available
+    if (initialUserRole && !roleData) {
+      setRoleData({
+        ...initialUserRole,
+        isSchool: initialUserRole.isSchool ?? false,
+      });
+      return;
+    }
+
+    // Parent or school just logged out — set guest immediately, no fetch needed
+    if (isSignedIn === false && (roleData?.isParent || roleData?.isSchool)) {
       setRoleData({
         role: "guest",
         isParent: false,
@@ -57,19 +67,7 @@ export default function LeftSidebar({
       return;
     }
 
-    // Store has fresh data — skip fetch
-    if (roleData && !shouldRefresh()) return;
-
-    // Server passed initial role — seed store, skip fetch
-    if (initialUserRole && !roleData) {
-      setRoleData({
-        ...initialUserRole,
-        isSchool: initialUserRole.isSchool ?? false,
-      });
-      return;
-    }
-
-    // Fetch fresh role from server
+    // Fetch from server — works for Clerk (parent/school), JWT (child), or unauthenticated
     const fetchRole = async () => {
       setLoading(true);
       try {
@@ -160,15 +158,15 @@ export default function LeftSidebar({
   };
 
   const handleMessages = () => {
-    if (!roleData || roleData.role === "guest") {
-      toast.error("Please log in to chat!", {
-        description: "Messages are available only for kid profiles.",
+    if (roleData?.isParent) {
+      toast.error("Parents cannot chat with children.", {
+        description: "Switch to a kid account to use messages.",
       });
       return;
     }
-    if (roleData.isParent) {
-      toast.error("Parents cannot chat with children.", {
-        description: "Switch to a kid account to use messages.",
+    if (!roleData?.isChild && !roleData?.isSchool) {
+      toast.error("Please log in to chat!", {
+        description: "Messages are available only for kid profiles.",
       });
       return;
     }
@@ -246,7 +244,7 @@ export default function LeftSidebar({
 
             <ul className="space-y-1.5 relative z-10">
               {isLoading
-                ? Array.from({ length: 5 }).map((_, i) => (
+                ? Array.from({ length: 4 }).map((_, i) => (
                     <div
                       key={i}
                       className="w-full flex items-center gap-3 p-2.5 rounded-2xl border-2 border-transparent"
@@ -294,7 +292,7 @@ export default function LeftSidebar({
             <div className="mt-5 relative z-10">
               <button
                 onClick={handleCreatePost}
-                className="group relative w-full overflow-hidden bg-gradient-to-br from-brand-purple to-hot-pink text-white font-black text-base py-3.5 rounded-2xl shadow-xl shadow-brand-purple/30 hover:shadow-2xl hover:shadow-hot-pink/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer border-b-4 border-black/10"
+                className="group relative w-full overflow-hidden bg-linear-to-br from-brand-purple to-hot-pink text-white font-black text-base py-3.5 rounded-2xl shadow-xl shadow-brand-purple/30 hover:shadow-2xl hover:shadow-hot-pink/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer border-b-4 border-black/10"
               >
                 <Sparkles className="w-6 h-6 text-sunshine-yellow fill-sunshine-yellow group-hover:rotate-6 transition-transform duration-300" />
                 <span className="relative">Create Magic</span>

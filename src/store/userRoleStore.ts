@@ -21,7 +21,7 @@ interface UserRoleStore {
 
 export const useUserRoleStore = create<UserRoleStore>((set, get) => ({
   roleData: null,
-  isLoading: false,
+  isLoading: true, // start as loading until first fetch completes
   lastFetched: null,
 
   setRoleData: (data) =>
