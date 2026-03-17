@@ -8,10 +8,24 @@ import { toast } from "sonner";
 import { format, differenceInYears, subYears } from "date-fns";
 import confetti from "canvas-confetti";
 import * as LucideIcons from "lucide-react";
-import { 
-  User, Calendar, Upload, Lock, Heart, Check, ChevronRight, 
-  ChevronLeft, Loader2, RefreshCw, Eye, EyeOff, X, AlertCircle,
-  Globe2, MapPin, ChevronDown
+import {
+  User,
+  Calendar,
+  Upload,
+  Lock,
+  Heart,
+  Check,
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  RefreshCw,
+  Eye,
+  EyeOff,
+  X,
+  AlertCircle,
+  Globe2,
+  MapPin,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -174,7 +188,7 @@ const COUNTRIES: CountryOption[] = [
   { code: "BB", name: "Barbados", flag: "🇧🇧" },
   { code: "TT", name: "Trinidad and Tobago", flag: "🇹🇹" },
   { code: "GY", name: "Guyana", flag: "🇬🇾" },
-  { code: "SR", name: "Suriname", flag: "🇸🇷" }
+  { code: "SR", name: "Suriname", flag: "🇸🇷" },
 ];
 interface FormData {
   name: string;
@@ -213,7 +227,9 @@ export default function AddChildPage() {
   const [formData, setFormData] = useState<FormData>(INITIAL_DATA);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
+    null,
+  );
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [createdChild, setCreatedChild] = useState<any>(null);
@@ -227,7 +243,8 @@ export default function AddChildPage() {
       const profile = await getParentProfile();
       if (profile && profile.max_children_slots <= 0) {
         toast.error("No slots available!", {
-          description: "Please Upgrade to Plan or Add Kid profile slot to continue.",
+          description:
+            "Please Upgrade to Plan or Add Kid profile slot to continue.",
           icon: <AlertCircle className="w-5 h-5 text-red-500" />,
         });
         router.push("/parent/upgrade");
@@ -264,28 +281,28 @@ export default function AddChildPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order', { ascending: true });
-      
+        .from("categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
       if (data) setCategories(data);
     };
     fetchCategories();
   }, []);
 
   const updateFields = (fields: Partial<FormData>) => {
-    setFormData(prev => ({ ...prev, ...fields }));
+    setFormData((prev) => ({ ...prev, ...fields }));
   };
 
   const handleNext = () => {
     if (validateStep(step)) {
-      setStep(prev => Math.min(prev + 1, 5) as Step);
+      setStep((prev) => Math.min(prev + 1, 5) as Step);
     }
   };
 
   const handleBack = () => {
-    setStep(prev => Math.max(prev - 1, 1) as Step);
+    setStep((prev) => Math.max(prev - 1, 1) as Step);
   };
 
   const validateStep = (currentStep: Step) => {
@@ -353,7 +370,7 @@ export default function AddChildPage() {
   };
 
   const filteredCountries = COUNTRIES.filter((c) =>
-    c.name.toLowerCase().includes(countrySearch.toLowerCase())
+    c.name.toLowerCase().includes(countrySearch.toLowerCase()),
   );
 
   const handleCheckUsername = async (username: string) => {
@@ -363,8 +380,8 @@ export default function AddChildPage() {
     }
     setCheckingUsername(true);
     try {
-      const res = await fetch('/api/children/check-username', {
-        method: 'POST',
+      const res = await fetch("/api/children/check-username", {
+        method: "POST",
         body: JSON.stringify({ username }),
       });
       const data = await res.json();
@@ -397,9 +414,9 @@ export default function AddChildPage() {
         method: "POST",
         body: formDataUpload,
       });
-      
+
       if (!res.ok) throw new Error("Upload failed");
-      
+
       const data = await res.json();
       updateFields({ avatar: data.url });
       toast.success("Avatar uploaded successfully", { id: toastId });
@@ -420,14 +437,16 @@ export default function AddChildPage() {
 
     try {
       const age = differenceInYears(new Date(), formData.birth_date!);
-      
+
       const payload = {
         clerk_id: user.id, // Send Clerk ID to look up custom parent_id backend-side
         name: formData.name,
         username: formData.username,
         bio: formData.bio,
         password: formData.password,
-        birth_date: formData.birth_date ? format(formData.birth_date, "yyyy-MM-dd") : null,
+        birth_date: formData.birth_date
+          ? format(formData.birth_date, "yyyy-MM-dd")
+          : null,
         age,
         gender: formData.gender,
         avatar: formData.avatar,
@@ -451,20 +470,19 @@ export default function AddChildPage() {
 
       setCreatedChild(data.child);
       toast.success("Child profile created successfully!", { id: toastId });
-      
+
       // Clear storage
       localStorage.removeItem("qidzo_add_child_form");
-      
+
       // Move to success step
       setStep(5);
-      
+
       // Fire confetti
       confetti({
         particleCount: 100,
         spread: 70,
-        origin: { y: 0.6 }
+        origin: { y: 0.6 },
       });
-
     } catch (error: any) {
       toast.error(error.message || "Something went wrong", { id: toastId });
     } finally {
@@ -477,7 +495,7 @@ export default function AddChildPage() {
     switch (step) {
       case 1:
         return (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -485,7 +503,9 @@ export default function AddChildPage() {
           >
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Full Name
+                </label>
                 <input
                   type="text"
                   value={formData.name}
@@ -496,12 +516,20 @@ export default function AddChildPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Date of Birth</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Date of Birth
+                </label>
                 <input
                   type="date"
-                  value={formData.birth_date ? format(formData.birth_date, "yyyy-MM-dd") : ""}
+                  value={
+                    formData.birth_date
+                      ? format(formData.birth_date, "yyyy-MM-dd")
+                      : ""
+                  }
                   onChange={(e) => {
-                    const date = e.target.value ? new Date(e.target.value) : undefined;
+                    const date = e.target.value
+                      ? new Date(e.target.value)
+                      : undefined;
                     updateFields({ birth_date: date });
                   }}
                   max={format(new Date(), "yyyy-MM-dd")}
@@ -509,13 +537,16 @@ export default function AddChildPage() {
                 />
                 {formData.birth_date && (
                   <p className="text-xs font-bold text-gray-500 mt-1">
-                    Age: {differenceInYears(new Date(), formData.birth_date)} years old
+                    Age: {differenceInYears(new Date(), formData.birth_date)}{" "}
+                    years old
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Gender (Optional)</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Gender (Optional)
+                </label>
                 <div className="flex gap-3">
                   {["Male", "Female", "Other", "Prefer not to say"].map((g) => (
                     <button
@@ -541,7 +572,9 @@ export default function AddChildPage() {
                   <input
                     type="text"
                     value={formData.school_name}
-                    onChange={(e) => updateFields({ school_name: e.target.value })}
+                    onChange={(e) =>
+                      updateFields({ school_name: e.target.value })
+                    }
                     className="w-full px-4 py-3 rounded-2xl border-2 border-gray-100 focus:border-brand-purple focus:ring-0 transition-all font-nunito font-bold outline-none"
                     placeholder="e.g. Sunshine Public School"
                   />
@@ -591,7 +624,9 @@ export default function AddChildPage() {
                           onClick={() => setCountryOpen((prev) => !prev)}
                           className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
                         >
-                          <ChevronDown className={`w-4 h-4 transition-transform ${countryOpen ? "rotate-180" : ""}`} />
+                          <ChevronDown
+                            className={`w-4 h-4 transition-transform ${countryOpen ? "rotate-180" : ""}`}
+                          />
                         </button>
                       </div>
                       {countryOpen && (
@@ -627,7 +662,7 @@ export default function AddChildPage() {
 
       case 2:
         return (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -635,7 +670,9 @@ export default function AddChildPage() {
           >
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Username</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Username
+                </label>
                 <div className="relative">
                   <input
                     type="text"
@@ -646,8 +683,11 @@ export default function AddChildPage() {
                       handleCheckUsername(val);
                     }}
                     className={`w-full px-4 py-3 rounded-2xl border-2 outline-none font-nunito font-bold transition-all ${
-                      usernameAvailable === true ? "border-green-500" : 
-                      usernameAvailable === false ? "border-red-500" : "border-gray-100 focus:border-brand-purple"
+                      usernameAvailable === true
+                        ? "border-green-500"
+                        : usernameAvailable === false
+                          ? "border-red-500"
+                          : "border-gray-100 focus:border-brand-purple"
                     }`}
                     placeholder="e.g. RocketStar892"
                   />
@@ -662,12 +702,16 @@ export default function AddChildPage() {
                   </div>
                 </div>
                 {usernameAvailable === false && (
-                  <p className="text-xs font-bold text-red-500 mt-1">Username is taken</p>
+                  <p className="text-xs font-bold text-red-500 mt-1">
+                    Username is taken
+                  </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Bio (Optional)</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Bio (Optional)
+                </label>
                 <textarea
                   value={formData.bio}
                   onChange={(e) => updateFields({ bio: e.target.value })}
@@ -677,11 +721,17 @@ export default function AddChildPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Avatar (Optional)</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Avatar (Optional)
+                </label>
                 <div className="flex items-center gap-4">
                   <div className="relative w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
                     {formData.avatar ? (
-                      <img src={formData.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      <img
+                        src={formData.avatar}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <User className="w-8 h-8 text-gray-400" />
                     )}
@@ -690,9 +740,16 @@ export default function AddChildPage() {
                     <label className="cursor-pointer bg-white border-2 border-gray-200 text-gray-700 font-bold py-2 px-4 rounded-xl hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
                       <Upload className="w-4 h-4" />
                       Upload Photo
-                      <input type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleFileUpload} />
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/png, image/jpeg"
+                        onChange={handleFileUpload}
+                      />
                     </label>
-                    <p className="text-xs text-gray-400 mt-2 font-bold">Max 2MB. JPG or PNG only.</p>
+                    <p className="text-xs text-gray-400 mt-2 font-bold">
+                      Max 2MB. JPG or PNG only.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -702,7 +759,7 @@ export default function AddChildPage() {
 
       case 3:
         return (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -710,7 +767,9 @@ export default function AddChildPage() {
           >
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Create Password</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Create Password
+                </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -723,17 +782,25 @@ export default function AddChildPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Confirm Password</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Confirm Password
+                </label>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={formData.passwordConfirm}
-                  onChange={(e) => updateFields({ passwordConfirm: e.target.value })}
+                  onChange={(e) =>
+                    updateFields({ passwordConfirm: e.target.value })
+                  }
                   className="w-full px-4 py-3 rounded-2xl border-2 border-gray-100 focus:border-brand-purple focus:ring-0 transition-all font-nunito font-bold outline-none"
                   placeholder="Re-enter password"
                 />
@@ -746,12 +813,18 @@ export default function AddChildPage() {
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500 font-bold">Username:</span>
-                    <span className="font-black text-gray-900">{formData.username || "..."}</span>
+                    <span className="font-black text-gray-900">
+                      {formData.username || "..."}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500 font-bold">Password:</span>
                     <span className="font-black text-gray-900">
-                      {formData.password ? (showPassword ? formData.password : "••••••••") : "..."}
+                      {formData.password
+                        ? showPassword
+                          ? formData.password
+                          : "••••••••"
+                        : "..."}
                     </span>
                   </div>
                 </div>
@@ -765,15 +838,19 @@ export default function AddChildPage() {
 
       case 4:
         return (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             className="space-y-6"
           >
             <div className="text-center mb-6">
-              <h3 className="font-black text-lg text-gray-900">What does {formData.name} like?</h3>
-              <p className="text-sm text-gray-500 font-bold">Choose 3-8 interests</p>
+              <h3 className="font-black text-lg text-gray-900">
+                What does {formData.name} like?
+              </h3>
+              <p className="text-sm text-gray-500 font-bold">
+                Choose 3-8 interests
+              </p>
               <div className="mt-2 inline-block px-3 py-1 bg-brand-purple/10 text-brand-purple rounded-full text-xs font-black">
                 {formData.preferred_categories.length} of 8 selected
               </div>
@@ -781,19 +858,24 @@ export default function AddChildPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto p-1">
               {categories.map((cat) => {
-                const isSelected = formData.preferred_categories.includes(cat.category_id);
+                const isSelected = formData.preferred_categories.includes(
+                  cat.category_id,
+                );
                 const isHovered = hoveredCategory === cat.id;
                 const displayColor = cat.color || "#8B5CF6"; // Fallback to brand purple
 
                 // Convert kebab-case icon name to PascalCase for Lucide component
                 // e.g. "landmark" -> "Landmark", "book-open" -> "BookOpen"
                 const iconName = cat.icon
-                  .split('-')
-                  .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-                  .join('');
-                
+                  .split("-")
+                  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                  .join("");
+
                 // Dynamic icon lookup from LucideIcons namespace
-                const IconComponent = (LucideIcons as any)[iconName] || (LucideIcons as any)[cat.icon] || LucideIcons.HelpCircle;
+                const IconComponent =
+                  (LucideIcons as any)[iconName] ||
+                  (LucideIcons as any)[cat.icon] ||
+                  LucideIcons.HelpCircle;
 
                 return (
                   <button
@@ -803,35 +885,48 @@ export default function AddChildPage() {
                     onClick={() => {
                       const current = formData.preferred_categories;
                       if (isSelected) {
-                        updateFields({ preferred_categories: current.filter(id => id !== cat.category_id) });
+                        updateFields({
+                          preferred_categories: current.filter(
+                            (id) => id !== cat.category_id,
+                          ),
+                        });
                       } else {
                         if (current.length >= 8) return;
-                        updateFields({ preferred_categories: [...current, cat.category_id] });
+                        updateFields({
+                          preferred_categories: [...current, cat.category_id],
+                        });
                       }
                     }}
                     style={{
-                      borderColor: isSelected || isHovered ? displayColor : "#f3f4f6", // gray-100
-                      backgroundColor: isSelected ? `${displayColor}15` : "white", // ~8% opacity
+                      borderColor:
+                        isSelected || isHovered ? displayColor : "#f3f4f6", // gray-100
+                      backgroundColor: isSelected
+                        ? `${displayColor}15`
+                        : "white", // ~8% opacity
                       transform: isSelected ? "scale(1.05)" : "scale(1)",
                     }}
                     className={`relative p-3 rounded-2xl border-2 text-left transition-all duration-200 group ${
-                      isSelected
-                        ? "shadow-md"
-                        : "hover:shadow-sm"
+                      isSelected ? "shadow-md" : "hover:shadow-sm"
                     }`}
                   >
-                    <div 
+                    <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-lg mb-2 transition-colors"
                       style={{
                         backgroundColor: isSelected ? displayColor : "#f3f4f6",
-                        color: isSelected ? "white" : (isHovered ? displayColor : "#6b7280")
+                        color: isSelected
+                          ? "white"
+                          : isHovered
+                            ? displayColor
+                            : "#6b7280",
                       }}
                     >
-                       <IconComponent className="w-4 h-4" /> 
+                      <IconComponent className="w-4 h-4" />
                     </div>
-                    <p className="font-bold text-xs text-gray-900 leading-tight">{cat.name}</p>
+                    <p className="font-bold text-xs text-gray-900 leading-tight">
+                      {cat.name}
+                    </p>
                     {isSelected && (
-                      <div 
+                      <div
                         className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center"
                         style={{ backgroundColor: displayColor }}
                       >
@@ -847,7 +942,7 @@ export default function AddChildPage() {
 
       case 5:
         return (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="text-center py-8 space-y-6"
@@ -855,8 +950,10 @@ export default function AddChildPage() {
             <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <span className="text-4xl">🎉</span>
             </div>
-            
-            <h2 className="text-3xl font-black font-nunito text-gray-900">Profile Created!</h2>
+
+            <h2 className="text-3xl font-black font-nunito text-gray-900">
+              Profile Created!
+            </h2>
             <p className="text-gray-500 font-bold">
               {createdChild?.name} is ready to start learning.
             </p>
@@ -867,17 +964,30 @@ export default function AddChildPage() {
               </h3>
               <div className="space-y-3">
                 <div className="bg-gray-50 p-3 rounded-xl flex justify-between items-center">
-                  <span className="text-xs font-bold text-gray-400">USERNAME</span>
-                  <span className="font-black font-mono text-lg text-brand-purple">{createdChild?.username}</span>
+                  <span className="text-xs font-bold text-gray-400">
+                    USERNAME
+                  </span>
+                  <span className="font-black font-mono text-lg text-brand-purple">
+                    {createdChild?.username}
+                  </span>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-xl flex justify-between items-center">
-                  <span className="text-xs font-bold text-gray-400">PASSWORD</span>
+                  <span className="text-xs font-bold text-gray-400">
+                    PASSWORD
+                  </span>
                   <div className="flex items-center gap-2">
                     <span className="font-black font-mono text-lg text-brand-purple">
                       {showPassword ? formData.password : "••••••••"}
                     </span>
-                    <button onClick={() => setShowPassword(!showPassword)} className="text-gray-400 hover:text-brand-purple">
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    <button
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-gray-400 hover:text-brand-purple"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -889,12 +999,22 @@ export default function AddChildPage() {
 
             <div className="flex flex-col gap-3 max-w-xs mx-auto pt-4">
               <button
-                onClick={() => {
+                onClick={async () => {
+                  const profile = await getParentProfile();
+                  if (!profile || profile.max_children_slots <= 0) {
+                    toast.error("No slots available!", {
+                      description:
+                        "Please upgrade your plan or add a kid profile slot to continue.",
+                      icon: <AlertCircle className="w-5 h-5 text-red-500" />,
+                    });
+                    router.push("/parent/upgrade");
+                    return;
+                  }
                   setFormData(INITIAL_DATA);
                   setStep(1);
                   setCreatedChild(null);
                 }}
-                className="w-full py-3 rounded-xl font-black text-brand-purple bg-brand-purple/10 hover:bg-brand-purple/20 transition-colors"
+                className="w-full py-3 rounded-xl font-black text-brand-purple bg-brand-purple/10 hover:bg-brand-purple/20 transition-colors cursor-pointer"
               >
                 Add Another Child
               </button>
@@ -916,7 +1036,7 @@ export default function AddChildPage() {
         {/* Progress Bar */}
         {step < 5 && (
           <div className="absolute top-0 left-0 w-full h-2 bg-gray-100">
-            <div 
+            <div
               className="h-full bg-brand-purple transition-all duration-500 ease-out"
               style={{ width: `${(step / 4) * 100}%` }}
             />
@@ -933,10 +1053,12 @@ export default function AddChildPage() {
                 {step === 3 && "Secure Account"}
                 {step === 4 && "Interests"}
               </h1>
-              <p className="text-sm font-bold text-gray-400">Step {step} of 4</p>
+              <p className="text-sm font-bold text-gray-400">
+                Step {step} of 4
+              </p>
             </div>
             {step > 1 && (
-              <button 
+              <button
                 onClick={handleBack}
                 className="p-2 rounded-xl hover:bg-gray-50 text-gray-400 transition-colors"
               >
@@ -948,9 +1070,7 @@ export default function AddChildPage() {
 
         {/* Content */}
         <div className="min-h-[300px]">
-          <AnimatePresence mode="wait">
-            {renderStep()}
-          </AnimatePresence>
+          <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
         </div>
 
         {/* Footer Actions */}
@@ -962,7 +1082,11 @@ export default function AddChildPage() {
                 disabled={loading}
                 className="px-8 py-3 bg-brand-purple text-white rounded-xl font-black shadow-lg shadow-brand-purple/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create Profile"}
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Create Profile"
+                )}
               </button>
             ) : (
               <button
