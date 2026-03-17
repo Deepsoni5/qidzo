@@ -41,7 +41,7 @@ const COMMISSION_MAP: Record<string, Record<string, Record<string, number>>> = {
   },
   USD: {
     monthly: { BASIC: 1.5, PRO: 2.5, ELITE: 3.5 },
-    yearly: { BASIC: 7, PRO: 20, ELITE: 27.5 },
+    yearly: { BASIC: 12.5, PRO: 20, ELITE: 27.5 },
   },
 };
 

@@ -42,12 +42,12 @@ const PRICING_CONFIG: Record<Currency, PricingData> = {
     currency: "USD",
     symbol: "$",
     prices: {
-      basic: { monthly: 3, yearly: 14 },
+      basic: { monthly: 3, yearly: 25 },
       pro: { monthly: 5, yearly: 40 },
       elite: { monthly: 7, yearly: 55 },
     },
     originalPrices: {
-      basic: { monthly: 5, yearly: 20 },
+      basic: { monthly: 5, yearly: 35 },
       pro: { monthly: 8, yearly: 55 },
       elite: { monthly: 10, yearly: 75 },
     },
