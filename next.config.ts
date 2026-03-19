@@ -8,16 +8,6 @@ const LOADER = path.resolve(
 
 const nextConfig: NextConfig = {
   // ─── www → non-www redirect ───────────────────────────────────────────────
-  async redirects() {
-    return [
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: "www.qidzo.com" }],
-        destination: "https://qidzo.com/:path*",
-        permanent: true, // 301 redirect — tells Google to always use non-www
-      },
-    ];
-  },
 
   // ─── Images ───────────────────────────────────────────────────────────────
   images: {
