@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
-import { format, differenceInYears, subYears } from "date-fns";
+import { format, differenceInYears } from "date-fns";
 import confetti from "canvas-confetti";
 import * as LucideIcons from "lucide-react";
 import {
@@ -29,7 +29,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { getParentProfile } from "@/actions/parent";
 
 // Types
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -190,6 +189,7 @@ const COUNTRIES: CountryOption[] = [
   { code: "GY", name: "Guyana", flag: "🇬🇾" },
   { code: "SR", name: "Suriname", flag: "🇸🇷" },
 ];
+
 interface FormData {
   name: string;
   birth_date: Date | undefined;
@@ -220,7 +220,7 @@ const INITIAL_DATA: FormData = {
   city: "",
 };
 
-export default function AddChildPage() {
+export default function AddStudentPage() {
   const router = useRouter();
   const { user } = useUser();
   const [step, setStep] = useState<Step>(1);
@@ -237,31 +237,12 @@ export default function AddChildPage() {
   const [countrySearch, setCountrySearch] = useState("");
   const [countryOpen, setCountryOpen] = useState(false);
 
-  // Check slots on mount
-  useEffect(() => {
-    async function checkSlots() {
-      const profile = await getParentProfile();
-      if (profile && profile.max_children_slots <= 0) {
-        toast.error("No slots available!", {
-          description:
-            "Please Upgrade to Plan or Add Kid profile slot to continue.",
-          icon: <AlertCircle className="w-5 h-5 text-red-500" />,
-        });
-        router.push("/parent/upgrade");
-      }
-    }
-    if (user) {
-      checkSlots();
-    }
-  }, [user, router]);
-
   // Load from localStorage on mount
   useEffect(() => {
-    const savedData = localStorage.getItem("qidzo_add_child_form");
+    const savedData = localStorage.getItem("qidzo_add_student_form");
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
-        // Convert date string back to Date object
         if (parsed.birth_date) {
           parsed.birth_date = new Date(parsed.birth_date);
         }
@@ -274,18 +255,17 @@ export default function AddChildPage() {
 
   // Save to localStorage on change
   useEffect(() => {
-    localStorage.setItem("qidzo_add_child_form", JSON.stringify(formData));
+    localStorage.setItem("qidzo_add_student_form", JSON.stringify(formData));
   }, [formData]);
 
   // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("categories")
         .select("*")
         .eq("is_active", true)
         .order("display_order", { ascending: true });
-
       if (data) setCategories(data);
     };
     fetchCategories();
@@ -318,7 +298,7 @@ export default function AddChildPage() {
         }
         const age = differenceInYears(new Date(), formData.birth_date);
         if (age < 4 || age > 17) {
-          toast.error("Child must be between 4 and 17 years old");
+          toast.error("Student must be between 4 and 17 years old");
           return false;
         }
         if (!formData.school_name || formData.school_name.trim().length < 2) {
@@ -386,9 +366,6 @@ export default function AddChildPage() {
       });
       const data = await res.json();
       setUsernameAvailable(data.available);
-      if (!data.available) {
-        // toast.error(data.message);
-      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -414,9 +391,7 @@ export default function AddChildPage() {
         method: "POST",
         body: formDataUpload,
       });
-
       if (!res.ok) throw new Error("Upload failed");
-
       const data = await res.json();
       updateFields({ avatar: data.url });
       toast.success("Avatar uploaded successfully", { id: toastId });
@@ -428,18 +403,19 @@ export default function AddChildPage() {
   const handleSubmit = async () => {
     if (!validateStep(4)) return;
     if (!user) {
-      toast.error("You must be logged in to add a child");
+      toast.error("You must be logged in to add a student");
       return;
     }
 
     setLoading(true);
-    const toastId = toast.loading("Creating child profile...");
+    const toastId = toast.loading("Creating student profile...");
 
     try {
       const age = differenceInYears(new Date(), formData.birth_date!);
 
       const payload = {
-        clerk_id: user.id, // Send Clerk ID to look up custom parent_id backend-side
+        // School uses school_${user.id} as clerk_id so backend finds the dummy parent
+        clerk_id: `school_${user.id}`,
         name: formData.name,
         username: formData.username,
         bio: formData.bio,
@@ -469,15 +445,11 @@ export default function AddChildPage() {
       }
 
       setCreatedChild(data.child);
-      toast.success("Child profile created successfully!", { id: toastId });
+      toast.success("Student profile created successfully!", { id: toastId });
 
-      // Clear storage
-      localStorage.removeItem("qidzo_add_child_form");
-
-      // Move to success step
+      localStorage.removeItem("qidzo_add_student_form");
       setStep(5);
 
-      // Fire confetti
       confetti({
         particleCount: 100,
         spread: 70,
@@ -547,12 +519,12 @@ export default function AddChildPage() {
                 <label className="block text-sm font-bold text-gray-700 mb-1">
                   Gender (Optional)
                 </label>
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-wrap">
                   {["Male", "Female", "Other", "Prefer not to say"].map((g) => (
                     <button
                       key={g}
                       onClick={() => updateFields({ gender: g })}
-                      className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                      className={`px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                         formData.gender === g
                           ? "bg-brand-purple text-white shadow-lg shadow-brand-purple/20"
                           : "bg-gray-50 text-gray-500 hover:bg-gray-100"
@@ -622,7 +594,7 @@ export default function AddChildPage() {
                         <button
                           type="button"
                           onClick={() => setCountryOpen((prev) => !prev)}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer"
                         >
                           <ChevronDown
                             className={`w-4 h-4 transition-transform ${countryOpen ? "rotate-180" : ""}`}
@@ -640,7 +612,7 @@ export default function AddChildPage() {
                                 setCountrySearch(c.name);
                                 setCountryOpen(false);
                               }}
-                              className={`w-full flex items-center gap-2 px-3 py-2 text-left font-nunito ${
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-left font-nunito cursor-pointer ${
                                 formData.country === c.name
                                   ? "bg-brand-purple/10 text-brand-purple"
                                   : "hover:bg-gray-50"
@@ -716,7 +688,7 @@ export default function AddChildPage() {
                   value={formData.bio}
                   onChange={(e) => updateFields({ bio: e.target.value })}
                   className="w-full px-4 py-3 rounded-2xl border-2 border-gray-100 focus:border-brand-purple focus:ring-0 transition-all font-nunito font-bold outline-none resize-none h-24"
-                  placeholder="Tell us a little about your child..."
+                  placeholder="Tell us a little about this student..."
                 />
               </div>
 
@@ -780,7 +752,7 @@ export default function AddChildPage() {
                   />
                   <button
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600"
+                    className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 cursor-pointer"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -829,7 +801,7 @@ export default function AddChildPage() {
                   </div>
                 </div>
                 <p className="text-xs text-sky-blue mt-3 font-bold text-center">
-                  Save these credentials! Your child will use them to login.
+                  Save these credentials! The student will use them to login.
                 </p>
                 <div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3">
                   <span className="text-base shrink-0">⚠️</span>
@@ -870,16 +842,13 @@ export default function AddChildPage() {
                   cat.category_id,
                 );
                 const isHovered = hoveredCategory === cat.id;
-                const displayColor = cat.color || "#8B5CF6"; // Fallback to brand purple
+                const displayColor = cat.color || "#8B5CF6";
 
-                // Convert kebab-case icon name to PascalCase for Lucide component
-                // e.g. "landmark" -> "Landmark", "book-open" -> "BookOpen"
                 const iconName = cat.icon
                   .split("-")
                   .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
                   .join("");
 
-                // Dynamic icon lookup from LucideIcons namespace
                 const IconComponent =
                   (LucideIcons as any)[iconName] ||
                   (LucideIcons as any)[cat.icon] ||
@@ -907,13 +876,13 @@ export default function AddChildPage() {
                     }}
                     style={{
                       borderColor:
-                        isSelected || isHovered ? displayColor : "#f3f4f6", // gray-100
+                        isSelected || isHovered ? displayColor : "#f3f4f6",
                       backgroundColor: isSelected
                         ? `${displayColor}15`
-                        : "white", // ~8% opacity
+                        : "white",
                       transform: isSelected ? "scale(1.05)" : "scale(1)",
                     }}
-                    className={`relative p-3 rounded-2xl border-2 text-left transition-all duration-200 group ${
+                    className={`relative p-3 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer ${
                       isSelected ? "shadow-md" : "hover:shadow-sm"
                     }`}
                   >
@@ -989,7 +958,7 @@ export default function AddChildPage() {
                     </span>
                     <button
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-gray-400 hover:text-brand-purple"
+                      className="text-gray-400 hover:text-brand-purple cursor-pointer"
                     >
                       {showPassword ? (
                         <EyeOff className="w-4 h-4" />
@@ -1007,28 +976,18 @@ export default function AddChildPage() {
 
             <div className="flex flex-col gap-3 max-w-xs mx-auto pt-4">
               <button
-                onClick={async () => {
-                  const profile = await getParentProfile();
-                  if (!profile || profile.max_children_slots <= 0) {
-                    toast.error("No slots available!", {
-                      description:
-                        "Please upgrade your plan or add a kid profile slot to continue.",
-                      icon: <AlertCircle className="w-5 h-5 text-red-500" />,
-                    });
-                    router.push("/parent/upgrade");
-                    return;
-                  }
+                onClick={() => {
                   setFormData(INITIAL_DATA);
                   setStep(1);
                   setCreatedChild(null);
                 }}
                 className="w-full py-3 rounded-xl font-black text-brand-purple bg-brand-purple/10 hover:bg-brand-purple/20 transition-colors cursor-pointer"
               >
-                Add Another Child
+                Add Another Student
               </button>
               <Link
-                href="/parent/dashboard"
-                className="w-full py-3 rounded-xl font-black text-white bg-brand-purple hover:bg-brand-purple/90 transition-colors shadow-lg shadow-brand-purple/20"
+                href="/school/dashboard"
+                className="w-full py-3 rounded-xl font-black text-white bg-brand-purple hover:bg-brand-purple/90 transition-colors shadow-lg shadow-brand-purple/20 text-center"
               >
                 Go to Dashboard
               </Link>
@@ -1068,7 +1027,7 @@ export default function AddChildPage() {
             {step > 1 && (
               <button
                 onClick={handleBack}
-                className="p-2 rounded-xl hover:bg-gray-50 text-gray-400 transition-colors"
+                className="p-2 rounded-xl hover:bg-gray-50 text-gray-400 transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
@@ -1088,7 +1047,7 @@ export default function AddChildPage() {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="px-8 py-3 bg-brand-purple text-white rounded-xl font-black shadow-lg shadow-brand-purple/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
+                className="px-8 py-3 bg-brand-purple text-white rounded-xl font-black shadow-lg shadow-brand-purple/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:hover:scale-100 cursor-pointer"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -1099,7 +1058,7 @@ export default function AddChildPage() {
             ) : (
               <button
                 onClick={handleNext}
-                className="px-8 py-3 bg-gray-900 text-white rounded-xl font-black shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                className="px-8 py-3 bg-gray-900 text-white rounded-xl font-black shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
               >
                 Continue <ChevronRight className="w-5 h-5" />
               </button>

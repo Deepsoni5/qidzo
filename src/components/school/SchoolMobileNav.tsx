@@ -3,10 +3,9 @@
 import {
   LayoutDashboard,
   Users,
-  Settings,
   BarChart3,
-  ArrowLeft,
   Images,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -15,7 +14,6 @@ export default function SchoolMobileNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { label: "Website", icon: ArrowLeft, href: "/", color: "text-red-500" },
     {
       label: "Dashboard",
       icon: LayoutDashboard,
@@ -23,22 +21,28 @@ export default function SchoolMobileNav() {
       color: "text-sky-blue",
     },
     {
-      label: "Gallery",
-      icon: Images,
-      href: "/school/gallery",
-      color: "text-brand-purple",
+      label: "Students",
+      icon: Users,
+      href: "/school/students",
+      color: "text-hot-pink",
+    },
+    {
+      label: "Add Student",
+      icon: UserPlus,
+      href: "/school/add-student",
+      color: "text-grass-green",
     },
     {
       label: "Inquiries",
       icon: Users,
       href: "/school/inquiries",
-      color: "text-grass-green",
+      color: "text-brand-purple",
     },
     {
       label: "Analytics",
       icon: BarChart3,
       href: "/school/analytics",
-      color: "text-sky-blue",
+      color: "text-sunshine-yellow",
     },
   ];
 

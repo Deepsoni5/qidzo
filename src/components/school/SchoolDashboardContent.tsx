@@ -6,7 +6,6 @@ import {
   FileText,
   ArrowUpRight,
   ArrowDownRight,
-  Loader2,
   Sparkles,
   Star,
   TrendingUp,
@@ -15,6 +14,7 @@ import {
   ImageIcon,
   Link,
   Mail,
+  UserPlus,
 } from "lucide-react";
 import {
   AreaChart,
@@ -129,27 +129,27 @@ export default function SchoolDashboardContent({
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
         {stats.map((stat, i) => (
           <div
             key={i}
-            className="group bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
+            className="group bg-white p-5 rounded-[32px] shadow-sm border border-gray-100 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
           >
             <div
               className={`absolute top-0 right-0 w-24 h-24 ${stat.bg} rounded-full blur-3xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500`}
             />
 
-            <div className="flex items-center gap-4 mb-4 relative z-10">
+            <div className="flex items-center gap-3 mb-3 relative z-10">
               <div
-                className={`p-3 rounded-2xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform duration-300`}
+                className={`p-2.5 rounded-2xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform duration-300`}
               >
-                <stat.icon className="w-6 h-6" />
+                <stat.icon className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight">
                   {stat.label}
                 </p>
-                <p className="text-2xl font-black text-gray-900 font-nunito">
+                <p className="text-xl font-black text-gray-900 font-nunito">
                   {stat.value}
                 </p>
               </div>
@@ -172,6 +172,43 @@ export default function SchoolDashboardContent({
             </div>
           </div>
         ))}
+
+        {/* Students Card */}
+        <div className="group bg-white p-5 rounded-[32px] shadow-sm border border-gray-100 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-hot-pink/10 rounded-full blur-3xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
+
+          <div className="flex items-center gap-3 mb-3 relative z-10">
+            <div className="p-2.5 rounded-2xl bg-hot-pink/10 text-hot-pink group-hover:scale-110 transition-transform duration-300">
+              <UserPlus className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight">
+                Students
+              </p>
+              <p className="text-xl font-black text-gray-900 font-nunito">
+                {data.analytics.studentCount}
+                <span className="text-sm font-bold text-gray-400">
+                  /{data.analytics.studentSlots}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="relative z-10">
+            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-hot-pink rounded-full transition-all duration-700"
+                style={{
+                  width: `${Math.min((data.analytics.studentCount / data.analytics.studentSlots) * 100, 100)}%`,
+                }}
+              />
+            </div>
+            <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wide">
+              slots used
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Charts Section */}
@@ -349,7 +386,7 @@ export default function SchoolDashboardContent({
             Quick Actions
           </h3>
           <div className="grid grid-cols-2 gap-4">
-            <button className="flex flex-col items-center gap-3 p-6 rounded-3xl border-2 border-dashed border-gray-100 hover:border-sky-blue hover:bg-sky-blue/5 transition-all group cursor-pointer">
+            <button className="flex flex-col items-center gap-3 p-5 rounded-3xl border-2 border-dashed border-gray-100 hover:border-sky-blue hover:bg-sky-blue/5 transition-all group cursor-pointer">
               <div className="p-3 rounded-2xl bg-sky-blue/10 text-sky-blue group-hover:scale-110 transition-transform">
                 <ImageIcon className="w-6 h-6" />
               </div>
@@ -357,7 +394,7 @@ export default function SchoolDashboardContent({
                 Post Update
               </span>
             </button>
-            <button className="flex flex-col items-center gap-3 p-6 rounded-3xl border-2 border-dashed border-gray-100 hover:border-brand-purple hover:bg-brand-purple/5 transition-all group cursor-pointer">
+            <button className="flex flex-col items-center gap-3 p-5 rounded-3xl border-2 border-dashed border-gray-100 hover:border-brand-purple hover:bg-brand-purple/5 transition-all group cursor-pointer">
               <div className="p-3 rounded-2xl bg-brand-purple/10 text-brand-purple group-hover:scale-110 transition-transform">
                 <FileText className="w-6 h-6" />
               </div>
@@ -365,6 +402,28 @@ export default function SchoolDashboardContent({
                 Create Exam
               </span>
             </button>
+            <Link
+              href="/school/add-student"
+              className="flex flex-col items-center gap-3 p-5 rounded-3xl border-2 border-dashed border-gray-100 hover:border-grass-green hover:bg-grass-green/5 transition-all group cursor-pointer"
+            >
+              <div className="p-3 rounded-2xl bg-grass-green/10 text-grass-green group-hover:scale-110 transition-transform">
+                <UserPlus className="w-6 h-6" />
+              </div>
+              <span className="text-xs font-black text-gray-600 uppercase tracking-widest">
+                Add Student
+              </span>
+            </Link>
+            <Link
+              href="/school/students"
+              className="flex flex-col items-center gap-3 p-5 rounded-3xl border-2 border-dashed border-gray-100 hover:border-hot-pink hover:bg-hot-pink/5 transition-all group cursor-pointer"
+            >
+              <div className="p-3 rounded-2xl bg-hot-pink/10 text-hot-pink group-hover:scale-110 transition-transform">
+                <Users className="w-6 h-6" />
+              </div>
+              <span className="text-xs font-black text-gray-600 uppercase tracking-widest">
+                View Students
+              </span>
+            </Link>
           </div>
         </div>
 

@@ -12,6 +12,7 @@ import {
   BarChart3,
   Mail,
   ExternalLink,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -51,6 +52,18 @@ export default function SchoolSidebar() {
       icon: Mail,
       href: "/school/inquiries",
       color: "text-grass-green",
+    },
+    {
+      label: "Add Student",
+      icon: UserPlus,
+      href: "/school/add-student",
+      color: "text-grass-green",
+    },
+    {
+      label: "Students",
+      icon: Users,
+      href: "/school/students",
+      color: "text-hot-pink",
     },
     {
       label: "Exams Portal",

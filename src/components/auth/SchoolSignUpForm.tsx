@@ -80,7 +80,7 @@ const profileSchema = z.object({
     .optional()
     .refine(
       (val) => !val || /^https?:\/\//.test(val),
-      "Website must start with http:// or https://"
+      "Website must start with http:// or https://",
     ),
   gradeFrom: z.string().min(1, "Select start grade"),
   gradeTo: z.string().min(1, "Select end grade"),
@@ -106,7 +106,9 @@ export default function SchoolSignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [createdUserId, setCreatedUserId] = useState<string | null>(null);
   const [createdSessionId, setCreatedSessionId] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState<"logo" | "banner" | null>(null);
+  const [isUploading, setIsUploading] = useState<"logo" | "banner" | null>(
+    null,
+  );
 
   const authForm = useForm<AuthValues>({
     resolver: zodResolver(authSchema),
@@ -309,7 +311,7 @@ export default function SchoolSignUpForm() {
       setStep("details");
     } catch (err: any) {
       toast.error(
-        err.errors?.[0]?.message || "Invalid code, please check and try again."
+        err.errors?.[0]?.message || "Invalid code, please check and try again.",
       );
     } finally {
       setIsLoading(false);
@@ -372,7 +374,7 @@ export default function SchoolSignUpForm() {
         userId,
         firstName,
         lastName || "",
-        "school"
+        "school",
       );
 
       let insertError = null as any;
@@ -425,6 +427,45 @@ export default function SchoolSignUpForm() {
         return;
       }
 
+      // Create dummy parent row so school can add students
+      const oneYearFromNow = new Date();
+      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+      try {
+        const { error: dummyParentError } = await supabase
+          .from("parents")
+          .insert({
+            parent_id: `SP_${schoolId}`,
+            clerk_id: `school_${userId}`,
+            email: `school_${schoolId}@qidzo.internal`,
+            username: `school_${schoolId}`,
+            name: data.schoolName,
+            phone: `+91${data.contactPhone}`,
+            avatar:
+              data.logo ||
+              "https://cdn-icons-png.flaticon.com/512/847/847969.png",
+            date_of_birth: "1990-06-15",
+            role: "parent",
+            subscription_plan: "ELITE",
+            subscription_status: "ACTIVE",
+            subscription_ends_at: oneYearFromNow.toISOString(),
+            subscription_interval: "yearly",
+            max_children_slots: 999,
+            is_active: true,
+            referral_code: `SP_${schoolId}`,
+          });
+        if (dummyParentError) {
+          toast.error("School registered but student setup failed", {
+            description: dummyParentError.message,
+          });
+        }
+      } catch (dummyErr: any) {
+        toast.error("School registered but student setup failed", {
+          description:
+            dummyErr?.message || "Could not create school parent record.",
+        });
+      }
+
       if (!user && (signUp?.createdSessionId || createdSessionId)) {
         const sessionId = signUp?.createdSessionId || createdSessionId;
         if (sessionId) {
@@ -449,10 +490,10 @@ export default function SchoolSignUpForm() {
     step === "auth"
       ? 25
       : step === "verification"
-      ? 50
-      : step === "details"
-      ? 75
-      : 100;
+        ? 50
+        : step === "details"
+          ? 75
+          : 100;
 
   return (
     <div className="w-full max-w-md mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border-4 border-gray-100">
@@ -516,7 +557,11 @@ export default function SchoolSignUpForm() {
                 className="w-full rounded-xl border-2 hover:bg-gray-50 hover:text-gray-900 cursor-pointer"
                 onClick={() => handleOAuth("oauth_facebook")}
               >
-                <svg className="w-5 h-5 mr-2 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-5 h-5 mr-2 text-[#1877F2]"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036c-2.148 0-2.797 1.66-2.797 3.592v1.4h3.67l-.418 3.667h-3.252v7.98h-4.968Z" />
                 </svg>
                 Facebook
@@ -1121,8 +1166,6 @@ export default function SchoolSignUpForm() {
                   )}
                 />
               </div>
-
-              
 
               <Button
                 type="submit"

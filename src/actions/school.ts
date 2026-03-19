@@ -60,6 +60,8 @@ export async function getSchoolDashboardData() {
           // Inquiries total and last month snapshot
           { count: admissionInquiries },
           { count: inquiriesLastMonth },
+          // Student count via dummy parent SP_${school_id}
+          { data: dummyParent },
         ] = await Promise.all([
           supabase
             .from("follows")
@@ -83,6 +85,11 @@ export async function getSchoolDashboardData() {
             .select("*", { count: "exact", head: true })
             .eq("school_id", school.id)
             .lt("created_at", lastMonthISO),
+          supabase
+            .from("parents")
+            .select("max_children_slots")
+            .eq("parent_id", `SP_${school.school_id}`)
+            .single(),
         ]);
 
         // Aggregate engagement from posts
@@ -143,6 +150,10 @@ export async function getSchoolDashboardData() {
               )
             : 0;
 
+        // Student count = 999 - remaining slots (dummy parent starts at 999)
+        const remainingSlots = dummyParent?.max_children_slots ?? 999;
+        const studentCount = 999 - remainingSlots;
+
         const analytics = {
           totalFollowers: totalFollowers || 0,
           followerGrowth,
@@ -152,6 +163,8 @@ export async function getSchoolDashboardData() {
           inquiryGrowth,
           examParticipation: totalPosts || 0,
           participationGrowth,
+          studentCount,
+          studentSlots: 999,
         };
 
         // 3. Activity Data (Last 7 days) — aggregate from single queries
@@ -641,4 +654,44 @@ export async function getSchoolGalleryBySchoolId(
     },
     300, // 5 minutes cache
   );
+}
+
+// Get all students for the school (via dummy parent SP_${school_id})
+export async function getSchoolStudents() {
+  try {
+    const user = await currentUser();
+    if (!user) return null;
+
+    const { data: school, error: schoolError } = await supabase
+      .from("schools")
+      .select("school_id, id")
+      .eq("clerk_id", user.id)
+      .single();
+
+    if (schoolError || !school) return null;
+
+    const cacheKey = `school:students:${school.id}`;
+
+    return getOrSetCache(
+      cacheKey,
+      async () => {
+        const dummyParentId = `SP_${school.school_id}`;
+
+        const { data, error } = await supabase
+          .from("children")
+          .select(
+            "id, child_id, name, username, avatar, age, gender, level, xp_points, is_active, created_at, city, country, school_name",
+          )
+          .eq("parent_id", dummyParentId)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        return data || [];
+      },
+      120, // 2 minutes cache
+    );
+  } catch (error) {
+    console.error("Error in getSchoolStudents:", error);
+    return null;
+  }
 }
