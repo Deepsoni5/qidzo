@@ -2,10 +2,10 @@ import { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabaseClient";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://qidzo.com";
+  const baseUrl = "https://qidzo.com"; // Always non-www — make sure www redirects here
   const currentDate = new Date();
 
-  // Static pages with high priority
+  // ─── Static Pages ────────────────────────────────────────────────────────────
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
@@ -51,52 +51,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Fetch active schools for public pages
+  // ─── School Pages ─────────────────────────────────────────────────────────────
+  // Only include: active schools + real slugs (exclude test/dummy entries)
   let schoolPages: MetadataRoute.Sitemap = [];
   try {
-    const { data: schools } = await supabase
+    const { data: schools, error } = await supabase
       .from("schools")
-      .select("slug, updated_at")
+      .select("slug, updated_at, name")
       .eq("is_active", true)
       .not("slug", "is", null)
+      .not("slug", "eq", "new-school") // exclude dummy/test entries
+      .not("slug", "eq", "abc-international-school") // exclude dummy/test entries
       .limit(1000);
 
+    if (error) throw error;
+
     if (schools && schools.length > 0) {
-      console.log(`Sitemap: Found ${schools.length} schools`);
+      console.log(`Sitemap: Found ${schools.length} active schools`);
       schoolPages = schools.map((school) => ({
         url: `${baseUrl}/schools/${school.slug}`,
         lastModified: new Date(school.updated_at),
         changeFrequency: "weekly" as const,
         priority: 0.7,
       }));
-    } else {
-      console.log("Sitemap: No schools found");
     }
   } catch (error) {
-    console.error("Error fetching schools for sitemap:", error);
+    console.error("Sitemap: Error fetching schools:", error);
   }
 
-  // Fetch active children profiles (public profiles only)
-  let childPages: MetadataRoute.Sitemap = [];
-  try {
-    const { data: children } = await supabase
-      .from("children")
-      .select("username, updated_at")
-      .not("username", "is", null)
-      .limit(5000); // Limit to prevent huge sitemaps
-
-    if (children && children.length > 0) {
-      childPages = children.map((child) => ({
-        url: `${baseUrl}/child/${child.username}`,
-        lastModified: new Date(child.updated_at),
-        changeFrequency: "weekly" as const,
-        priority: 0.6,
-      }));
-    }
-  } catch (error) {
-    console.error("Error fetching children for sitemap:", error);
-  }
-
-  // Combine all pages
-  return [...staticPages, ...schoolPages, ...childPages];
+  return [...staticPages, ...schoolPages];
 }
