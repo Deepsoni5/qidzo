@@ -507,9 +507,9 @@ export default function SchoolSignUpForm() {
         <div id="clerk-captcha" />
         <div className="text-center mb-8">
           <h2 className="text-3xl font-nunito font-black text-gray-800 mb-2">
-            {step === "auth" && "Create School Account"}
+            {step === "auth" && "Create Account"}
             {step === "verification" && "Verify Email"}
-            {step === "details" && "School Details"}
+            {step === "details" && "Organization Details"}
             {step === "branding" && "Campus & Branding"}
           </h2>
           <p className="text-gray-500 font-medium">
@@ -517,7 +517,7 @@ export default function SchoolSignUpForm() {
             {step === "verification" &&
               "We sent a code to " + authForm.getValues("email")}
             {step === "details" &&
-              "Tell us the basics about your school so parents trust you"}
+              "Tell us the basics about your organization so parents trust you"}
             {step === "branding" &&
               "Add location and branding so your page feels unique"}
           </p>

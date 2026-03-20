@@ -11,7 +11,7 @@ export default function Page() {
 
       <div className="z-10 w-full max-w-md mb-8 text-center mt-12">
         <h1 className="text-2xl font-bold text-gray-800 font-nunito">
-          School Portal
+          Organization Portal
         </h1>
         <p className="text-gray-500">Login to manage your School page</p>
       </div>
@@ -22,4 +22,3 @@ export default function Page() {
     </div>
   );
 }
-
