@@ -11,7 +11,9 @@ export default function Page() {
       </div>
 
       <div className="z-10 w-full max-w-md mb-8 text-center pt-16 lg:pt-24">
-          <h1 className="text-2xl font-bold text-gray-800 font-nunito">Parent Portal</h1>
+        <h1 className="text-2xl font-bold text-gray-800 font-nunito">
+          Access To Portal
+        </h1>
         <p className="text-gray-500">Manage your child's learning journey</p>
       </div>
 

@@ -13,7 +13,7 @@ export default function Page() {
         <h1 className="text-2xl font-bold text-gray-800 font-nunito">
           Organization Portal
         </h1>
-        <p className="text-gray-500">Login to manage your School page</p>
+        <p className="text-gray-500">Login to manage your page</p>
       </div>
 
       <div className="z-10 w-full">
