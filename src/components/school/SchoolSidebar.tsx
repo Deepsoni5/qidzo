@@ -122,7 +122,7 @@ export default function SchoolSidebar() {
             className="flex items-center gap-3 p-3.5 rounded-2xl font-nunito font-bold cursor-pointer transition-all duration-300 hover:bg-sky-blue/10 hover:text-sky-blue text-gray-500 group border border-dashed border-gray-200 hover:border-sky-blue/40"
           >
             <ExternalLink className="w-5 h-5 group-hover:scale-110 transition-transform flex-shrink-0" />
-            <span className="text-sm leading-tight">View School Page</span>
+            <span className="text-sm leading-tight">View Page</span>
           </Link>
         )}
 

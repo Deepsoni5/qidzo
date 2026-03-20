@@ -62,7 +62,7 @@ const verificationSchema = z.object({
 });
 
 const profileSchema = z.object({
-  schoolName: z.string().min(3, "School name is required"),
+  schoolName: z.string().min(3, "Name is required"),
   contactPerson: z.string().min(2, "Contact person name is required"),
   contactPhone: z
     .string()
@@ -84,8 +84,8 @@ const profileSchema = z.object({
     ),
   gradeFrom: z.string().min(1, "Select start grade"),
   gradeTo: z.string().min(1, "Select end grade"),
-  about: z.string().min(20, "Tell parents more about your school"),
-  logo: z.string().min(1, "School logo is required"),
+  about: z.string().min(20, "Tell parents more about your organization"),
+  logo: z.string().min(1, "Logo is required"),
   banner: z.string().optional(),
   brandPrimaryColor: z.string().optional(),
   brandSecondaryColor: z.string().optional(),
@@ -274,8 +274,7 @@ export default function SchoolSignUpForm() {
         err.errors?.[0]?.message || "Something went wrong. Please try again.";
 
       if (errorCode === "form_identifier_exists") {
-        userMsg =
-          "This email is already registered. Please use School Login instead.";
+        userMsg = "This email is already registered. Please use login instead.";
       }
 
       toast.error("Sign up failed", {
@@ -415,12 +414,12 @@ export default function SchoolSignUpForm() {
 
       if (insertError) {
         if (insertError.code === "23505") {
-          toast.error("School already exists", {
+          toast.error("Organization already exists", {
             description:
-              "An account for this school or email already exists. Please use School Login.",
+              "An account for this email already exists. Please use Login.",
           });
         } else {
-          toast.error("School creation failed", {
+          toast.error("Organization creation failed", {
             description: insertError.message,
           });
         }
@@ -473,8 +472,8 @@ export default function SchoolSignUpForm() {
         }
       }
 
-      toast.success("School registered", {
-        description: "Welcome to Qidzo School Pages.",
+      toast.success("Registration Successful!", {
+        description: "Welcome to Qidzo!",
       });
       router.push("/school/dashboard");
     } catch (err: any) {
@@ -693,7 +692,7 @@ export default function SchoolSignUpForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-bold text-gray-700">
-                      School Name
+                      Name:
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -833,12 +832,12 @@ export default function SchoolSignUpForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-bold text-gray-700">
-                      About School
+                      About Your Organization
                     </FormLabel>
                     <FormControl>
                       <Textarea
                         rows={4}
-                        placeholder="Share your vision, facilities and what makes your school special."
+                        placeholder="Share your vision, facilities and what makes your organization special."
                         {...field}
                         className="rounded-2xl border-2 focus:border-brand-purple"
                       />
@@ -871,7 +870,7 @@ export default function SchoolSignUpForm() {
                 {/* Logo Upload (Required) */}
                 <div className="flex flex-col items-center">
                   <FormLabel className="font-bold text-gray-700 mb-2 self-start">
-                    School Logo (Required)
+                    Logo (Required)
                   </FormLabel>
                   <div className="relative group w-full">
                     <div className="w-full h-32 rounded-2xl overflow-hidden border-4 border-dashed border-gray-100 group-hover:border-brand-purple transition-all bg-gray-50 flex items-center justify-center relative">

@@ -78,11 +78,12 @@ export default function SchoolSignInForm() {
         /could\s*not\s*find/i.test(message)
       ) {
         toast.error("Email not found", {
-          description: "Please sign up to create your School account.",
+          description: "Please sign up to create your account.",
         });
       } else {
         toast.error("Login failed", {
-          description: message || "Invalid email or password. Please try again.",
+          description:
+            message || "Invalid email or password. Please try again.",
         });
       }
     } finally {
@@ -96,10 +97,10 @@ export default function SchoolSignInForm() {
         <div id="clerk-captcha" />
         <div className="text-center mb-8">
           <h2 className="text-3xl font-nunito font-black text-gray-800 mb-2">
-            School Login
+            Login Here
           </h2>
           <p className="text-gray-500 font-medium">
-            Access your School Dashboard
+            Access your Dashboard Here
           </p>
         </div>
 
@@ -134,7 +135,11 @@ export default function SchoolSignInForm() {
             className="w-full rounded-xl border-2 hover:bg-gray-50 hover:text-gray-900 cursor-pointer"
             onClick={() => handleOAuth("oauth_facebook")}
           >
-            <svg className="w-5 h-5 mr-2 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-5 h-5 mr-2 text-[#1877F2]"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036c-2.148 0-2.797 1.66-2.797 3.592v1.4h3.67l-.418 3.667h-3.252v7.98h-4.968Z" />
             </svg>
             Facebook
@@ -204,8 +209,6 @@ export default function SchoolSignInForm() {
               )}
             />
 
-            
-
             <Button
               type="submit"
               className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white font-bold py-6 rounded-xl text-lg shadow-lg shadow-brand-purple/20 transition-all hover:scale-[1.02] cursor-pointer"
@@ -217,7 +220,7 @@ export default function SchoolSignInForm() {
         </Form>
 
         <div className="text-center mt-4">
-          <span className="text-gray-500">New school? </span>
+          <span className="text-gray-500">New To This Platform? </span>
           <a
             href="/school/sign-up"
             className="text-brand-purple font-bold hover:underline cursor-pointer"

@@ -75,7 +75,7 @@ const profileSchema = z.object({
       const date = new Date(dateStr);
       const age = differenceInYears(new Date(), date);
       return age >= 22;
-    }, "You must be 22+ to create a parents account"),
+    }, "You must be 22+ to create a account"),
   avatar: z.string().optional(),
 });
 
@@ -403,7 +403,6 @@ export default function SignUpForm() {
         // Non-blocking, proceed with DB insert
       }
 
-      console.log("[SignUp] Inserting parent into Supabase...");
       const { error } = await supabase.from("parents").insert({
         clerk_id: userId,
         email: authForm.getValues("email"),
@@ -472,7 +471,7 @@ export default function SignUpForm() {
       await invalidateParentCache(userId);
 
       toast.success("Welcome to Qidzo! 🎉", {
-        description: "Your parent account is ready to go!",
+        description: "Your account is ready to go!",
         duration: 5000,
       });
       router.push("/parent/dashboard");
@@ -513,7 +512,7 @@ export default function SignUpForm() {
             {step === "profile" && "Setup Profile 👤"}
           </h2>
           <p className="text-gray-500 font-medium">
-            {step === "auth" && "Create your parent account to get started"}
+            {step === "auth" && "Create your account to get started"}
             {step === "verification" &&
               "We sent a code to " + authForm.getValues("email")}
             {step === "profile" && "Tell us a bit about yourself"}
