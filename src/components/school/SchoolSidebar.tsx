@@ -13,6 +13,7 @@ import {
   Mail,
   ExternalLink,
   UserPlus,
+  Video,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -64,6 +65,12 @@ export default function SchoolSidebar() {
       icon: Users,
       href: "/school/students",
       color: "text-hot-pink",
+    },
+    {
+      label: "Live Classes",
+      icon: Video,
+      href: "/school/live",
+      color: "text-red-500",
     },
     {
       label: "Exams Portal",

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, GraduationCap } from "lucide-react";
+import { BookOpen, GraduationCap, Video } from "lucide-react";
 import ExamsTab from "./ExamsTab";
+import TutorialsTab from "./TutorialsTab";
 
 interface StudyContentProps {
   initialExams?: any[];
@@ -48,8 +49,8 @@ export default function StudyContent({ initialExams = [] }: StudyContentProps) {
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
-            <BookOpen className="w-5 h-5" />
-            Tutorials
+            <Video className="w-5 h-5" />
+            Live Classes
             {activeTab === "tutorials" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-purple" />
             )}
@@ -58,19 +59,7 @@ export default function StudyContent({ initialExams = [] }: StudyContentProps) {
 
         {/* Tab Content */}
         {activeTab === "exams" && <ExamsTab initialExams={initialExams} />}
-        {activeTab === "tutorials" && (
-          <div className="bg-white rounded-2xl p-12 border border-gray-200 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-brand-purple/10 flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="w-8 h-8 text-brand-purple" />
-            </div>
-            <h3 className="text-xl font-bold font-nunito text-gray-900 mb-2">
-              Tutorials Coming Soon! 🎬
-            </h3>
-            <p className="text-sm text-gray-600">
-              We're working on bringing you amazing video tutorials
-            </p>
-          </div>
-        )}
+        {activeTab === "tutorials" && <TutorialsTab />}
       </div>
     </div>
   );

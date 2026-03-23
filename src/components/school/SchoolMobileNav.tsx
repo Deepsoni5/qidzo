@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  LayoutDashboard,
-  Users,
-  BarChart3,
-  Images,
-  UserPlus,
-} from "lucide-react";
+import { LayoutDashboard, Users, UserPlus, Video } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -33,16 +27,16 @@ export default function SchoolMobileNav() {
       color: "text-grass-green",
     },
     {
+      label: "Live",
+      icon: Video,
+      href: "/school/live",
+      color: "text-red-500",
+    },
+    {
       label: "Inquiries",
       icon: Users,
       href: "/school/inquiries",
       color: "text-brand-purple",
-    },
-    {
-      label: "Analytics",
-      icon: BarChart3,
-      href: "/school/analytics",
-      color: "text-sunshine-yellow",
     },
   ];
 
