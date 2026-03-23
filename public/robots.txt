@@ -49,12 +49,8 @@ Disallow: /school/profile
 # Block exam and study materials (premium content)
 Disallow: /study/
 
-# Block internal routes
-Disallow: /_next/
-Disallow: /static/
 
 # Sitemap location
 Sitemap: https://qidzo.com/sitemap.xml
 
-# Crawl delay (be nice to servers)
-Crawl-delay: 1
+

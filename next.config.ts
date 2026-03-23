@@ -7,8 +7,6 @@ const LOADER = path.resolve(
 );
 
 const nextConfig: NextConfig = {
-  // ─── www → non-www redirect ───────────────────────────────────────────────
-
   // ─── Images ───────────────────────────────────────────────────────────────
   images: {
     remotePatterns: [
