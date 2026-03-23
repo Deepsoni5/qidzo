@@ -16,6 +16,7 @@ import {
   Mail,
   ChevronDown,
   School,
+  Sparkles,
 } from "lucide-react";
 import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
@@ -569,6 +570,17 @@ export default function Navbar({
                     Support & Info
                   </h4>
                   <div className="space-y-1">
+                    <Link
+                      href="/about"
+                      className="flex items-center gap-3 p-2 hover:bg-brand-purple/5 rounded-2xl transition-colors group cursor-pointer"
+                    >
+                      <div className="w-8 h-8 bg-brand-purple/10 rounded-xl flex items-center justify-center text-brand-purple group-hover:bg-brand-purple/20 transition-colors">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-700 group-hover:text-brand-purple">
+                        About Us
+                      </span>
+                    </Link>
                     <Link
                       href="/privacy"
                       className="flex items-center gap-3 p-2 hover:bg-sky-50 rounded-2xl transition-colors group cursor-pointer"

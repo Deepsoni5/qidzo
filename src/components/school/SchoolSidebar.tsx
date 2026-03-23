@@ -14,6 +14,7 @@ import {
   ExternalLink,
   UserPlus,
   Video,
+  BookOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -73,6 +74,12 @@ export default function SchoolSidebar() {
       color: "text-red-500",
     },
     {
+      label: "Tutorials",
+      icon: BookOpen,
+      href: "/school/resources",
+      color: "text-brand-purple",
+    },
+    {
       label: "Exams Portal",
       icon: FileText,
       href: "/school/exams",
@@ -128,7 +135,7 @@ export default function SchoolSidebar() {
             target="_blank"
             className="flex items-center gap-3 p-3.5 rounded-2xl font-nunito font-bold cursor-pointer transition-all duration-300 hover:bg-sky-blue/10 hover:text-sky-blue text-gray-500 group border border-dashed border-gray-200 hover:border-sky-blue/40"
           >
-            <ExternalLink className="w-5 h-5 group-hover:scale-110 transition-transform flex-shrink-0" />
+            <ExternalLink className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0" />
             <span className="text-sm leading-tight">View Page</span>
           </Link>
         )}

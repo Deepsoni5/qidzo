@@ -18,6 +18,8 @@ import {
   Volume2,
   VolumeX,
   Shield,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getLiveClassById } from "@/actions/live-classes";
@@ -1075,7 +1077,7 @@ function ViewerVideoGrid({
       }}
     >
       {/* Self tile */}
-      <div className="relative bg-gray-900 rounded-[20px] overflow-hidden min-h-0">
+      <VideoTile className="relative bg-gray-900 rounded-[20px] overflow-hidden min-h-0">
         <div ref={localVideoRef} className="w-full h-full" />
         {!camOn && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
@@ -1108,13 +1110,13 @@ function ViewerVideoGrid({
             </div>
           )}
         </div>
-      </div>
+      </VideoTile>
 
       {/* Remote peer tiles */}
       {allPeers.map((peer) => {
         const isTeacher = peer.name === "👨‍🏫 Teacher";
         return (
-          <div
+          <VideoTile
             key={String(peer.uid)}
             className="relative bg-gray-800 rounded-[20px] overflow-hidden min-h-0"
           >
@@ -1151,9 +1153,61 @@ function ViewerVideoGrid({
                 </div>
               )}
             </div>
-          </div>
+          </VideoTile>
         );
       })}
+    </div>
+  );
+}
+
+// ── FullscreenBtn ─────────────────────────────────────────────────────────────
+function FullscreenBtn({
+  targetRef,
+}: {
+  targetRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const [isFs, setIsFs] = useState(false);
+  useEffect(() => {
+    const handler = () => setIsFs(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+  const toggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!document.fullscreenElement) {
+      targetRef.current?.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
+  return (
+    <button
+      onClick={toggle}
+      className="absolute bottom-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-lg text-white transition-all cursor-pointer z-10"
+      title={isFs ? "Exit fullscreen" : "Fullscreen"}
+    >
+      {isFs ? (
+        <Minimize2 className="w-3 h-3" />
+      ) : (
+        <Maximize2 className="w-3 h-3" />
+      )}
+    </button>
+  );
+}
+
+// ── VideoTile ─────────────────────────────────────────────────────────────────
+function VideoTile({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const tileRef = useRef<HTMLDivElement>(null);
+  return (
+    <div ref={tileRef} className={className}>
+      {children}
+      <FullscreenBtn targetRef={tileRef} />
     </div>
   );
 }

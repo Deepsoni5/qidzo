@@ -25,6 +25,8 @@ import {
   Clock,
   GraduationCap,
   CalendarCheck,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -1097,6 +1099,60 @@ export default function HostRoomPage() {
   );
 }
 
+// ── FullscreenBtn ─────────────────────────────────────────────────────────────
+// Small button at bottom-right of each tile to toggle fullscreen
+function FullscreenBtn({
+  targetRef,
+}: {
+  targetRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const [isFs, setIsFs] = useState(false);
+  useEffect(() => {
+    const handler = () => setIsFs(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+  const toggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!document.fullscreenElement) {
+      targetRef.current?.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
+  return (
+    <button
+      onClick={toggle}
+      className="absolute bottom-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-lg text-white transition-all cursor-pointer z-10"
+      title={isFs ? "Exit fullscreen" : "Fullscreen"}
+    >
+      {isFs ? (
+        <Minimize2 className="w-3 h-3" />
+      ) : (
+        <Maximize2 className="w-3 h-3" />
+      )}
+    </button>
+  );
+}
+
+// ── VideoTile ─────────────────────────────────────────────────────────────────
+// Wrapper that owns the tile ref so FullscreenBtn can target it
+function VideoTile({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const tileRef = useRef<HTMLDivElement>(null);
+  return (
+    <div ref={tileRef} className={className}>
+      {children}
+      <FullscreenBtn targetRef={tileRef} />
+    </div>
+  );
+}
+
 // ── VideoGrid ─────────────────────────────────────────────────────────────────
 // Google Meet-style: every participant gets a tile. Camera-off = avatar tile.
 function VideoGrid({
@@ -1159,7 +1215,7 @@ function VideoGrid({
       }}
     >
       {/* Host tile */}
-      <div className="relative bg-gray-900 rounded-[20px] overflow-hidden min-h-0">
+      <VideoTile className="relative bg-gray-900 rounded-[20px] overflow-hidden min-h-0">
         <div ref={localVideoRef} className="w-full h-full" />
         {!camOn && !screenSharing && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
@@ -1192,7 +1248,7 @@ function VideoGrid({
             </div>
           )}
         </div>
-      </div>
+      </VideoTile>
 
       {/* One tile per remote participant — video if publishing, avatar if not */}
       {remotePeers.map((p) => {
@@ -1200,13 +1256,11 @@ function VideoGrid({
         const name = info?.name ?? p.name;
         const avatar = info?.avatar ?? null;
         return (
-          <div
+          <VideoTile
             key={String(p.uid)}
             className="relative bg-gray-800 rounded-[20px] overflow-hidden min-h-0"
           >
-            {/* Always render the video div so Agora can play into it */}
             <div id={`remote-${p.uid}`} className="w-full h-full" />
-            {/* Avatar overlay — driven by p.hasVideo state, not mutable ref */}
             {!p.hasVideo && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
                 <div className="flex flex-col items-center gap-2">
@@ -1239,7 +1293,7 @@ function VideoGrid({
                 </div>
               )}
             </div>
-          </div>
+          </VideoTile>
         );
       })}
     </div>
