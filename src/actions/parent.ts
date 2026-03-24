@@ -20,7 +20,7 @@ export async function checkIsParent() {
     if (!user) return false;
 
     // Check metadata first
-    if (user.unsafeMetadata?.role === "parent") return true;
+    if (user.publicMetadata?.role === "parent") return true;
 
     // Fallback to Direct DB check
     const { data } = await supabase
@@ -43,7 +43,7 @@ export async function checkIsSchool() {
     if (!user) return false;
 
     // Check metadata first
-    if (user.unsafeMetadata?.role === "school") return true;
+    if (user.publicMetadata?.role === "school") return true;
 
     // Fallback to Direct DB check
     const { data } = await supabase

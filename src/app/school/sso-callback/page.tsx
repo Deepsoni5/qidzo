@@ -22,7 +22,7 @@ export default function SSOSchoolCallback() {
         return;
       }
 
-      const role = (user.unsafeMetadata as any)?.role;
+      const role = (user.publicMetadata as any)?.role;
       if (role && role !== "school") {
         toast.error("Access denied", {
           description: "This account is not a School account.",
@@ -61,4 +61,3 @@ export default function SSOSchoolCallback() {
     </div>
   );
 }
-
