@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { GraduationCap, Video, BookOpen } from "lucide-react";
 import ExamsTab from "./ExamsTab";
 import TutorialsTab from "./TutorialsTab";
@@ -23,7 +24,11 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 ];
 
 export default function StudyContent({ initialExams = [] }: StudyContentProps) {
-  const [activeTab, setActiveTab] = useState<Tab>("exams");
+  const searchParams = useSearchParams();
+  const hasResourceParam = !!searchParams.get("resource");
+  const [activeTab, setActiveTab] = useState<Tab>(
+    hasResourceParam ? "tutorials" : "exams",
+  );
 
   return (
     <div className="min-h-screen pt-20 pb-12 px-4 sm:px-6">
