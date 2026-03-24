@@ -73,9 +73,14 @@ export default function SignInForm() {
           description: "It's great to see you again.",
         });
         router.push("/");
+      } else if (res.status === "needs_second_factor") {
+        toast.error("2FA Required", {
+          description:
+            "Please disable two-step verification from your account settings or contact support.",
+        });
       } else {
         toast.error("Sign in incomplete", {
-          description: "Please check your email for further instructions.",
+          description: `Status: ${res.status}`,
         });
       }
     } catch (err: any) {

@@ -183,7 +183,8 @@ export async function updateClerkUserMetadata(
     await client.users.updateUser(userId, {
       firstName,
       lastName,
-      unsafeMetadata: {
+      publicMetadata: {
+        // ✅ CORRECT
         role,
         onboarding_complete: true,
       },

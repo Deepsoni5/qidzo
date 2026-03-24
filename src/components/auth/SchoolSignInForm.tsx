@@ -64,6 +64,12 @@ export default function SchoolSignInForm() {
         await setActive({ session: result.createdSessionId });
         toast.success("Welcome back");
         router.push("/school/dashboard");
+      } else if (result.status === "needs_second_factor") {
+        // Handle TOTP/2FA - attempt it automatically
+        toast.error("2FA is enabled on this account", {
+          description:
+            "Please contact support or disable 2FA from your account.",
+        });
       } else {
         toast.error("Login failed", {
           description: "Please check your details and try again.",
