@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { GraduationCap, Video, BookOpen } from "lucide-react";
+import { toast } from "sonner";
+import { getCurrentUserRole } from "@/actions/auth";
 import ExamsTab from "./ExamsTab";
 import TutorialsTab from "./TutorialsTab";
 import ResourcesTab from "./ResourcesTab";
@@ -24,11 +26,36 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 ];
 
 export default function StudyContent({ initialExams = [] }: StudyContentProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const hasResourceParam = !!searchParams.get("resource");
   const [activeTab, setActiveTab] = useState<Tab>(
     hasResourceParam ? "tutorials" : "exams",
   );
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const roleData = await getCurrentUserRole();
+      if (!roleData?.isChild) {
+        toast("Kid Account Required! 🎓", {
+          description:
+            "Please log in with a children account to view the Study Hub. ✨",
+          duration: 5000,
+          style: {
+            background: "#F0F9FF",
+            border: "3px solid #0EA5E9",
+            color: "#075985",
+            fontSize: "16px",
+            fontFamily: "Nunito, sans-serif",
+            fontWeight: "bold",
+          },
+          className: "rounded-2xl shadow-xl",
+        });
+        router.replace("/login");
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   return (
     <div className="min-h-screen pt-20 pb-12 px-4 sm:px-6">
