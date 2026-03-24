@@ -477,8 +477,11 @@ function UploadModal({
         : "from-brand-purple to-hot-pink";
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-white w-full sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden max-h-[90svh] sm:max-h-[95vh] flex flex-col">
+    <div className="fixed inset-0 z-200 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div
+        className="bg-white w-full sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden flex flex-col mb-16 sm:mb-0"
+        style={{ maxHeight: "calc(100svh - 80px)" }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
           <h2 className="text-lg font-black font-nunito text-gray-900">
@@ -723,7 +726,7 @@ function UploadModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 shrink-0 flex gap-3">
+        <div className="px-6 py-4 border-t border-gray-100 shrink-0 flex gap-3 bg-white sticky bottom-0">
           {phase === "uploading" && (
             <button
               onClick={handleCancel}

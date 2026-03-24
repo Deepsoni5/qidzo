@@ -61,7 +61,7 @@ export async function getSchoolDashboardData() {
           { count: admissionInquiries },
           { count: inquiriesLastMonth },
           // Student count via dummy parent SP_${school_id}
-          { data: dummyParent },
+          { count: studentCount },
         ] = await Promise.all([
           supabase
             .from("follows")
@@ -86,10 +86,9 @@ export async function getSchoolDashboardData() {
             .eq("school_id", school.id)
             .lt("created_at", lastMonthISO),
           supabase
-            .from("parents")
-            .select("max_children_slots")
-            .eq("parent_id", `SP_${school.school_id}`)
-            .single(),
+            .from("children")
+            .select("*", { count: "exact", head: true })
+            .eq("parent_id", `SP_${school.school_id}`),
         ]);
 
         // Aggregate engagement from posts
@@ -150,10 +149,6 @@ export async function getSchoolDashboardData() {
               )
             : 0;
 
-        // Student count = 9999 - remaining slots (dummy parent starts at 9999)
-        const remainingSlots = dummyParent?.max_children_slots ?? 9999;
-        const studentCount = 9999 - remainingSlots;
-
         const analytics = {
           totalFollowers: totalFollowers || 0,
           followerGrowth,
@@ -163,7 +158,7 @@ export async function getSchoolDashboardData() {
           inquiryGrowth,
           examParticipation: totalPosts || 0,
           participationGrowth,
-          studentCount,
+          studentCount: studentCount || 0,
           studentSlots: 9999,
         };
 
