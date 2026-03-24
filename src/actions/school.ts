@@ -150,9 +150,9 @@ export async function getSchoolDashboardData() {
               )
             : 0;
 
-        // Student count = 999 - remaining slots (dummy parent starts at 999)
-        const remainingSlots = dummyParent?.max_children_slots ?? 999;
-        const studentCount = 999 - remainingSlots;
+        // Student count = 9999 - remaining slots (dummy parent starts at 9999)
+        const remainingSlots = dummyParent?.max_children_slots ?? 9999;
+        const studentCount = 9999 - remainingSlots;
 
         const analytics = {
           totalFollowers: totalFollowers || 0,
