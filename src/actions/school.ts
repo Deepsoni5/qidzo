@@ -164,7 +164,7 @@ export async function getSchoolDashboardData() {
           examParticipation: totalPosts || 0,
           participationGrowth,
           studentCount,
-          studentSlots: 999,
+          studentSlots: 9999,
         };
 
         // 3. Activity Data (Last 7 days) — aggregate from single queries

@@ -449,7 +449,7 @@ export default function SchoolSignUpForm() {
             subscription_status: "ACTIVE",
             subscription_ends_at: oneYearFromNow.toISOString(),
             subscription_interval: "yearly",
-            max_children_slots: 999,
+            max_children_slots: 9999,
             is_active: true,
             referral_code: `SP_${schoolId}`,
           });
