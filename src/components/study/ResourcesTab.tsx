@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Play,
   Globe,
@@ -9,10 +10,13 @@ import {
   BookOpen,
   RefreshCw,
   X,
-  Download,
   Search,
   ChevronRight,
   ArrowLeft,
+  Share2,
+  Copy,
+  Check,
+  Download,
 } from "lucide-react";
 
 type ResourceType = "video" | "image" | "pdf";
@@ -63,6 +67,7 @@ const TYPE_META: Record<
 };
 
 export default function ResourcesTab() {
+  const searchParams = useSearchParams();
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -91,6 +96,15 @@ export default function ResourcesTab() {
     fetchResources();
   }, []);
 
+  // Auto-open resource from ?resource= deep link
+  useEffect(() => {
+    if (loading || resources.length === 0) return;
+    const rid = searchParams.get("resource");
+    if (!rid) return;
+    const match = resources.find((r) => r.resource_id === rid);
+    if (match) setViewer(match);
+  }, [loading, resources, searchParams]);
+
   // Group resources by school
   const schoolGroups = useMemo<SchoolGroup[]>(() => {
     const map = new Map<string, SchoolGroup>();
@@ -111,7 +125,24 @@ export default function ResourcesTab() {
     );
   }, [resources]);
 
-  // Filter school list by search query
+  // Resources matching title/description search (shown when no school selected)
+  const resourceSearchResults = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return null; // null = not in resource-search mode
+    // Check if any school name matches — if so, show school cards instead
+    const schoolMatch = schoolGroups.some((s) =>
+      s.name.toLowerCase().includes(q),
+    );
+    if (schoolMatch) return null;
+    // Search by title or description across all resources
+    return resources.filter(
+      (r) =>
+        r.title.toLowerCase().includes(q) ||
+        (r.description ?? "").toLowerCase().includes(q),
+    );
+  }, [resources, schoolGroups, search]);
+
+  // School cards shown when not in resource-search mode
   const filteredSchools = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return schoolGroups;
@@ -243,7 +274,7 @@ export default function ResourcesTab() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search schools..."
+            placeholder="Search schools or resources..."
             className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-brand-purple/30 focus:border-brand-purple transition-all shadow-sm"
           />
           {search && (
@@ -266,38 +297,82 @@ export default function ResourcesTab() {
         </button>
       </div>
 
-      {/* Empty state */}
-      {filteredSchools.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div className="w-24 h-24 rounded-full bg-brand-purple/10 flex items-center justify-center text-5xl">
-            {search ? "🔍" : "📚"}
-          </div>
-          <p className="font-black text-xl text-gray-700 font-nunito">
-            {search ? `No schools matching "${search}"` : "No tutorials yet"}
-          </p>
-          <p className="text-sm font-bold text-gray-400 text-center max-w-xs">
-            {search
-              ? "Try a different school name"
-              : "Your teachers will upload videos, images, and PDFs here 🎓"}
-          </p>
-        </div>
+      {/* Resource search results (title/description match) */}
+      {resourceSearchResults !== null && (
+        <>
+          {resourceSearchResults.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-24 h-24 rounded-full bg-brand-purple/10 flex items-center justify-center text-5xl">
+                🔍
+              </div>
+              <p className="font-black text-xl text-gray-700 font-nunito">
+                No resources matching "{search}"
+              </p>
+              <p className="text-sm font-bold text-gray-400 text-center max-w-xs">
+                Try searching by school name, subject, or a different keyword
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs font-black text-gray-400 uppercase tracking-wider">
+                {resourceSearchResults.length} resource
+                {resourceSearchResults.length !== 1 ? "s" : ""} found
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 max-w-5xl">
+                {resourceSearchResults.map((r) => (
+                  <ResourceCard
+                    key={r.id}
+                    resource={r}
+                    onClick={() => setViewer(r)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </>
       )}
 
-      {/* School cards grid */}
-      {filteredSchools.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 max-w-5xl">
-          {filteredSchools.map((school, i) => (
-            <SchoolCard
-              key={school.school_id}
-              school={school}
-              index={i}
-              onClick={() => {
-                setSelectedSchool(school);
-                setFilterType("all");
-              }}
-            />
-          ))}
-        </div>
+      {/* School cards (shown when not in resource-search mode) */}
+      {resourceSearchResults === null && (
+        <>
+          {filteredSchools.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-24 h-24 rounded-full bg-brand-purple/10 flex items-center justify-center text-5xl">
+                {search ? "🔍" : "📚"}
+              </div>
+              <p className="font-black text-xl text-gray-700 font-nunito">
+                {search
+                  ? `No schools matching "${search}"`
+                  : "No tutorials yet"}
+              </p>
+              <p className="text-sm font-bold text-gray-400 text-center max-w-xs">
+                {search
+                  ? "Try a different school name or search by resource title"
+                  : "Your teachers will upload videos, images, and PDFs here 🎓"}
+              </p>
+            </div>
+          )}
+
+          {filteredSchools.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 max-w-5xl">
+              {filteredSchools.map((school, i) => (
+                <SchoolCard
+                  key={school.school_id}
+                  school={school}
+                  index={i}
+                  onClick={() => {
+                    setSelectedSchool(school);
+                    setFilterType("all");
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {viewer && (
+        <ViewerModal resource={viewer} onClose={() => setViewer(null)} />
       )}
     </div>
   );
@@ -542,6 +617,30 @@ function ViewerModal({
   resource: Resource;
   onClose: () => void;
 }) {
+  const [showShare, setShowShare] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const shareUrl = `https://www.qidzo.com/study?resource=${resource.resource_id}`;
+  const shareText = `📚 Check out "${resource.title}" on Qidzo! Learn something new today 🎓\n`;
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareWhatsApp = () => {
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(shareText + shareUrl)}`,
+      "_blank",
+    );
+  };
+
+  const shareInstagram = () => {
+    // Instagram doesn't support direct link sharing — copy the Qidzo link
+    handleCopy();
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
@@ -569,21 +668,74 @@ function ViewerModal({
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <a
-              href={resource.file_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 transition-all cursor-pointer"
+          <div className="flex items-center gap-2 shrink-0 relative">
+            {/* Share button */}
+            <button
+              onClick={() => setShowShare((v) => !v)}
+              className="p-2 rounded-xl bg-gray-100 hover:bg-brand-purple/10 text-gray-600 hover:text-brand-purple transition-all cursor-pointer"
             >
-              <Download className="w-4 h-4" />
-            </a>
+              <Share2 className="w-4 h-4" />
+            </button>
             <button
               onClick={onClose}
               className="p-2 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-500 transition-all cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
+
+            {/* Share popover */}
+            {showShare && (
+              <div className="absolute top-10 right-0 z-10 bg-white rounded-2xl shadow-2xl border border-gray-100 p-3 w-52 flex flex-col gap-1">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider px-2 mb-1">
+                  Share via
+                </p>
+                <button
+                  onClick={shareWhatsApp}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-green-50 transition-colors cursor-pointer group"
+                >
+                  <span className="w-8 h-8 rounded-xl bg-green-500 flex items-center justify-center text-white text-base shrink-0">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.855L.057 23.882l6.198-1.625A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.794 9.794 0 01-5.003-1.374l-.36-.214-3.68.965.981-3.595-.234-.369A9.794 9.794 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z" />
+                    </svg>
+                  </span>
+                  <span className="text-sm font-black text-gray-700 group-hover:text-green-600">
+                    WhatsApp
+                  </span>
+                </button>
+                <button
+                  onClick={shareInstagram}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pink-50 transition-colors cursor-pointer group"
+                >
+                  <span className="w-8 h-8 rounded-xl bg-linear-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+                    </svg>
+                  </span>
+                  <span className="text-sm font-black text-gray-700 group-hover:text-pink-600">
+                    Instagram
+                    <span className="text-[10px] font-bold text-gray-400 block leading-none">
+                      (copies link)
+                    </span>
+                  </span>
+                </button>
+                <button
+                  onClick={handleCopy}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-brand-purple/5 transition-colors cursor-pointer group"
+                >
+                  {copied ? (
+                    <Check className="w-5 h-5 text-grass-green" />
+                  ) : (
+                    <Copy className="w-5 h-5 text-gray-400 group-hover:text-brand-purple" />
+                  )}
+                  <span
+                    className={`text-sm font-black ${copied ? "text-grass-green" : "text-gray-700 group-hover:text-brand-purple"}`}
+                  >
+                    {copied ? "Copied!" : "Copy Link"}
+                  </span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
