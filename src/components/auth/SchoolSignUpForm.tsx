@@ -304,6 +304,16 @@ export default function SchoolSignUpForm() {
       }
       if (completeSignUp.createdSessionId) {
         setCreatedSessionId(completeSignUp.createdSessionId);
+        // Persist to sessionStorage so it survives slow devices / state loss
+        sessionStorage.setItem(
+          "qidzo_school_signup_session",
+          completeSignUp.createdSessionId,
+        );
+      }
+
+      // ✅ Activate session immediately — prevents needs_second_factor on next login
+      if (completeSignUp.createdSessionId) {
+        await setActive({ session: completeSignUp.createdSessionId });
       }
 
       toast.success("Email verified");
@@ -465,11 +475,18 @@ export default function SchoolSignUpForm() {
         });
       }
 
-      if (!user && (signUp?.createdSessionId || createdSessionId)) {
-        const sessionId = signUp?.createdSessionId || createdSessionId;
+      // Finalize Clerk Session — use sessionStorage backup if signUp state was lost
+      if (!user) {
+        const sessionId =
+          signUp?.createdSessionId ||
+          createdSessionId ||
+          sessionStorage.getItem("qidzo_school_signup_session");
         if (sessionId) {
-          await setActive({ session: sessionId });
+          try {
+            await setActive({ session: sessionId });
+          } catch (_) {}
         }
+        sessionStorage.removeItem("qidzo_school_signup_session");
       }
 
       toast.success("Registration Successful!", {

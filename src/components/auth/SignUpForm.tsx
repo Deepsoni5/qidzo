@@ -305,17 +305,19 @@ export default function SignUpForm() {
       if (completeSignUp.status !== "complete") {
         toast.error("Verification failed. Please try again.");
       } else {
-        // Don't set active yet, wait for profile creation
-        // But Clerk might auto-login?
-        // We will setActive after profile creation to ensure data consistency?
-        // Actually, if we don't setActive, we might not be able to get the clerk ID easily?
-        // Let's setActive here, but maybe we need it for the user ID.
-        // completeSignUp.createdUserId gives the ID.
-        if (completeSignUp.createdUserId) {
-          setCreatedUserId(completeSignUp.createdUserId);
+        const uid = completeSignUp.createdUserId;
+        const sid = completeSignUp.createdSessionId;
+
+        if (uid) setCreatedUserId(uid);
+        if (sid) {
+          setCreatedSessionId(sid);
+          // Persist to sessionStorage so it survives slow devices / state loss
+          sessionStorage.setItem("qidzo_signup_session", sid);
         }
-        if (completeSignUp.createdSessionId) {
-          setCreatedSessionId(completeSignUp.createdSessionId);
+
+        // ✅ Activate session immediately — prevents needs_second_factor on next login
+        if (sid) {
+          await setActive({ session: sid });
         }
 
         toast.success("Email verified!");
@@ -459,12 +461,18 @@ export default function SignUpForm() {
         }
       }
 
-      // Finalize Clerk Session (only needed if not already active)
-      if (!user && (signUp?.createdSessionId || createdSessionId)) {
-        const sessionId = signUp?.createdSessionId || createdSessionId;
+      // Finalize Clerk Session — use sessionStorage backup if signUp state was lost
+      if (!user) {
+        const sessionId =
+          signUp?.createdSessionId ||
+          createdSessionId ||
+          sessionStorage.getItem("qidzo_signup_session");
         if (sessionId) {
-          await setActive({ session: sessionId });
+          try {
+            await setActive({ session: sessionId });
+          } catch (_) {}
         }
+        sessionStorage.removeItem("qidzo_signup_session");
       }
 
       // Invalidate cache to ensure Navbar updates immediately
