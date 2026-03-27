@@ -49,6 +49,33 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Custom Genie Chat Prose Overrides */
+.prose-genie {
+  max-width: none;
+}
+.prose-genie p {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+.prose-genie p:last-child {
+  margin-bottom: 0;
+}
+.prose-genie strong {
+  color: inherit;
+  font-weight: 800;
+}
+.prose-genie em {
+  color: inherit;
+}
+.prose-genie ul, .prose-genie ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.prose-genie li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);

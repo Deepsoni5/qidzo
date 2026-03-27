@@ -9,6 +9,7 @@ import {
   MessageCircle,
   LayoutDashboard,
   School,
+  Bot,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
@@ -140,7 +141,65 @@ export default function LeftSidebar({
     router.push("/playzone");
   };
 
-  const handleStudyHub = () => {
+  const handleGenieAI = async () => {
+    const currentRole = await getCurrentUserRole();
+
+    if (!currentRole.isChild && !currentRole.isParent) {
+      toast("Login Required! ✨", {
+        description: "Please log in to talk to Genie, your magical AI tutor! 🧞‍♂️",
+        duration: 5000,
+        style: {
+          background: "#F5F3FF", // purple-50
+          border: "3px solid #8B5CF6", // brand-purple
+          color: "#5B21B6", // purple-900
+          fontSize: "16px",
+          fontFamily: "Nunito, sans-serif",
+          fontWeight: "bold",
+        },
+        className: "rounded-2xl shadow-xl",
+      });
+      return;
+    }
+
+    // Subscription check
+    const { checkParentSubscription } = await import("@/actions/parent");
+    let plan = "FREE";
+
+    if (currentRole.isParent) {
+      plan = (await checkParentSubscription()) || "FREE";
+    } else if (currentRole.isChild) {
+      const { supabase } = await import("@/lib/supabaseClient");
+      const { data: child } = await supabase
+        .from("children")
+        .select("parent_id")
+        .eq("child_id", (currentRole.child as any)?.id)
+        .single();
+      if (child) {
+        plan = (await checkParentSubscription(child.parent_id)) || "FREE";
+      }
+    }
+
+    if (plan !== "PRO" && plan !== "ELITE") {
+      toast("Premium Access Required! 💎", {
+        description: "Please upgrade to PRO or ELITE to talk to Genie AI! ✨",
+        duration: 5000,
+        style: {
+          background: "#FFF7ED", // orange-50
+          border: "3px solid #F97316", // orange-500
+          color: "#9A3412", // orange-900
+          fontSize: "16px",
+          fontFamily: "Nunito, sans-serif",
+          fontWeight: "bold",
+        },
+        className: "rounded-2xl shadow-xl",
+      });
+      return;
+    }
+
+    router.push("/genie");
+  };
+
+  const handleStudyHub = async () => {
     if (!roleData?.isChild) {
       toast("Kid Account Required! 🎓", {
         description:
@@ -192,6 +251,14 @@ export default function LeftSidebar({
       bg: "bg-sky-blue/10",
       action: handleStudyHub,
       prefetch: "/study",
+    },
+    {
+      label: "Genie AI",
+      icon: Bot,
+      color: "text-sunshine-yellow",
+      bg: "bg-sunshine-yellow/10",
+      action: handleGenieAI,
+      prefetch: "/genie",
     },
     {
       label: "Play Zone",

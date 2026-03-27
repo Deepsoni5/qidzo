@@ -11,6 +11,7 @@ import {
   Gamepad2,
   Sparkles,
   MessageCircle,
+  Bot,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
@@ -115,6 +116,64 @@ export default function MobileNav() {
     });
   };
 
+  const handleGenieAI = async () => {
+    const currentRole = await getCurrentUserRole();
+
+    if (!currentRole.isChild && !currentRole.isParent) {
+      toast("Login Required! ✨", {
+        description: "Please log in to talk to Genie, your magical AI tutor! 🧞‍♂️",
+        duration: 5000,
+        style: {
+          background: "#F5F3FF", // purple-50
+          border: "3px solid #8B5CF6", // brand-purple
+          color: "#5B21B6", // purple-900
+          fontSize: "16px",
+          fontFamily: "Nunito, sans-serif",
+          fontWeight: "bold",
+        },
+        className: "rounded-2xl shadow-xl",
+      });
+      return;
+    }
+
+    // Subscription check
+    const { checkParentSubscription } = await import("@/actions/parent");
+    let plan = "FREE";
+
+    if (currentRole.isParent) {
+      plan = (await checkParentSubscription()) || "FREE";
+    } else if (currentRole.isChild) {
+      const { supabase } = await import("@/lib/supabaseClient");
+      const { data: child } = await supabase
+        .from("children")
+        .select("parent_id")
+        .eq("child_id", (currentRole.child as any)?.id)
+        .single();
+      if (child) {
+        plan = (await checkParentSubscription(child.parent_id)) || "FREE";
+      }
+    }
+
+    if (plan !== "PRO" && plan !== "ELITE") {
+      toast("Premium Access Required! 💎", {
+        description: "Please upgrade to PRO or ELITE to talk to Genie AI! ✨",
+        duration: 5000,
+        style: {
+          background: "#FFF7ED", // orange-50
+          border: "3px solid #F97316", // orange-500
+          color: "#9A3412", // orange-900
+          fontSize: "16px",
+          fontFamily: "Nunito, sans-serif",
+          fontWeight: "bold",
+        },
+        className: "rounded-2xl shadow-xl",
+      });
+      return;
+    }
+
+    router.push("/genie");
+  };
+
   const handleStudyHub = async () => {
     const currentRole = await getCurrentUserRole();
 
@@ -162,7 +221,7 @@ export default function MobileNav() {
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/90 backdrop-blur-xl border-t border-gray-100 pb-safe">
-        <div className="grid grid-cols-5 items-center h-16 px-2">
+        <div className="grid grid-cols-6 items-center h-16 px-2">
           {/* 1. Home */}
           <Link
             href="/"
@@ -185,7 +244,18 @@ export default function MobileNav() {
             </span>
           </button>
 
-          {/* 3. Create Button (Center) */}
+          {/* 3. Genie AI */}
+          <button
+            onClick={handleGenieAI}
+            className="flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-brand-purple transition-colors w-full"
+          >
+            <Bot className="w-6 h-6" />
+            <span className="text-[10px] font-bold uppercase tracking-wide">
+              Genie
+            </span>
+          </button>
+
+          {/* 4. Create Post - Center Button */}
           <div className="flex justify-center items-center w-full relative -top-6">
             <button
               onClick={handleCreatePost}
@@ -195,7 +265,7 @@ export default function MobileNav() {
             </button>
           </div>
 
-          {/* 4. Play Zone */}
+          {/* 5. Play Zone */}
           <button
             onClick={handlePlayZone}
             className="flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-hot-pink transition-colors w-full"
@@ -206,14 +276,14 @@ export default function MobileNav() {
             </span>
           </button>
 
-          {/* 5. Messages */}
+          {/* 6. Messages */}
           <button
             onClick={handleMessages}
             className="flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-grass-green transition-colors w-full"
           >
             <MessageCircle className="w-6 h-6" />
             <span className="text-[10px] font-bold uppercase tracking-wide">
-              Messages
+              Chat
             </span>
           </button>
         </div>

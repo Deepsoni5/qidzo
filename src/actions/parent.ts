@@ -524,3 +524,25 @@ export async function updateChildScreenTime(
     return { success: false, error: "An unexpected error occurred" };
   }
 }
+
+export async function checkParentSubscription(parentId?: string) {
+  try {
+    let query = supabase.from("parents").select("subscription_plan");
+
+    if (parentId) {
+      query = query.eq("parent_id", parentId);
+    } else {
+      const user = await currentUser();
+      if (!user) return null;
+      query = query.eq("clerk_id", user.id);
+    }
+
+    const { data, error } = await query.single();
+    if (error || !data) return null;
+
+    return data.subscription_plan?.toUpperCase() || "FREE";
+  } catch (error) {
+    console.error("Error checking parent subscription:", error);
+    return null;
+  }
+}
