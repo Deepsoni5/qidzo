@@ -198,10 +198,12 @@ export async function updatePost(
   try {
     // 1. Verify session ownership for security
     let isAuthorized = false;
+    let ownerType: "child" | "school" = "child";
 
     const childSession = await getChildSession();
     if (childSession && childSession.id === ownerId) {
       isAuthorized = true;
+      ownerType = "child";
     } else {
       const user = await currentUser();
       if (user) {
@@ -213,6 +215,7 @@ export async function updatePost(
 
         if (school && school.id === ownerId) {
           isAuthorized = true;
+          ownerType = "school";
         }
       }
     }
@@ -221,8 +224,8 @@ export async function updatePost(
       return { success: false, error: "Unauthorized to update this post" };
     }
 
-    // 2. Perform Update
-    const { error } = await supabase
+    // 2. Perform Update — use correct column per owner type to avoid UUID type mismatch
+    const updateQuery = supabase
       .from("posts")
       .update({
         title: updates.title,
@@ -230,8 +233,12 @@ export async function updatePost(
         category_id: updates.categoryId,
         updated_at: new Date().toISOString(),
       })
-      .eq("post_id", postId)
-      .or(`child_id.eq.${ownerId},school_id.eq.${ownerId}`);
+      .eq("post_id", postId);
+
+    const { error } =
+      ownerType === "child"
+        ? await updateQuery.eq("child_id", ownerId)
+        : await updateQuery.eq("school_id", ownerId);
 
     if (error) throw error;
 

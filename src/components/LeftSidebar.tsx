@@ -146,7 +146,7 @@ export default function LeftSidebar({
 
     if (!currentRole.isChild && !currentRole.isParent) {
       toast("Login Required! ✨", {
-        description: "Please log in to talk to your AI Tutor! 🧞‍♂️",
+        description: "Please log in as a kid to talk to your AI Tutor! 🧞‍♂️",
         duration: 5000,
         style: {
           background: "#F5F3FF", // purple-50
