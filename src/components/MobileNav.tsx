@@ -121,7 +121,7 @@ export default function MobileNav() {
 
     if (!currentRole.isChild && !currentRole.isParent) {
       toast("Login Required! ✨", {
-        description: "Please log in to talk to Genie, your magical AI tutor! 🧞‍♂️",
+        description: "Please log in to talk to your AI Tutor! 🧞‍♂️",
         duration: 5000,
         style: {
           background: "#F5F3FF", // purple-50
@@ -156,7 +156,7 @@ export default function MobileNav() {
 
     if (plan !== "PRO" && plan !== "ELITE") {
       toast("Premium Access Required! 💎", {
-        description: "Please upgrade to PRO or ELITE to talk to Genie AI! ✨",
+        description: "Please upgrade to PRO or ELITE to use AI Tutor! ✨",
         duration: 5000,
         style: {
           background: "#FFF7ED", // orange-50
@@ -244,14 +244,14 @@ export default function MobileNav() {
             </span>
           </button>
 
-          {/* 3. Genie AI */}
+          {/* 3. AI Tutor */}
           <button
             onClick={handleGenieAI}
             className="flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-brand-purple transition-colors w-full"
           >
             <Bot className="w-6 h-6" />
             <span className="text-[10px] font-bold uppercase tracking-wide">
-              Genie
+              AI Tutor
             </span>
           </button>
 

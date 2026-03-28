@@ -7,8 +7,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Genie AI | Qidzo Tutor",
-  description: "Learn anything with Genie, your magical AI tutor!",
+  title: "AI Tutor | Qidzo",
+  description: "Learn anything with your AI Tutor on Qidzo!",
 };
 
 export default async function GeniePage() {

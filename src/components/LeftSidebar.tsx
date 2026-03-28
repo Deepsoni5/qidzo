@@ -146,7 +146,7 @@ export default function LeftSidebar({
 
     if (!currentRole.isChild && !currentRole.isParent) {
       toast("Login Required! ✨", {
-        description: "Please log in to talk to Genie, your magical AI tutor! 🧞‍♂️",
+        description: "Please log in to talk to your AI Tutor! 🧞‍♂️",
         duration: 5000,
         style: {
           background: "#F5F3FF", // purple-50
@@ -181,7 +181,7 @@ export default function LeftSidebar({
 
     if (plan !== "PRO" && plan !== "ELITE") {
       toast("Premium Access Required! 💎", {
-        description: "Please upgrade to PRO or ELITE to talk to Genie AI! ✨",
+        description: "Please upgrade to PRO or ELITE to use AI Tutor! ✨",
         duration: 5000,
         style: {
           background: "#FFF7ED", // orange-50
@@ -253,7 +253,7 @@ export default function LeftSidebar({
       prefetch: "/study",
     },
     {
-      label: "Genie AI",
+      label: "AI Tutor",
       icon: Bot,
       color: "text-sunshine-yellow",
       bg: "bg-sunshine-yellow/10",

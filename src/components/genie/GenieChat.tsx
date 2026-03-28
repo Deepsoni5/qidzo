@@ -1,18 +1,18 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { 
-  Send, 
-  Sparkles, 
-  User, 
-  Bot, 
-  Loader2, 
-  MessageSquare, 
-  Zap, 
+import {
+  Send,
+  Sparkles,
+  User,
+  Bot,
+  Loader2,
+  MessageSquare,
+  Zap,
   Trophy,
   BookOpen,
   ArrowLeft,
-  RotateCcw
+  RotateCcw,
 } from "lucide-react";
 import { askGenie } from "@/actions/genie";
 import { toast } from "sonner";
@@ -46,7 +46,8 @@ export default function GenieChat() {
         setMessages([
           {
             role: "assistant",
-            content: "Hello! I'm Genie, your magical AI tutor. What would you like to learn today? ✨",
+            content:
+              "Hello! I'm your AI Tutor, here to help you learn anything! What would you like to explore today? ✨",
           },
         ]);
       }
@@ -54,7 +55,8 @@ export default function GenieChat() {
       setMessages([
         {
           role: "assistant",
-          content: "Hello! I'm Genie, your magical AI tutor. What would you like to learn today? ✨",
+          content:
+            "Hello! I'm your AI Tutor, here to help you learn anything! What would you like to explore today? ✨",
         },
       ]);
     }
@@ -84,9 +86,9 @@ export default function GenieChat() {
     setIsLoading(true);
 
     try {
-      const chatHistory = messages.concat(userMessage).map(m => ({
+      const chatHistory = messages.concat(userMessage).map((m) => ({
         role: m.role as "user" | "assistant" | "system",
-        content: m.content
+        content: m.content,
       }));
 
       // Start streaming request
@@ -98,7 +100,7 @@ export default function GenieChat() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Genie is a bit shy right now.");
+        throw new Error(error.error || "AI Tutor is a bit busy right now.");
       }
 
       if (!response.body) throw new Error("No response from the magic lamp!");
@@ -107,7 +109,7 @@ export default function GenieChat() {
 
       const reader = response.body.getReader();
       const textDecoder = new TextDecoder();
-      
+
       let assistantReply = "";
       let hasStartedStreaming = false;
 
@@ -116,11 +118,11 @@ export default function GenieChat() {
         if (done) break;
 
         const chunk = textDecoder.decode(value, { stream: true });
-        const lines = chunk.split("\n").filter(line => line.trim() !== "");
+        const lines = chunk.split("\n").filter((line) => line.trim() !== "");
 
         for (const line of lines) {
           if (line.includes("[DONE]")) break;
-          
+
           const match = line.match(/^data: (.*)/);
           if (match) {
             try {
@@ -130,7 +132,10 @@ export default function GenieChat() {
                 if (!hasStartedStreaming) {
                   hasStartedStreaming = true;
                   setIsLoading(false); // Stop thinking animation only when first word arrives
-                  setMessages((prev) => [...prev, { role: "assistant", content: content }]);
+                  setMessages((prev) => [
+                    ...prev,
+                    { role: "assistant", content: content },
+                  ]);
                   assistantReply = content;
                 } else {
                   assistantReply += content;
@@ -138,14 +143,13 @@ export default function GenieChat() {
                     const newMessages = [...prev];
                     newMessages[newMessages.length - 1] = {
                       ...newMessages[newMessages.length - 1],
-                      content: assistantReply
+                      content: assistantReply,
                     };
                     return newMessages;
                   });
                 }
               }
-            } catch (e) {
-            }
+            } catch (e) {}
           }
         }
       }
@@ -162,11 +166,15 @@ export default function GenieChat() {
       const initialMessage = [
         {
           role: "assistant" as const,
-          content: "Hello! I'm Genie, your magical AI tutor. What would you like to learn today? ✨",
+          content:
+            "Hello! I'm your AI Tutor, here to help you learn anything! What would you like to explore today? ✨",
         },
       ];
       setMessages(initialMessage);
-      localStorage.setItem("qidzo_genie_history", JSON.stringify(initialMessage));
+      localStorage.setItem(
+        "qidzo_genie_history",
+        JSON.stringify(initialMessage),
+      );
       toast.success("Magic lamp cleaned! Ready for new questions. 🧞‍♂️");
     }
   };
@@ -176,17 +184,24 @@ export default function GenieChat() {
       {/* Header */}
       <div className="bg-brand-purple p-6 flex items-center justify-between shadow-lg relative overflow-hidden">
         <div className="flex items-center gap-4 relative z-10">
-          <Link href="/" className="lg:hidden text-white/80 hover:text-white transition-colors">
+          <Link
+            href="/"
+            className="lg:hidden text-white/80 hover:text-white transition-colors"
+          >
             <ArrowLeft className="w-6 h-6" />
           </Link>
           <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-inner group">
             <Bot className="w-7 h-7 text-brand-purple group-hover:scale-110 transition-transform" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-white font-nunito leading-tight">Genie AI</h1>
+            <h1 className="text-xl sm:text-2xl font-black text-white font-nunito leading-tight">
+              AI Tutor
+            </h1>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-white/80 text-xs font-bold uppercase tracking-widest">Ready to teach! 🎓</span>
+              <span className="text-white/80 text-xs font-bold uppercase tracking-widest">
+                Ready to teach! 🎓
+              </span>
             </div>
           </div>
         </div>
@@ -203,47 +218,63 @@ export default function GenieChat() {
       </div>
 
       {/* Messages */}
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 scroll-smooth scrollbar-thin scrollbar-thumb-brand-purple/20"
       >
         {messages.map((msg, i) => (
-          <div 
-            key={i} 
+          <div
+            key={i}
             className={cn(
               "flex w-full animate-in fade-in slide-in-from-bottom-2 duration-300",
-              msg.role === "user" ? "justify-end" : "justify-start"
+              msg.role === "user" ? "justify-end" : "justify-start",
             )}
           >
-            <div className={cn(
-              "flex gap-3 max-w-[85%] sm:max-w-[75%]",
-              msg.role === "user" ? "flex-row-reverse" : "flex-row"
-            )}>
-              <div className={cn(
-                "w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center shadow-md",
-                msg.role === "user" ? "bg-hot-pink text-white" : "bg-brand-purple text-white"
-              )}>
-                {msg.role === "user" ? <User className="w-6 h-6" /> : <Bot className="w-6 h-6" />}
+            <div
+              className={cn(
+                "flex gap-3 max-w-[85%] sm:max-w-[75%]",
+                msg.role === "user" ? "flex-row-reverse" : "flex-row",
+              )}
+            >
+              <div
+                className={cn(
+                  "w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center shadow-md",
+                  msg.role === "user"
+                    ? "bg-hot-pink text-white"
+                    : "bg-brand-purple text-white",
+                )}
+              >
+                {msg.role === "user" ? (
+                  <User className="w-6 h-6" />
+                ) : (
+                  <Bot className="w-6 h-6" />
+                )}
               </div>
-              
-              <div className={cn(
-                "p-4 sm:p-5 rounded-[24px] shadow-sm relative",
-                msg.role === "user" 
-                  ? "bg-hot-pink text-white rounded-tr-none" 
-                  : "bg-gray-50 text-gray-800 border-2 border-gray-100 rounded-tl-none"
-              )}>
-                <div className={cn(
-                  "text-sm sm:text-base font-bold leading-relaxed whitespace-pre-wrap prose prose-sm prose-genie",
-                  msg.role === "user" ? "prose-invert" : "prose-slate"
-                )}>
+
+              <div
+                className={cn(
+                  "p-4 sm:p-5 rounded-[24px] shadow-sm relative",
+                  msg.role === "user"
+                    ? "bg-hot-pink text-white rounded-tr-none"
+                    : "bg-gray-50 text-gray-800 border-2 border-gray-100 rounded-tl-none",
+                )}
+              >
+                <div
+                  className={cn(
+                    "text-sm sm:text-base font-bold leading-relaxed whitespace-pre-wrap prose prose-sm prose-genie",
+                    msg.role === "user" ? "prose-invert" : "prose-slate",
+                  )}
+                >
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {msg.content}
                   </ReactMarkdown>
                 </div>
-                <div className={cn(
-                  "text-[10px] mt-2 opacity-50 font-black uppercase tracking-wider",
-                  msg.role === "user" ? "text-white" : "text-gray-400"
-                )}>
+                <div
+                  className={cn(
+                    "text-[10px] mt-2 opacity-50 font-black uppercase tracking-wider",
+                    msg.role === "user" ? "text-white" : "text-gray-400",
+                  )}
+                >
                   {msg.role === "user" ? "You" : "Genie"}
                 </div>
               </div>
@@ -258,11 +289,22 @@ export default function GenieChat() {
               </div>
               <div className="bg-gray-50 p-5 rounded-[24px] rounded-tl-none border-2 border-gray-100 flex items-center gap-3">
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 rounded-full bg-brand-purple animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-brand-purple animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-brand-purple animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div
+                    className="w-2 h-2 rounded-full bg-brand-purple animate-bounce"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <div
+                    className="w-2 h-2 rounded-full bg-brand-purple animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <div
+                    className="w-2 h-2 rounded-full bg-brand-purple animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  />
                 </div>
-                <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Genie is thinking...</span>
+                <span className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                  AI Tutor is thinking...
+                </span>
               </div>
             </div>
           </div>
@@ -292,24 +334,24 @@ export default function GenieChat() {
             </button>
           </div>
         </div>
-        
+
         {/* Quick Tips */}
         <div className="flex flex-wrap gap-2 mt-4 justify-center">
-          <button 
+          <button
             onClick={() => handleSend("Explain gravity like I'm 5!")}
             disabled={isLoading}
             className="text-[10px] sm:text-xs font-black text-gray-400 hover:text-brand-purple bg-gray-100 hover:bg-brand-purple/10 px-3 py-1.5 rounded-full transition-colors border border-transparent hover:border-brand-purple/20 disabled:opacity-50 cursor-pointer"
           >
             🍎 Gravity for kids
           </button>
-          <button 
+          <button
             onClick={() => handleSend("Tell me a space adventure story!")}
             disabled={isLoading}
             className="text-[10px] sm:text-xs font-black text-gray-400 hover:text-hot-pink bg-gray-100 hover:bg-hot-pink/10 px-3 py-1.5 rounded-full transition-colors border border-transparent hover:border-hot-pink/20 disabled:opacity-50 cursor-pointer"
           >
             🚀 Space Story
           </button>
-          <button 
+          <button
             onClick={() => handleSend("Help me with multiplication tables.")}
             disabled={isLoading}
             className="text-[10px] sm:text-xs font-black text-gray-400 hover:text-sky-blue bg-gray-100 hover:bg-sky-blue/10 px-3 py-1.5 rounded-full transition-colors border border-transparent hover:border-sky-blue/20 disabled:opacity-50 cursor-pointer"
