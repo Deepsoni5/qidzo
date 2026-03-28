@@ -109,9 +109,6 @@ export default function PostCard({
   // Detect if this is a school post
   const isSchoolPost = post.publisher_type === "SCHOOL" || !!post.school_id;
 
-  // Use a deterministic color if category color is missing or invalid
-  const categoryColor = post.category?.color || "#8B5CF6";
-
   // Optimize avatar URLs
   const avatarUrl = isSchoolPost
     ? optimizeCloudinaryImage(
@@ -143,6 +140,16 @@ export default function PostCard({
   const [editContent, setEditContent] = useState(post.content);
   const [editCategoryId, setEditCategoryId] = useState(post.category_id);
   const [categories, setCategories] = useState<Category[]>([]);
+
+  // Local display state — updated immediately after successful edit
+  const [displayTitle, setDisplayTitle] = useState(post.title || "");
+  const [displayContent, setDisplayContent] = useState(post.content);
+  const [displayCategoryId, setDisplayCategoryId] = useState(post.category_id);
+  const [displayCategory, setDisplayCategory] = useState(post.category);
+
+  // Derived — must be after state declarations
+  const categoryColor =
+    displayCategory?.color || post.category?.color || "#8B5CF6";
 
   const { isSignedIn: isParentSignedIn } = useUser();
 
@@ -288,9 +295,15 @@ export default function PostCard({
       if (result.success) {
         toast.success("Post updated successfully! 🌈");
         setIsEditModalOpen(false);
-        // Note: The page will revalidate due to server action,
-        // but for immediate UI feedback we can also update local state if needed.
-        // For now, revalidatePath in server action handles it.
+        // Update local display state immediately for instant UI feedback
+        setDisplayTitle(editTitle);
+        setDisplayContent(editContent);
+        setDisplayCategoryId(editCategoryId);
+        // Update category object for color/badge update
+        const updatedCat = categories.find(
+          (c) => c.category_id === editCategoryId,
+        );
+        if (updatedCat) setDisplayCategory(updatedCat as any);
       } else {
         toast.error("Failed to update post. 😢");
       }
@@ -483,13 +496,13 @@ export default function PostCard({
 
       {/* Post Content */}
       <div className="px-4 sm:px-6 pb-3 sm:pb-4 overflow-hidden">
-        {post.title && (
+        {displayTitle && (
           <h4 className="font-black text-base sm:text-xl mb-1 sm:mb-2 text-gray-900 break-words">
-            {post.title}
+            {displayTitle}
           </h4>
         )}
         <p className="text-gray-800 font-bold text-sm sm:text-lg leading-relaxed font-nunito whitespace-pre-wrap break-words">
-          {post.content}
+          {displayContent}
         </p>
       </div>
 
