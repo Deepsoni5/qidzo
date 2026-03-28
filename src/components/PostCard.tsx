@@ -486,10 +486,10 @@ export default function PostCard({
             style={{ backgroundColor: categoryColor }}
           >
             <DynamicIcon
-              name={post.category?.icon}
+              name={displayCategory?.icon}
               className="w-2.5 h-2.5 sm:w-3 sm:h-3"
             />
-            {post.category?.name}
+            {displayCategory?.name}
           </div>
         </div>
       </div>
