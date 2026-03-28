@@ -63,8 +63,7 @@ export default function SchoolSignInForm() {
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         toast.success("Welcome back");
-        router.refresh();
-        router.push("/school/dashboard");
+        window.location.href = "/school/dashboard";
       } else if (result.status === "needs_second_factor") {
         // Handle TOTP/2FA - attempt it automatically
         toast.error("2FA is enabled on this account", {
