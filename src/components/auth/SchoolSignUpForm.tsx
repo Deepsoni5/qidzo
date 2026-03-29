@@ -27,8 +27,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import { supabase } from "@/lib/supabaseClient";
-import { create } from "domain";
 
 const gradeOptions = [
   "Nursery",
@@ -66,9 +67,11 @@ const profileSchema = z.object({
   contactPerson: z.string().min(2, "Contact person name is required"),
   contactPhone: z
     .string()
-    .min(10, "Phone number must be 10 digits")
-    .max(10, "Phone number must be 10 digits")
-    .regex(/^[0-9]+$/, "Phone number must contain only digits"),
+    .min(1, "Phone number is required")
+    .refine(
+      (val) => /^\+[1-9]\d{6,14}$/.test(val),
+      "Please enter a valid phone number with country code",
+    ),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
   country: z.string().min(2, "Country is required"),
@@ -394,7 +397,7 @@ export default function SchoolSignUpForm() {
           name: data.schoolName,
           slug,
           contact_email: emailFromAuth,
-          contact_phone: `+91${data.contactPhone}`,
+          contact_phone: data.contactPhone,
           website_url: data.websiteUrl || null,
           address_line1: data.addressLine1,
           address_line2: data.addressLine2 || null,
@@ -449,7 +452,7 @@ export default function SchoolSignUpForm() {
             email: `school_${schoolId}@qidzo.internal`,
             username: `school_${schoolId}`,
             name: data.schoolName,
-            phone: `+91${data.contactPhone}`,
+            phone: data.contactPhone,
             avatar:
               data.logo ||
               "https://cdn-icons-png.flaticon.com/512/847/847969.png",
@@ -751,23 +754,16 @@ export default function SchoolSignUpForm() {
                     <FormLabel className="font-bold text-gray-700">
                       Phone Number
                     </FormLabel>
-                    <div className="flex gap-2">
-                      <div className="flex items-center justify-center bg-gray-100 border-2 border-gray-200 rounded-xl px-3 font-bold text-gray-500 select-none">
-                        +91
-                      </div>
-                      <FormControl>
-                        <Input
-                          placeholder="9876543210"
-                          {...field}
-                          maxLength={10}
-                          className="rounded-xl border-2 focus:border-brand-purple"
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/[^0-9]/g, "");
-                            field.onChange(val);
-                          }}
-                        />
-                      </FormControl>
-                    </div>
+                    <FormControl>
+                      <PhoneInput
+                        international
+                        defaultCountry="IN"
+                        value={field.value}
+                        onChange={(val) => field.onChange(val ?? "")}
+                        className="phone-input-wrapper"
+                        placeholder="Enter phone number"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

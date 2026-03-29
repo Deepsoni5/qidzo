@@ -2,6 +2,8 @@
 
 import { useState, useEffect, type ChangeEvent } from "react";
 import { useSignUp, useSignIn, useUser } from "@clerk/nextjs";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import { updateClerkUserMetadata } from "@/actions/auth";
 import { invalidateParentCache } from "@/actions/parent";
 import { applyReferralCode } from "@/actions/referral";
@@ -64,8 +66,8 @@ const profileSchema = z.object({
     .string()
     .optional()
     .refine(
-      (val) => !val || /^\+91[0-9]{10}$/.test(val),
-      "Phone number must start with +91 and be 10 digits",
+      (val) => !val || /^\+[1-9]\d{6,14}$/.test(val),
+      "Please enter a valid phone number with country code",
     ),
   dob: z
     .string()
@@ -153,7 +155,7 @@ export default function SignUpForm() {
     defaultValues: {
       fullName: "",
       username: "",
-      phone: "+91",
+      phone: "",
       dob: "",
       avatar: "", // Default avatar selection logic can go here
     },
@@ -927,10 +929,13 @@ export default function SignUpForm() {
                       Phone Number
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="+919876543210"
-                        {...field}
-                        className="rounded-xl border-2 focus:border-brand-purple"
+                      <PhoneInput
+                        international
+                        defaultCountry="IN"
+                        value={field.value}
+                        onChange={(val) => field.onChange(val ?? "")}
+                        className="phone-input-wrapper"
+                        placeholder="Enter phone number"
                       />
                     </FormControl>
                     <FormMessage />
