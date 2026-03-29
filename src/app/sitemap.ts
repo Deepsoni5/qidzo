@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabaseClient";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://qidzo.com"; // Always non-www — make sure www redirects here
+  const baseUrl = "https://www.qidzo.com"; // Always non-www — make sure www redirects here
   const currentDate = new Date();
 
   // ─── Static Pages ────────────────────────────────────────────────────────────

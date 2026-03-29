@@ -1,5 +1,5 @@
 # Qidzo - Social Learning Platform for Kids
-# https://qidzo.com
+# https://www.qidzo.com
 
 User-agent: *
 
@@ -51,6 +51,6 @@ Disallow: /study/
 
 
 # Sitemap location
-Sitemap: https://qidzo.com/sitemap.xml
+Sitemap: https://www.qidzo.com/sitemap.xml
 
 

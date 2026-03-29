@@ -44,7 +44,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://qidzo.com"),
+  metadataBase: new URL("https://www.qidzo.com"),
   title: {
     default: "Qidzo | The Global Fun & Safe Social Learning Community for Kids",
     template: "%s | Qidzo",
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     "parental controls",
     "screen time management",
   ],
-  authors: [{ name: "Qidzo Team", url: "https://qidzo.com" }],
+  authors: [{ name: "Qidzo Team", url: "https://www.qidzo.com" }],
   creator: "Qidzo",
   publisher: "Qidzo",
   robots: {
@@ -88,14 +88,14 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://qidzo.com",
+    canonical: "https://www.qidzo.com",
   },
 
   openGraph: {
     title: "Qidzo | The Global Fun & Safe Social Learning Community for Kids",
     description:
       "The playful place where kids share, learn, and grow together! Join challenges, earn badges, and explore a world of creativity. Safe, fun, and educational for ages 4-17.",
-    url: "https://qidzo.com",
+    url: "https://www.qidzo.com",
     siteName: "Qidzo",
     images: [
       {
