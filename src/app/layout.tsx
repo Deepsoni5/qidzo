@@ -22,18 +22,21 @@ import LazyVideoCallProvider from "@/components/video/LazyVideoCallProvider";
 const nunito = Nunito({
   subsets: ["latin"],
   variable: "--font-nunito",
+  display: "swap",
   weight: ["700", "800"],
 });
 
 const poppins = Poppins({
   subsets: ["latin"],
   variable: "--font-poppins",
+  display: "swap",
   weight: ["600", "700"],
 });
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
 });
 
 export const viewport: Viewport = {

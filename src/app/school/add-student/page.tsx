@@ -7,7 +7,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 import { format, differenceInYears } from "date-fns";
 import confetti from "canvas-confetti";
-import * as LucideIcons from "lucide-react";
+import { CATEGORY_ICONS } from "@/lib/categoryIcons";
+import { HelpCircle } from "lucide-react";
 import {
   User,
   Calendar,
@@ -844,15 +845,11 @@ export default function AddStudentPage() {
                 const isHovered = hoveredCategory === cat.id;
                 const displayColor = cat.color || "#8B5CF6";
 
-                const iconName = cat.icon
-                  .split("-")
-                  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-                  .join("");
-
+                const key = (cat.icon || "")
+                  .toLowerCase()
+                  .replace(/[-_ ]/g, "");
                 const IconComponent =
-                  (LucideIcons as any)[iconName] ||
-                  (LucideIcons as any)[cat.icon] ||
-                  LucideIcons.HelpCircle;
+                  CATEGORY_ICONS[cat.icon] || CATEGORY_ICONS[key] || HelpCircle;
 
                 return (
                   <button

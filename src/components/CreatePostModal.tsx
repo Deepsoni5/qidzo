@@ -19,7 +19,8 @@ import {
   Send,
   Check,
 } from "lucide-react";
-import * as LucideIcons from "lucide-react";
+import { DynamicCategoryIcon as DynamicIcon } from "@/lib/categoryIcons";
+
 import { supabase } from "@/lib/supabaseClient";
 import { createPost } from "@/actions/post";
 import { cn } from "@/lib/utils";
@@ -40,31 +41,6 @@ interface CreatePostModalProps {
   onClose: () => void;
   childId: string;
 }
-
-// Helper to render dynamic Lucide icons
-const DynamicIcon = ({
-  name,
-  className,
-}: {
-  name: string;
-  className?: string;
-}) => {
-  // 1. Try exact match
-  let IconComponent = (LucideIcons as any)[name];
-
-  // 2. Try PascalCase if not found (e.g. "image" -> "Image", "bar-chart" -> "BarChart")
-  if (!IconComponent && name) {
-    const pascalName = name
-      .split(/[-_ ]/) // Split by hyphen, underscore, or space
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-      .join("");
-
-    IconComponent = (LucideIcons as any)[pascalName];
-  }
-
-  if (!IconComponent) return <LucideIcons.Sparkles className={className} />;
-  return <IconComponent className={className} />;
-};
 
 export function CreatePostModal({
   isOpen,

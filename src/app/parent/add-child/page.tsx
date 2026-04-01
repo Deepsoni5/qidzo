@@ -7,7 +7,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 import { format, differenceInYears, subYears } from "date-fns";
 import confetti from "canvas-confetti";
-import * as LucideIcons from "lucide-react";
+import { CATEGORY_ICONS } from "@/lib/categoryIcons";
+import { HelpCircle } from "lucide-react";
 import {
   User,
   Calendar,
@@ -872,18 +873,11 @@ export default function AddChildPage() {
                 const isHovered = hoveredCategory === cat.id;
                 const displayColor = cat.color || "#8B5CF6"; // Fallback to brand purple
 
-                // Convert kebab-case icon name to PascalCase for Lucide component
-                // e.g. "landmark" -> "Landmark", "book-open" -> "BookOpen"
-                const iconName = cat.icon
-                  .split("-")
-                  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-                  .join("");
-
-                // Dynamic icon lookup from LucideIcons namespace
+                const key = (cat.icon || "")
+                  .toLowerCase()
+                  .replace(/[-_ ]/g, "");
                 const IconComponent =
-                  (LucideIcons as any)[iconName] ||
-                  (LucideIcons as any)[cat.icon] ||
-                  LucideIcons.HelpCircle;
+                  CATEGORY_ICONS[cat.icon] || CATEGORY_ICONS[key] || HelpCircle;
 
                 return (
                   <button

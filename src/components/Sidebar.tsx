@@ -106,8 +106,8 @@ export default async function Sidebar() {
                     src={avatarSrc}
                     alt={kid.name}
                     fill
+                    sizes="44px"
                     className="object-cover"
-                    unoptimized
                   />
                 </div>
 

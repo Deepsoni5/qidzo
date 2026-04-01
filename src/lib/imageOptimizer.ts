@@ -44,10 +44,11 @@ export function optimizeCloudinaryImage(
  */
 export const ImagePresets = {
   // Feed post images - balance between quality and performance
-  FEED_POST: { width: 1200, quality: 80 },
+  // Feed column is max-w-2xl (672px), displayed at ~494px
+  FEED_POST: { width: 500, quality: 80 },
 
   // Thumbnails in feed - smaller, faster
-  FEED_THUMBNAIL: { width: 800, quality: 75 },
+  FEED_THUMBNAIL: { width: 500, quality: 75 },
 
   // Avatar images - small and crisp
   AVATAR: { width: 200, quality: 85 },

@@ -11,7 +11,18 @@ import {
   Check,
   Sparkles,
 } from "lucide-react";
-import * as LucideIcons from "lucide-react";
+import { DynamicCategoryIcon } from "@/lib/categoryIcons";
+
+const DynamicIcon = ({
+  name,
+  className,
+  color,
+}: {
+  name: string;
+  className?: string;
+  color?: string;
+}) => <DynamicCategoryIcon name={name} className={className} />;
+
 import { toast } from "sonner";
 import { createSchoolPost, getSchoolCategories } from "@/actions/school-post";
 
@@ -31,37 +42,6 @@ interface SchoolCreatePostModalProps {
   onClose: () => void;
   onSuccess?: () => void;
 }
-
-const DynamicIcon = ({
-  name,
-  className,
-  color,
-}: {
-  name: string;
-  className?: string;
-  color?: string;
-}) => {
-  let IconComponent = (LucideIcons as any)[name];
-
-  if (!IconComponent && name) {
-    const pascalName = name
-      .split(/[-_ ]/)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-      .join("");
-    IconComponent = (LucideIcons as any)[pascalName];
-  }
-
-  if (!IconComponent)
-    return (
-      <Sparkles className={className} style={color ? { color } : undefined} />
-    );
-  return (
-    <IconComponent
-      className={className}
-      style={color ? { color } : undefined}
-    />
-  );
-};
 
 const FILE_SIZE_LIMITS = {
   IMAGE: 10 * 1024 * 1024,
@@ -183,9 +163,9 @@ export default function SchoolCreatePostModal({
       }
 
       const data = await res.json();
-      
+
       // For images/videos, we can use the URL as thumbnail too
-      // Cloudinary usually provides eager transformations for thumbnails if configured, 
+      // Cloudinary usually provides eager transformations for thumbnails if configured,
       // but for now we'll just use the main URL.
       return {
         url: data.url,

@@ -195,6 +195,8 @@ export default function Navbar({
               alt="Qidzo Logo"
               width={220}
               height={88}
+              sizes="(max-width: 640px) 168px, 220px"
+              quality={80}
               className="h-[64px] sm:h-[88px] w-auto object-contain hover:scale-105 transition-transform absolute top-1/2 -translate-y-1/2"
               priority
             />
@@ -388,8 +390,8 @@ export default function Navbar({
                             src={kid.avatar}
                             alt={kid.username}
                             fill
+                            sizes="40px"
                             className="object-cover"
-                            unoptimized
                           />
                         ) : (
                           kid.username[0].toUpperCase()
@@ -411,8 +413,8 @@ export default function Navbar({
                               src={kid.avatar}
                               alt={kid.username}
                               fill
+                              sizes="64px"
                               className="object-cover"
-                              unoptimized
                             />
                           ) : (
                             kid.username[0].toUpperCase()

@@ -2,7 +2,6 @@ import {
   Heart,
   MessageCircle,
   MoreHorizontal,
-  Sparkles,
   Pencil,
   Trash2,
   X,
@@ -10,11 +9,66 @@ import {
   Link2,
   Share2,
   Globe2,
-  Building2,
-  FileText,
   Download,
+  Palette,
+  Music,
+  PersonStanding,
+  Scissors,
+  Camera,
+  Book,
+  Mic,
+  BookOpen,
+  Pen,
+  FlaskConical,
+  Calculator,
+  Code,
+  Bot,
+  ChefHat,
+  Leaf,
+  Landmark,
+  Lightbulb,
+  Star,
+  Box,
+  Megaphone,
+  UserPlus,
+  FileText,
+  Calendar,
+  Award,
+  CreditCard,
+  Building2,
+  Sparkles,
 } from "lucide-react";
-import * as LucideIcons from "lucide-react";
+
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  art: Palette,
+  music: Music,
+  dance: PersonStanding,
+  scissors: Scissors,
+  camera: Camera,
+  book: Book,
+  mic: Mic,
+  "book-open": BookOpen,
+  pen: Pen,
+  flask: FlaskConical,
+  calculator: Calculator,
+  code: Code,
+  robot: Bot,
+  run: PersonStanding,
+  yoga: PersonStanding,
+  cooking: ChefHat,
+  leaf: Leaf,
+  landmark: Landmark,
+  lightbulb: Lightbulb,
+  star: Star,
+  box: Box,
+  megaphone: Megaphone,
+  userplus: UserPlus,
+  filetext: FileText,
+  calendar: Calendar,
+  award: Award,
+  creditcard: CreditCard,
+  building2: Building2,
+};
 import Image from "next/image";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -83,14 +137,8 @@ const DynamicIcon = ({
   name: string;
   className?: string;
 }) => {
-  let IconComponent = (LucideIcons as any)[name];
-  if (!IconComponent && name) {
-    const pascalName = name
-      .split(/[-_ ]/)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-      .join("");
-    IconComponent = (LucideIcons as any)[pascalName];
-  }
+  const key = (name || "").toLowerCase().replace(/[-_ ]/g, "");
+  const IconComponent = CATEGORY_ICONS[name] || CATEGORY_ICONS[key];
   if (!IconComponent) return <Sparkles className={className} />;
   return <IconComponent className={className} />;
 };
@@ -538,7 +586,7 @@ export default function PostCard({
             </div>
           ) : (
             <div
-              className="relative w-full aspect-[4/3] bg-black/5 overflow-hidden group shadow-inner select-none"
+              className="relative w-full aspect-4/3 bg-black/5 overflow-hidden group shadow-inner select-none"
               onContextMenu={(e) => e.preventDefault()}
             >
               {post.media_type === "IMAGE" ? (
@@ -550,7 +598,7 @@ export default function PostCard({
                     )}
                     alt="Post content"
                     fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    sizes="(max-width: 600px) calc(100vw - 32px), 494px"
                     loading="lazy"
                     className="object-contain transition-transform duration-700 group-hover:scale-105"
                     draggable={false}
