@@ -42,7 +42,10 @@ export async function POST(req: Request) {
     }
 
     if (plan !== "PRO" && plan !== "ELITE") {
-      return NextResponse.json({ error: "Premium Access Required" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Premium Access Required" },
+        { status: 403 },
+      );
     }
 
     if (!OPENROUTER_API_KEY) {
@@ -99,28 +102,34 @@ LIMITATIONS:
 - Do NOT act like a general chatbot for adults.
 
 GOAL:
-Make the child understand, feel confident, and enjoy learning.`
+Make the child understand, feel confident, and enjoy learning.`,
     };
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "HTTP-Referer": "https://qidzo.com",
-        "X-Title": "Qidzo Genie AI",
-        "Content-Type": "application/json"
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          "HTTP-Referer": "https://www.qidzo.com",
+          "X-Title": "Qidzo Genie AI",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "nvidia/nemotron-3-super-120b-a12b:free",
+          messages: [systemPrompt, ...messages],
+          stream: true,
+        }),
       },
-      body: JSON.stringify({
-        model: "nvidia/nemotron-3-super-120b-a12b:free",
-        messages: [systemPrompt, ...messages],
-        stream: true,
-      })
-    });
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
       console.error("OpenRouter API Error:", errorData);
-      return NextResponse.json({ error: "Genie is a bit tired" }, { status: response.status });
+      return NextResponse.json(
+        { error: "Genie is a bit tired" },
+        { status: response.status },
+      );
     }
 
     // Return the stream directly to the client
@@ -128,12 +137,14 @@ Make the child understand, feel confident, and enjoy learning.`
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
+        Connection: "keep-alive",
       },
     });
-
   } catch (error) {
     console.error("Genie API Route Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

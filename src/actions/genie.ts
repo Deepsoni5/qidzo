@@ -7,14 +7,23 @@ import { supabase } from "@/lib/supabaseClient";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
-export async function askGenie(messages: { role: "user" | "assistant" | "system"; content: string; reasoning_details?: any }[]) {
+export async function askGenie(
+  messages: {
+    role: "user" | "assistant" | "system";
+    content: string;
+    reasoning_details?: any;
+  }[],
+) {
   try {
     // 1. Verify session (Either Parent via Clerk or Child via JWT)
     const clerkUser = await currentUser();
     const childSession = await getChildSession();
 
     if (!clerkUser && !childSession) {
-      return { success: false, error: "Unauthorized. Please log in to talk to Genie!" };
+      return {
+        success: false,
+        error: "Unauthorized. Please log in to talk to Genie!",
+      };
     }
 
     // 2. Check Subscription Plan (Only PRO or ELITE can access)
@@ -22,7 +31,7 @@ export async function askGenie(messages: { role: "user" | "assistant" | "system"
 
     if (clerkUser) {
       // Parent/School session
-      plan = await checkParentSubscription() || "FREE";
+      plan = (await checkParentSubscription()) || "FREE";
     } else if (childSession) {
       // Child session - get parent's subscription
       const { data: child } = await supabase
@@ -30,23 +39,26 @@ export async function askGenie(messages: { role: "user" | "assistant" | "system"
         .select("parent_id")
         .eq("child_id", childSession.id)
         .single();
-      
+
       if (child) {
-        plan = await checkParentSubscription(child.parent_id) || "FREE";
+        plan = (await checkParentSubscription(child.parent_id)) || "FREE";
       }
     }
 
     if (plan !== "PRO" && plan !== "ELITE") {
-      return { 
-        success: false, 
-        error: "Premium Access Required! 💎", 
-        needsUpgrade: true 
+      return {
+        success: false,
+        error: "Premium Access Required! 💎",
+        needsUpgrade: true,
       };
     }
 
     if (!OPENROUTER_API_KEY) {
       console.error("OPENROUTER_API_KEY is missing");
-      return { success: false, error: "Genie is taking a nap right now. Try again later!" };
+      return {
+        success: false,
+        error: "Genie is taking a nap right now. Try again later!",
+      };
     }
 
     // 2. Prepare System Prompt (Detailed)
@@ -98,38 +110,44 @@ LIMITATIONS:
 - Do NOT act like a general chatbot for adults.
 
 GOAL:
-Make the child understand, feel confident, and enjoy learning.`
+Make the child understand, feel confident, and enjoy learning.`,
     };
 
     // 3. Call OpenRouter API with Reasoning enabled
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "HTTP-Referer": "https://qidzo.com",
-        "X-Title": "Qidzo Genie AI",
-        "Content-Type": "application/json"
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          "HTTP-Referer": "https://www.qidzo.com",
+          "X-Title": "Qidzo Genie AI",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "nvidia/nemotron-3-super-120b-a12b:free",
+          messages: [systemPrompt, ...messages],
+          reasoning: { enabled: true },
+        }),
       },
-      body: JSON.stringify({
-        model: "nvidia/nemotron-3-super-120b-a12b:free",
-        messages: [systemPrompt, ...messages],
-        reasoning: { enabled: true }
-      })
-    });
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
       console.error("OpenRouter API error:", data);
-      return { success: false, error: "Genie is a bit confused. Let's try again!" };
+      return {
+        success: false,
+        error: "Genie is a bit confused. Let's try again!",
+      };
     }
 
     const assistantMessage = data.choices[0].message;
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       reply: assistantMessage.content,
-      reasoning_details: assistantMessage.reasoning_details 
+      reasoning_details: assistantMessage.reasoning_details,
     };
   } catch (error) {
     console.error("Genie AI Error:", error);
