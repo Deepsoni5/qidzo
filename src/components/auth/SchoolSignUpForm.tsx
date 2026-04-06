@@ -545,7 +545,7 @@ export default function SchoolSignUpForm() {
 
         {step === "auth" && (
           <>
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-1 gap-3 mb-6">
               <Button
                 variant="outline"
                 className="w-full rounded-xl border-2 hover:bg-gray-50 hover:text-gray-900 cursor-pointer"
@@ -570,20 +570,6 @@ export default function SchoolSignUpForm() {
                   />
                 </svg>
                 Google
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full rounded-xl border-2 hover:bg-gray-50 hover:text-gray-900 cursor-pointer"
-                onClick={() => handleOAuth("oauth_facebook")}
-              >
-                <svg
-                  className="w-5 h-5 mr-2 text-[#1877F2]"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036c-2.148 0-2.797 1.66-2.797 3.592v1.4h3.67l-.418 3.667h-3.252v7.98h-4.968Z" />
-                </svg>
-                Facebook
               </Button>
             </div>
 
