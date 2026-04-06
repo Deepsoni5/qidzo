@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 // Types
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -204,6 +206,7 @@ interface FormData {
   school_name: string;
   country: string;
   city: string;
+  parents_whatsapp_number: string;
 }
 
 const INITIAL_DATA: FormData = {
@@ -219,6 +222,7 @@ const INITIAL_DATA: FormData = {
   school_name: "",
   country: "India",
   city: "",
+  parents_whatsapp_number: "",
 };
 
 export default function AddStudentPage() {
@@ -304,6 +308,14 @@ export default function AddStudentPage() {
         }
         if (!formData.school_name || formData.school_name.trim().length < 2) {
           toast.error("Please enter a valid school name");
+          return false;
+        }
+        if (!formData.parents_whatsapp_number) {
+          toast.error("Please enter Parent's WhatsApp number");
+          return false;
+        }
+        if (!isValidPhoneNumber(formData.parents_whatsapp_number)) {
+          toast.error("Please enter a valid WhatsApp number");
           return false;
         }
         if (!formData.country) {
@@ -429,6 +441,7 @@ export default function AddStudentPage() {
         avatar: formData.avatar,
         preferred_categories: formData.preferred_categories,
         school_name: formData.school_name,
+        parents_whatsapp_number: formData.parents_whatsapp_number,
         country: formData.country,
         city: formData.city,
       };
@@ -550,6 +563,22 @@ export default function AddStudentPage() {
                     }
                     className="w-full px-4 py-3 rounded-2xl border-2 border-gray-100 focus:border-brand-purple focus:ring-0 transition-all font-nunito font-bold outline-none"
                     placeholder="e.g. Sunshine Public School"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">
+                    Parent's WhatsApp Number
+                  </label>
+                  <PhoneInput
+                    international
+                    defaultCountry="IN"
+                    value={formData.parents_whatsapp_number}
+                    onChange={(val) =>
+                      updateFields({ parents_whatsapp_number: val ?? "" })
+                    }
+                    className="phone-input-wrapper"
+                    placeholder="Enter WhatsApp number"
                   />
                 </div>
 

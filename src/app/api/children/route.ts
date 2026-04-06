@@ -24,6 +24,7 @@ export async function POST(req: Request) {
       preferred_categories,
       age,
       school_name,
+      parents_whatsapp_number,
       country,
       city
     } = body;
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
       !birth_date ||
       !age ||
       !school_name ||
+      !parents_whatsapp_number ||
       !country ||
       !city
     ) {
@@ -108,6 +110,7 @@ export async function POST(req: Request) {
           avatar: avatar || "https://cdn-icons-png.flaticon.com/512/847/847969.png",
           preferred_categories,
           school_name,
+          parents_whatsapp_number,
           country,
           city,
           // Default values are handled by DB or can be explicit here
