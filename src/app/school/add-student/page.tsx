@@ -270,6 +270,7 @@ export default function AddStudentPage() {
         .from("categories")
         .select("*")
         .eq("is_active", true)
+        .eq("category_type", "CHILD")
         .order("display_order", { ascending: true });
       if (data) setCategories(data);
     };
