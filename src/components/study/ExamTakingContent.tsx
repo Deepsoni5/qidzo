@@ -451,7 +451,14 @@ export default function ExamTakingContent({ examId }: ExamTakingContentProps) {
 
   // Exam Taking Screen
   return (
-    <div className="min-h-screen pt-20 pb-12 px-4 sm:px-6">
+    <div
+      className="min-h-screen pt-20 pb-12 px-4 sm:px-6 select-none"
+      style={{ WebkitTouchCallout: "none" }}
+      onContextMenu={(e) => e.preventDefault()}
+      onCopy={(e) => e.preventDefault()}
+      onCut={(e) => e.preventDefault()}
+      onDragStart={(e) => e.preventDefault()}
+    >
       <div className="max-w-4xl mx-auto">
         {/* Header with Timer */}
         <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm mb-6 sticky top-20 z-10">
