@@ -33,6 +33,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import Image from "next/image";
 import type { GlobalSearchResult } from "@/actions/search";
 import { useChildAuthStore } from "@/store/childAuthStore";
+import FollowListModal from "./FollowListModal";
 
 type UserRoleState = {
   role: string;
@@ -76,6 +77,9 @@ export default function Navbar({
     initialKidProfile,
   );
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [modalType, setModalType] = useState<"FOLLOWERS" | "FOLLOWING" | null>(
+    null,
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<GlobalSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -486,7 +490,10 @@ export default function Navbar({
                       ) : (
                         <div className="grid grid-cols-2 gap-3">
                           {/* Followers */}
-                          <div className="bg-brand-purple/5 rounded-2xl p-3 border border-brand-purple/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                          <button
+                            onClick={() => setModalType("FOLLOWERS")}
+                            className="bg-brand-purple/5 rounded-2xl p-3 border border-brand-purple/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all cursor-pointer active:scale-95"
+                          >
                             <Users className="w-6 h-6 text-brand-purple" />
                             <span className="font-black text-xl text-gray-800">
                               {kidProfile?.followers_count || 0}
@@ -494,10 +501,13 @@ export default function Navbar({
                             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
                               Followers
                             </span>
-                          </div>
+                          </button>
 
                           {/* Following */}
-                          <div className="bg-hot-pink/5 rounded-2xl p-3 border border-hot-pink/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+                          <button
+                            onClick={() => setModalType("FOLLOWING")}
+                            className="bg-hot-pink/5 rounded-2xl p-3 border border-hot-pink/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all cursor-pointer active:scale-95"
+                          >
                             <UserCheck className="w-6 h-6 text-hot-pink" />
                             <span className="font-black text-xl text-gray-800">
                               {kidProfile?.following_count || 0}
@@ -505,7 +515,7 @@ export default function Navbar({
                             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
                               Following
                             </span>
-                          </div>
+                          </button>
 
                           {/* Total Likes */}
                           <div className="bg-pink-50 rounded-2xl p-3 border border-pink-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
@@ -634,6 +644,16 @@ export default function Navbar({
           </div>
         </div>
       </div>
+      {kidProfile && (
+        <FollowListModal
+          isOpen={!!modalType}
+          onClose={() => setModalType(null)}
+          title={modalType === "FOLLOWERS" ? "Followers" : "Following"}
+          type={modalType || "FOLLOWERS"}
+          targetId={kidProfile.child_id}
+          targetType="CHILD"
+        />
+      )}
     </nav>
   );
 }

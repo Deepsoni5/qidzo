@@ -5,6 +5,7 @@ import { refreshChildProfile, ChildProfile } from "@/actions/profile";
 import { Trophy, MessageCircle, Heart, RotateCw, Sparkles, Users, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import FollowListModal from "./FollowListModal";
 
 interface UserStatsCardProps {
   initialProfile: ChildProfile | null;
@@ -13,6 +14,9 @@ interface UserStatsCardProps {
 export function UserStatsCard({ initialProfile }: UserStatsCardProps) {
   const [profile, setProfile] = useState<ChildProfile | null>(initialProfile);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [modalType, setModalType] = useState<"FOLLOWERS" | "FOLLOWING" | null>(
+    null,
+  );
 
   const handleRefresh = async () => {
     if (!profile) return;
@@ -113,47 +117,80 @@ export function UserStatsCard({ initialProfile }: UserStatsCardProps) {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
-            {/* Followers */}
-            <div className="bg-brand-purple/5 rounded-2xl p-3 border border-brand-purple/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
-                <Users className="w-6 h-6 text-brand-purple" />
-                <span className="font-black text-xl text-gray-800">{profile.followers_count || 0}</span>
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Followers</span>
-            </div>
+          {/* Followers */}
+          <button
+            onClick={() => setModalType("FOLLOWERS")}
+            className="bg-brand-purple/5 rounded-2xl p-3 border border-brand-purple/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all cursor-pointer active:scale-95"
+          >
+            <Users className="w-6 h-6 text-brand-purple" />
+            <span className="font-black text-xl text-gray-800">
+              {profile.followers_count || 0}
+            </span>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+              Followers
+            </span>
+          </button>
 
-            {/* Following */}
-            <div className="bg-hot-pink/5 rounded-2xl p-3 border border-hot-pink/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
-                <UserCheck className="w-6 h-6 text-hot-pink" />
-                <span className="font-black text-xl text-gray-800">{profile.following_count || 0}</span>
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Following</span>
-            </div>
+          {/* Following */}
+          <button
+            onClick={() => setModalType("FOLLOWING")}
+            className="bg-hot-pink/5 rounded-2xl p-3 border border-hot-pink/10 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all cursor-pointer active:scale-95"
+          >
+            <UserCheck className="w-6 h-6 text-hot-pink" />
+            <span className="font-black text-xl text-gray-800">
+              {profile.following_count || 0}
+            </span>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+              Following
+            </span>
+          </button>
 
-            {/* Total Likes */}
-            <div className="bg-pink-50 rounded-2xl p-3 border border-pink-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
-                <Heart className="w-6 h-6 text-hot-pink fill-hot-pink/20" />
-                <span className="font-black text-xl text-gray-800">{profile.total_likes_received || 0}</span>
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Likes Get</span>
-            </div>
+          {/* Total Likes */}
+          <div className="bg-pink-50 rounded-2xl p-3 border border-pink-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+            <Heart className="w-6 h-6 text-hot-pink fill-hot-pink/20" />
+            <span className="font-black text-xl text-gray-800">
+              {profile.total_likes_received || 0}
+            </span>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+              Likes Get
+            </span>
+          </div>
 
-            {/* Total Comments */}
-            <div className="bg-sky-50 rounded-2xl p-3 border border-sky-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
-                <MessageCircle className="w-6 h-6 text-sky-blue fill-sky-blue/20" />
-                <span className="font-black text-xl text-gray-800">{profile.total_comments_made || 0}</span>
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Comments</span>
-            </div>
+          {/* Total Comments */}
+          <div className="bg-sky-50 rounded-2xl p-3 border border-sky-100 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform cursor-default">
+            <MessageCircle className="w-6 h-6 text-sky-blue fill-sky-blue/20" />
+            <span className="font-black text-xl text-gray-800">
+              {profile.total_comments_made || 0}
+            </span>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+              Comments
+            </span>
+          </div>
         </div>
-        
+
         {/* XP Points Summary (Small) */}
         <div className="bg-yellow-50 rounded-2xl p-3 border border-yellow-100 flex items-center justify-between px-4">
-             <div className="flex items-center gap-3">
-                <div className="bg-sunshine-yellow p-1.5 rounded-lg text-white shadow-sm">
-                    <Trophy className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Total XP</span>
-             </div>
-             <span className="font-black text-lg text-gray-800">{currentXP}</span>
+          <div className="flex items-center gap-3">
+            <div className="bg-sunshine-yellow p-1.5 rounded-lg text-white shadow-sm">
+              <Trophy className="w-4 h-4" />
+            </div>
+            <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">
+              Total XP
+            </span>
+          </div>
+          <span className="font-black text-lg text-gray-800">{currentXP}</span>
         </div>
-
       </div>
+
+      <FollowListModal
+        isOpen={!!modalType}
+        onClose={() => setModalType(null)}
+        title={modalType === "FOLLOWERS" ? "Followers" : "Following"}
+        type={modalType || "FOLLOWERS"}
+        targetId={profile.child_id}
+        targetType="CHILD"
+      />
     </div>
   );
 }
+

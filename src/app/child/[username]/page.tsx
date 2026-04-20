@@ -20,6 +20,7 @@ import Navbar from "@/components/Navbar";
 import LeftSidebar from "@/components/LeftSidebar";
 import Sidebar from "@/components/Sidebar";
 import ProfileFeed from "@/components/ProfileFeed";
+import ProfileStats from "@/components/ProfileStats";
 import { getChildProfile, getChildPosts } from "@/actions/profile";
 import { getCurrentUserRole } from "@/actions/auth";
 import { FollowButton } from "@/components/FollowButton";
@@ -231,40 +232,14 @@ export default async function ChildProfilePage({
                   </div>
 
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                    <div className="bg-sky-50/50 rounded-2xl p-4 text-center border-2 border-sky-100 hover:border-sky-200 transition-colors group cursor-default">
-                      <div className="text-sky-500 font-black text-2xl group-hover:scale-110 transition-transform duration-300">
-                        {profile.total_posts}
-                      </div>
-                      <div className="text-sky-900/60 text-xs font-bold uppercase tracking-wide">
-                        Magic Created
-                      </div>
-                    </div>
-                    <div className="bg-brand-purple/5 rounded-2xl p-4 text-center border-2 border-brand-purple/10 hover:border-brand-purple/20 transition-colors group cursor-default">
-                      <div className="text-brand-purple font-black text-2xl group-hover:scale-110 transition-transform duration-300">
-                        {profile.followers_count}
-                      </div>
-                      <div className="text-brand-purple/60 text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-1">
-                        <Users className="w-3 h-3" /> Followers
-                      </div>
-                    </div>
-                    <div className="bg-hot-pink/5 rounded-2xl p-4 text-center border-2 border-hot-pink/10 hover:border-hot-pink/20 transition-colors group cursor-default">
-                      <div className="text-hot-pink font-black text-2xl group-hover:scale-110 transition-transform duration-300">
-                        {profile.following_count}
-                      </div>
-                      <div className="text-hot-pink/60 text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-1">
-                        <UserCheck className="w-3 h-3" /> Following
-                      </div>
-                    </div>
-                    <div className="bg-amber-50/50 rounded-2xl p-4 text-center border-2 border-amber-100 hover:border-amber-200 transition-colors group cursor-default">
-                      <div className="text-amber-500 font-black text-2xl group-hover:scale-110 transition-transform duration-300">
-                        {profile.xp_points}
-                      </div>
-                      <div className="text-amber-900/60 text-xs font-bold uppercase tracking-wide">
-                        XP Power
-                      </div>
-                    </div>
-                  </div>
+                  <ProfileStats
+                    totalPosts={profile.total_posts}
+                    followersCount={profile.followers_count}
+                    followingCount={profile.following_count}
+                    xpPoints={profile.xp_points}
+                    targetId={profile.child_id}
+                    targetType="CHILD"
+                  />
                 </div>
               </div>
 

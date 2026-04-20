@@ -3,7 +3,196 @@
 import { supabase } from "@/lib/supabaseClient";
 import { getChildSession } from "./auth";
 import { currentUser } from "@clerk/nextjs/server";
-import { invalidateCache } from "@/lib/redis";
+import { invalidateCache, getOrSetCache } from "@/lib/redis";
+
+export interface FollowerInfo {
+  id: string;
+  name: string;
+  username: string;
+  avatar: string | null;
+  type: "CHILD" | "PARENT" | "SCHOOL";
+  slug?: string;
+}
+
+export async function getFollowers(
+  targetId: string,
+  targetType: "CHILD" | "PARENT" | "SCHOOL",
+) {
+  const cacheKey = `followers:${targetType}:${targetId}`;
+
+  return getOrSetCache<FollowerInfo[]>(
+    cacheKey,
+    async () => {
+      const { data: follows, error } = await supabase
+        .from("follows")
+        .select(
+          `
+          follower_child_id,
+          follower_parent_id,
+          follower_school_id,
+          follower_type
+        `,
+        )
+        .eq(`following_${targetType.toLowerCase()}_id`, targetId);
+
+      if (error) {
+        console.error("Error fetching followers:", error);
+        return [];
+      }
+
+      const followerIds = {
+        children: follows
+          .filter((f) => f.follower_type === "CHILD")
+          .map((f) => f.follower_child_id),
+        parents: follows
+          .filter((f) => f.follower_type === "PARENT")
+          .map((f) => f.follower_parent_id),
+        schools: follows
+          .filter((f) => f.follower_type === "SCHOOL")
+          .map((f) => f.follower_school_id),
+      };
+
+      const [childrenData, parentsData, schoolsData] = await Promise.all([
+        followerIds.children.length > 0
+          ? supabase
+              .from("children")
+              .select("child_id, name, username, avatar")
+              .in("child_id", followerIds.children)
+          : Promise.resolve({ data: [] }),
+        followerIds.parents.length > 0
+          ? supabase
+              .from("parents")
+              .select("parent_id, name, username, avatar")
+              .in("parent_id", followerIds.parents)
+          : Promise.resolve({ data: [] }),
+        followerIds.schools.length > 0
+          ? supabase
+              .from("schools")
+              .select("school_id, name, slug, logo_url")
+              .in("school_id", followerIds.schools)
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      const results: FollowerInfo[] = [
+        ...(childrenData.data || []).map((c) => ({
+          id: c.child_id,
+          name: c.name,
+          username: c.username,
+          avatar: c.avatar,
+          type: "CHILD" as const,
+        })),
+        ...(parentsData.data || []).map((p) => ({
+          id: p.parent_id,
+          name: p.name,
+          username: p.username,
+          avatar: p.avatar,
+          type: "PARENT" as const,
+        })),
+        ...(schoolsData.data || []).map((s) => ({
+          id: s.school_id,
+          name: s.name,
+          username: s.slug,
+          avatar: s.logo_url,
+          type: "SCHOOL" as const,
+          slug: s.slug,
+        })),
+      ];
+
+      return results;
+    },
+    300, // 5 minutes
+  );
+}
+
+export async function getFollowing(
+  targetId: string,
+  targetType: "CHILD" | "PARENT" | "SCHOOL",
+) {
+  const cacheKey = `following:${targetType}:${targetId}`;
+
+  return getOrSetCache<FollowerInfo[]>(
+    cacheKey,
+    async () => {
+      const { data: follows, error } = await supabase
+        .from("follows")
+        .select(
+          `
+          following_child_id,
+          following_parent_id,
+          following_school_id,
+          following_type
+        `,
+        )
+        .eq(`follower_${targetType.toLowerCase()}_id`, targetId);
+
+      if (error) {
+        console.error("Error fetching following:", error);
+        return [];
+      }
+
+      const followingIds = {
+        children: follows
+          .filter((f) => f.following_type === "CHILD")
+          .map((f) => f.following_child_id),
+        parents: follows
+          .filter((f) => f.following_type === "PARENT")
+          .map((f) => f.following_parent_id),
+        schools: follows
+          .filter((f) => f.following_type === "SCHOOL")
+          .map((f) => f.following_school_id),
+      };
+
+      const [childrenData, parentsData, schoolsData] = await Promise.all([
+        followingIds.children.length > 0
+          ? supabase
+              .from("children")
+              .select("child_id, name, username, avatar")
+              .in("child_id", followingIds.children)
+          : Promise.resolve({ data: [] }),
+        followingIds.parents.length > 0
+          ? supabase
+              .from("parents")
+              .select("parent_id, name, username, avatar")
+              .in("parent_id", followingIds.parents)
+          : Promise.resolve({ data: [] }),
+        followingIds.schools.length > 0
+          ? supabase
+              .from("schools")
+              .select("school_id, name, slug, logo_url")
+              .in("school_id", followingIds.schools)
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      const results: FollowerInfo[] = [
+        ...(childrenData.data || []).map((c) => ({
+          id: c.child_id,
+          name: c.name,
+          username: c.username,
+          avatar: c.avatar,
+          type: "CHILD" as const,
+        })),
+        ...(parentsData.data || []).map((p) => ({
+          id: p.parent_id,
+          name: p.name,
+          username: p.username,
+          avatar: p.avatar,
+          type: "PARENT" as const,
+        })),
+        ...(schoolsData.data || []).map((s) => ({
+          id: s.school_id,
+          name: s.name,
+          username: s.slug,
+          avatar: s.logo_url,
+          type: "SCHOOL" as const,
+          slug: s.slug,
+        })),
+      ];
+
+      return results;
+    },
+    300, // 5 minutes
+  );
+}
 
 export async function toggleFollow(
   targetId: string,
