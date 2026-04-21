@@ -43,6 +43,8 @@ export default function ExamTakingContent({ examId }: ExamTakingContentProps) {
   const [hasPaid, setHasPaid] = useState(false);
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [showWarningModal, setShowWarningModal] = useState(false);
 
   useEffect(() => {
     loadExam();
@@ -213,13 +215,7 @@ export default function ExamTakingContent({ examId }: ExamTakingContentProps) {
     }));
   };
 
-  const handleAutoSubmit = useCallback(async () => {
-    if (isSubmitting) return;
-    toast.error("Time's up! Submitting your exam...");
-    await handleSubmitExam();
-  }, [isSubmitting]);
-
-  const handleSubmitExam = async () => {
+  const handleSubmitExam = useCallback(async () => {
     if (!attemptId) return;
 
     setIsSubmitting(true);
@@ -238,7 +234,54 @@ export default function ExamTakingContent({ examId }: ExamTakingContentProps) {
       toast.error("Something went wrong");
       setIsSubmitting(false);
     }
-  };
+  }, [attemptId, answers, examId, router]);
+
+  const handleAutoSubmit = useCallback(async (reason?: string) => {
+    if (isSubmitting) return;
+    const message = reason || "Time's up!";
+    toast.error(`${message} Submitting your exam...`);
+    await handleSubmitExam();
+  }, [isSubmitting, handleSubmitExam]);
+
+  // Tab Switching Detection
+  useEffect(() => {
+    if (!hasStarted || isSubmitting) return;
+
+    const handleViolation = () => {
+      setTabSwitchCount((prev) => {
+        const newCount = prev + 1;
+        if (newCount === 1) {
+          setShowWarningModal(true);
+        } else if (newCount >= 2) {
+          handleAutoSubmit("Anti-Cheat: Tab switching detected!");
+        }
+        return newCount;
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        handleViolation();
+      }
+    };
+
+    const handleBlur = () => {
+      // Small timeout to avoid triggering on certain browser UI interactions
+      setTimeout(() => {
+        if (document.activeElement?.tagName !== "IFRAME") {
+          handleViolation();
+        }
+      }, 100);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleBlur);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, [hasStarted, isSubmitting, handleAutoSubmit]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -624,6 +667,38 @@ export default function ExamTakingContent({ examId }: ExamTakingContentProps) {
             </button>
           )}
         </div>
+
+        {/* Tab Switch Warning Modal */}
+        {showWarningModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+            <div className="relative bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl border-4 border-red-100 animate-in zoom-in duration-300">
+              <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertCircle className="w-10 h-10 text-red-500" />
+              </div>
+              <h3 className="text-2xl font-black font-nunito text-gray-900 text-center mb-4">
+                Anti-Cheat Warning! ⚠️
+              </h3>
+              <p className="text-gray-600 font-bold text-center mb-8 leading-relaxed">
+                We detected that you switched tabs or windows. This is strictly
+                prohibited during the exam.
+                <br />
+                <br />
+                <span className="text-red-600 uppercase">
+                  One more violation
+                </span>{" "}
+                will result in your exam being{" "}
+                <span className="underline">automatically submitted</span>.
+              </p>
+              <button
+                onClick={() => setShowWarningModal(false)}
+                className="w-full py-4 rounded-2xl bg-brand-purple text-white font-black text-lg shadow-lg shadow-brand-purple/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
+              >
+                I Understand, Continue
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Confirm Submit Modal */}
         {showConfirmSubmit && (
