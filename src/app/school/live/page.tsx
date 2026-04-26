@@ -35,6 +35,7 @@ interface LiveClass {
   title: string;
   subject: string | null;
   description: string | null;
+  class: string | null;
   status: "scheduled" | "live" | "ended";
   channel_name: string;
   is_private: boolean;
@@ -44,6 +45,25 @@ interface LiveClass {
   created_at: string;
   attendee_count: number;
 }
+
+const CLASSES = [
+  "All",
+  "Nursery",
+  "LKG",
+  "UKG",
+  "Class 1",
+  "Class 2",
+  "Class 3",
+  "Class 4",
+  "Class 5",
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10",
+  "Class 11",
+  "Class 12",
+];
 
 const STATUS_CONFIG = {
   scheduled: {
@@ -83,6 +103,7 @@ export default function SchoolLivePage() {
     title: "",
     subject: "",
     description: "",
+    class: "All",
     scheduled_at: "",
     is_private: true,
   });
@@ -107,6 +128,7 @@ export default function SchoolLivePage() {
       title: form.title,
       subject: form.subject || undefined,
       description: form.description || undefined,
+      class: form.class,
       scheduled_at: form.scheduled_at || undefined,
       is_private: form.is_private,
     });
@@ -121,6 +143,7 @@ export default function SchoolLivePage() {
       title: "",
       subject: "",
       description: "",
+      class: "All",
       scheduled_at: "",
       is_private: true,
     });
@@ -479,6 +502,24 @@ export default function SchoolLivePage() {
                   </div>
                   <div>
                     <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">
+                      Target Class
+                    </label>
+                    <select
+                      value={form.class}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, class: e.target.value }))
+                      }
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-gray-100 focus:border-brand-purple outline-none font-bold text-gray-800 transition-all bg-white cursor-pointer"
+                    >
+                      {CLASSES.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">
                       Description
                     </label>
                     <textarea
@@ -607,11 +648,18 @@ function ClassCard({
         <h3 className="font-black text-gray-900 font-nunito text-lg leading-tight mb-1">
           {cls.title}
         </h3>
-        {cls.subject && (
-          <p className="text-xs font-bold text-brand-purple flex items-center gap-1 mb-2">
-            <BookOpen className="w-3 h-3" /> {cls.subject}
-          </p>
-        )}
+        <div className="flex flex-wrap gap-2 mb-2">
+          {cls.subject && (
+            <p className="text-[10px] font-black text-brand-purple bg-brand-purple/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <BookOpen className="w-3 h-3" /> {cls.subject}
+            </p>
+          )}
+          {cls.class && cls.class !== "All" && (
+            <p className="text-[10px] font-black text-hot-pink bg-hot-pink/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <Users className="w-3 h-3" /> {cls.class}
+            </p>
+          )}
+        </div>
         {cls.description && (
           <p className="text-xs font-bold text-gray-400 mb-3 line-clamp-2">
             {cls.description}

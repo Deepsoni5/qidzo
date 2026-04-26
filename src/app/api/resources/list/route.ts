@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
           .from("school_resources")
           .select("*, school:schools(name, logo_url, school_id)")
           .eq("is_private", false)
+          .eq("class", "All")
           .order("created_at", { ascending: false });
         if (error) throw error;
         return data || [];

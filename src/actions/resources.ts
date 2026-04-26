@@ -24,6 +24,7 @@ export async function createResource(input: {
   title: string;
   description?: string;
   subject?: string;
+  class?: string;
   type: "video" | "image" | "pdf";
   file_url: string;
   thumbnail_url?: string;
@@ -51,6 +52,7 @@ export async function createResource(input: {
       title: input.title,
       description: input.description || null,
       subject: input.subject || null,
+      class: input.class || "All",
       type: input.type,
       file_url: input.file_url,
       thumbnail_url: input.thumbnail_url || null,
@@ -109,9 +111,11 @@ export async function getResourcesForStudent(childId: string) {
     async () => {
       const { data: child } = await supabase
         .from("children")
-        .select("parent_id")
+        .select("parent_id, class")
         .eq("child_id", childId)
         .single();
+
+      const studentClass = child?.class;
 
       const schoolId = child?.parent_id?.startsWith("SP_")
         ? child.parent_id.slice(3)
@@ -135,9 +139,18 @@ export async function getResourcesForStudent(childId: string) {
       if (error) throw error;
 
       return (data || []).filter((r: any) => {
-        if (!r.is_private) return true;
-        if (schoolUuid && r.school_id === schoolUuid) return true;
-        return false;
+        // 1. Class filtering: must match student's class or be "All"
+        const classMatches =
+          r.class === "All" || (studentClass && r.class === studentClass);
+        if (!classMatches) return false;
+
+        // 2. Privacy filtering: if private, must be from student's school
+        if (r.is_private) {
+          return !!(schoolUuid && r.school_id === schoolUuid);
+        }
+
+        // 3. If public and class matches, it's visible
+        return true;
       });
     },
     60,

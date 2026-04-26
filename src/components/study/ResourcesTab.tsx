@@ -17,6 +17,7 @@ import {
   Copy,
   Check,
   Download,
+  Users,
 } from "lucide-react";
 
 type ResourceType = "video" | "image" | "pdf";
@@ -27,6 +28,7 @@ interface Resource {
   title: string;
   description: string | null;
   subject: string | null;
+  class: string | null;
   type: ResourceType;
   file_url: string;
   thumbnail_url: string | null;
@@ -567,10 +569,27 @@ function ResourceCard({
           </div>
         )}
 
-        <div
-          className={`absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-black border ${meta.bg} ${meta.color}`}
-        >
-          {meta.emoji} {meta.label}
+        <div className="absolute top-2 left-2 flex flex-wrap gap-1.5">
+          <div
+            className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-black border ${meta.bg} ${meta.color}`}
+          >
+            {meta.emoji} {meta.label}
+          </div>
+          {resource.class && resource.class !== "All" && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-hot-pink/20 text-hot-pink border border-hot-pink/30 rounded-full text-[10px] font-black backdrop-blur-md">
+              <Users className="w-2.5 h-2.5" />
+              {resource.class}
+            </div>
+          )}
+        </div>
+
+        <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-black bg-black/50 text-gray-300 backdrop-blur-md border border-white/10">
+          {resource.is_private ? (
+            <Lock className="w-2.5 h-2.5" />
+          ) : (
+            <Globe className="w-2.5 h-2.5" />
+          )}
+          {resource.is_private ? "Private" : "Public"}
         </div>
 
         <div
@@ -588,14 +607,24 @@ function ResourceCard({
       </div>
 
       <div className="p-4">
-        {resource.subject && (
-          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-brand-purple/10 rounded-full mb-2">
-            <BookOpen className="w-3 h-3 text-brand-purple" />
-            <span className="text-[10px] font-black text-brand-purple">
-              {resource.subject}
-            </span>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2 mb-2">
+          {resource.subject && (
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-brand-purple/10 rounded-full">
+              <BookOpen className="w-3 h-3 text-brand-purple" />
+              <span className="text-[10px] font-black text-brand-purple">
+                {resource.subject}
+              </span>
+            </div>
+          )}
+          {resource.class && resource.class !== "All" && (
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-hot-pink/10 rounded-full">
+              <Users className="w-3 h-3 text-hot-pink" />
+              <span className="text-[10px] font-black text-hot-pink">
+                {resource.class}
+              </span>
+            </div>
+          )}
+        </div>
         <h3 className="font-black text-gray-900 font-nunito text-base leading-tight line-clamp-2 mb-1">
           {resource.title}
         </h3>

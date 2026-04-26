@@ -11,6 +11,7 @@ import {
   BookOpen,
   Calendar,
   RefreshCw,
+  Users,
 } from "lucide-react";
 
 interface LiveStream {
@@ -19,6 +20,7 @@ interface LiveStream {
   title: string;
   subject: string | null;
   description: string | null;
+  class: string | null;
   status: "live" | "scheduled";
   is_private: boolean;
   scheduled_at: string | null;
@@ -232,14 +234,24 @@ function StreamCard({
 
       <div className="p-4">
         {/* Subject pill */}
-        {stream.subject && (
-          <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-purple/10 rounded-full mb-2">
-            <BookOpen className="w-3 h-3 text-brand-purple" />
-            <span className="text-[10px] font-black text-brand-purple">
-              {stream.subject}
-            </span>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2 mb-2">
+          {stream.subject && (
+            <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-purple/10 rounded-full">
+              <BookOpen className="w-3 h-3 text-brand-purple" />
+              <span className="text-[10px] font-black text-brand-purple">
+                {stream.subject}
+              </span>
+            </div>
+          )}
+          {stream.class && stream.class !== "All" && (
+            <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-hot-pink/10 rounded-full">
+              <Users className="w-3 h-3 text-hot-pink" />
+              <span className="text-[10px] font-black text-hot-pink">
+                {stream.class}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Title */}
         <h3 className="font-black text-gray-900 font-nunito text-base leading-tight mb-1 line-clamp-2">

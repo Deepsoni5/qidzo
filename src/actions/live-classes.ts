@@ -24,6 +24,7 @@ export async function createLiveClass(input: {
   title: string;
   subject?: string;
   description?: string;
+  class?: string;
   scheduled_at?: string;
   is_private: boolean;
 }) {
@@ -53,6 +54,7 @@ export async function createLiveClass(input: {
       title: input.title,
       subject: input.subject || null,
       description: input.description || null,
+      class: input.class || "All",
       scheduled_at: input.scheduled_at || null,
       is_private: input.is_private,
       channel_name,
@@ -201,12 +203,14 @@ export async function getLiveStreamsForStudent(childId: string) {
   return getOrSetCache(
     cacheKey,
     async () => {
-      // Get child's school via parent_id pattern SP_<school_id>
+      // Get child's school via parent_id pattern SP_<school_id> and their class
       const { data: child } = await supabase
         .from("children")
-        .select("parent_id")
+        .select("parent_id, class")
         .eq("child_id", childId)
         .single();
+
+      const studentClass = child?.class;
 
       // Extract school_id from parent_id (SP_SCHOOL123 → SCHOOL123)
       const schoolId = child?.parent_id?.startsWith("SP_")
@@ -235,9 +239,18 @@ export async function getLiveStreamsForStudent(childId: string) {
       if (error) throw error;
 
       const streams = (data || []).filter((cls: any) => {
-        if (!cls.is_private) return true; // public — everyone sees
-        if (schoolUuid && cls.school_uuid === schoolUuid) return true; // private — own school only
-        return false;
+        // 1. Class filtering: must match student's class or be "All"
+        const classMatches =
+          cls.class === "All" || (studentClass && cls.class === studentClass);
+        if (!classMatches) return false;
+
+        // 2. Privacy filtering: if private, must be from student's school
+        if (cls.is_private) {
+          return !!(schoolUuid && cls.school_uuid === schoolUuid);
+        }
+
+        // 3. If public and class matches, it's visible
+        return true;
       });
 
       return streams;

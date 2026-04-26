@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
           .from("live_classes")
           .select("*, school:schools(name, logo_url, school_id)")
           .eq("is_private", false)
+          .eq("class", "All")
           .in("status", ["live", "scheduled"])
           .order("status", { ascending: true })
           .order("created_at", { ascending: false });

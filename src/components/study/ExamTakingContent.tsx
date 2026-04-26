@@ -252,7 +252,7 @@ export default function ExamTakingContent({ examId }: ExamTakingContentProps) {
         const newCount = prev + 1;
         if (newCount === 1) {
           setShowWarningModal(true);
-        } else if (newCount >= 2) {
+        } else if (newCount >= 5) {
           handleAutoSubmit("Anti-Cheat: Tab switching detected!");
         }
         return newCount;

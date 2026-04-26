@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Clock,
   Zap,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -33,12 +34,32 @@ interface Resource {
   title: string;
   description: string | null;
   subject: string | null;
+  class: string | null;
   type: ResourceType;
   file_url: string;
   thumbnail_url: string | null;
   is_private: boolean;
   created_at: string;
 }
+
+const CLASSES = [
+  "All",
+  "Nursery",
+  "LKG",
+  "UKG",
+  "Class 1",
+  "Class 2",
+  "Class 3",
+  "Class 4",
+  "Class 5",
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10",
+  "Class 11",
+  "Class 12",
+];
 
 const TYPE_META: Record<
   ResourceType,
@@ -266,14 +287,24 @@ function ResourceCard({
       </div>
 
       <div className="p-4">
-        {resource.subject && (
-          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-brand-purple/10 rounded-full mb-2">
-            <BookOpen className="w-3 h-3 text-brand-purple" />
-            <span className="text-[10px] font-black text-brand-purple">
-              {resource.subject}
-            </span>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2 mb-2">
+          {resource.subject && (
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-brand-purple/10 rounded-full">
+              <BookOpen className="w-3 h-3 text-brand-purple" />
+              <span className="text-[10px] font-black text-brand-purple">
+                {resource.subject}
+              </span>
+            </div>
+          )}
+          {resource.class && resource.class !== "All" && (
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-hot-pink/10 rounded-full">
+              <Users className="w-3 h-3 text-hot-pink" />
+              <span className="text-[10px] font-black text-hot-pink">
+                {resource.class}
+              </span>
+            </div>
+          )}
+        </div>
         <h3 className="font-black text-gray-900 font-nunito text-sm leading-tight line-clamp-2 mb-1">
           {resource.title}
         </h3>
@@ -329,6 +360,7 @@ function UploadModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [subject, setSubject] = useState("");
+  const [classValue, setClassValue] = useState("All");
   const [isPrivate, setIsPrivate] = useState(true);
   const [file, setFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState<ResourceType | null>(null);
@@ -447,6 +479,7 @@ function UploadModal({
         title: title.trim(),
         description: description.trim() || undefined,
         subject: subject || undefined,
+        class: classValue,
         type: fileType,
         file_url: url,
         is_private: isPrivate,
@@ -676,6 +709,23 @@ function UploadModal({
                 {SUBJECTS.map((s) => (
                   <option key={s} value={s}>
                     {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-black text-gray-700 mb-1.5">
+                Target Class
+              </label>
+              <select
+                value={classValue}
+                onChange={(e) => setClassValue(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm font-bold text-gray-800 outline-none focus:ring-2 focus:ring-brand-purple/30 focus:border-brand-purple transition-all bg-white cursor-pointer"
+              >
+                {CLASSES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
                   </option>
                 ))}
               </select>

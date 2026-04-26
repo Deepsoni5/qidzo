@@ -207,6 +207,7 @@ interface FormData {
   country: string;
   city: string;
   parents_whatsapp_number: string;
+  class: string;
 }
 
 const INITIAL_DATA: FormData = {
@@ -223,7 +224,26 @@ const INITIAL_DATA: FormData = {
   country: "India",
   city: "",
   parents_whatsapp_number: "",
+  class: "",
 };
+
+const CLASSES = [
+  "Nursery",
+  "LKG",
+  "UKG",
+  "Class 1",
+  "Class 2",
+  "Class 3",
+  "Class 4",
+  "Class 5",
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10",
+  "Class 11",
+  "Class 12",
+];
 
 export default function AddStudentPage() {
   const router = useRouter();
@@ -309,6 +329,10 @@ export default function AddStudentPage() {
         }
         if (!formData.school_name || formData.school_name.trim().length < 2) {
           toast.error("Please enter a valid school name");
+          return false;
+        }
+        if (!formData.class) {
+          toast.error("Please select a class");
           return false;
         }
         if (!formData.parents_whatsapp_number) {
@@ -442,6 +466,7 @@ export default function AddStudentPage() {
         avatar: formData.avatar,
         preferred_categories: formData.preferred_categories,
         school_name: formData.school_name,
+        class: formData.class,
         parents_whatsapp_number: formData.parents_whatsapp_number,
         country: formData.country,
         city: formData.city,
@@ -565,6 +590,27 @@ export default function AddStudentPage() {
                     className="w-full px-4 py-3 rounded-2xl border-2 border-gray-100 focus:border-brand-purple focus:ring-0 transition-all font-nunito font-bold outline-none"
                     placeholder="e.g. Sunshine Public School"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">
+                    Class / Grade
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={formData.class}
+                      onChange={(e) => updateFields({ class: e.target.value })}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-gray-100 focus:border-brand-purple focus:ring-0 transition-all font-nunito font-bold outline-none appearance-none bg-white"
+                    >
+                      <option value="">Select Class</option>
+                      {CLASSES.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
 
                 <div>

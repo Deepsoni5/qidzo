@@ -24,6 +24,7 @@ export async function POST(req: Request) {
       preferred_categories,
       age,
       school_name,
+      class: student_class, // Destructure as student_class because 'class' is a reserved keyword
       parents_whatsapp_number,
       country,
       city
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
       !birth_date ||
       !age ||
       !school_name ||
+      !student_class ||
       !parents_whatsapp_number ||
       !country ||
       !city
@@ -110,6 +112,7 @@ export async function POST(req: Request) {
           avatar: avatar || "https://cdn-icons-png.flaticon.com/512/847/847969.png",
           preferred_categories,
           school_name,
+          class: student_class,
           parents_whatsapp_number,
           country,
           city,
